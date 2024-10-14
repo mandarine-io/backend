@@ -1,0 +1,50 @@
+{
+  "errors": {
+    "validation" : {
+      "oneof": "Unsupported value",
+      "email": "Invalid email address",
+      "http_url": "Invalid URL",
+      "datetime": "Invalid date and time",
+      "zxcvbn": "Weak password",
+      "required": "Required field",
+      "uri": "Invalid URI",
+      "lowercase": "Must be lowercase",
+      "alphanum": "Must be alphanumeric",
+      "max": "Maximum {{.param}} characters"
+    },
+    "access_denied": "Access denied",
+    "too_many_requests": "Too many requests",
+    "session_invalid": "Invalid session",
+    "session_expired": "Expired session",
+    "user_not_found": "User not found",
+    "duplicate_user": "This user already exists",
+    "invalid_provider": "Unsupported provider",
+    "invalid_state": "Invalid state",
+    "invalid_code": "Invalid authorization code",
+    "invalid_or_expired_otp": "The code is invalid or has expired",
+    "duplicate_username": "This username already exists",
+    "duplicate_email": "This email already exists",
+    "password_is_set": "Password has already been set",
+    "incorrect_old_password": "Incorrect old password",
+    "user_not_deleted": "User not deleted",
+    "user_already_deleted": "User has already been deleted",
+    "bad_credentials": "Invalid password",
+    "user_is_blocked": "User is blocked",
+    "userinfo_not_received": "Could not retrieve user information",
+    "internal_error": "Internal error",
+    "route_not_found": "Route not found",
+    "method_not_allowed": "Method not allowed",
+    "redirect_url_not_found": "Redirect URL not found"
+  },
+  "email": {
+    "register-confirm": {
+      "title": "Registration confirmation"
+    },
+    "email-verify": {
+      "title": "Email confirmation"
+    },
+    "recovery-password": {
+      "title": "Password recovery"
+    }
+  }
+}

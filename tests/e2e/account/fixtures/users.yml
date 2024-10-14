@@ -1,0 +1,158 @@
+# GET /v0/account
+- id: a02fc7e1-c19a-4c1a-b66e-29fed1ed452f
+  username: user1
+  email: user1@example.com
+  password: $2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve # user1
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# PATCH /v0/account/username
+- id: c51013eb-d179-4f14-90da-0e9ac732ae86
+  username: user_for_update_username_1
+  email: user_for_update_username_1@example.com
+  password: $2a$12$jVO1hn15BIlyXNvm5sgUoOnGpjLMsUR654fv5qibD7AeW1XmZ7XNq  # user_for_update_username_1
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 518dc7d0-5bc1-4b4f-beba-664012282e18
+  username: user_for_update_username_2
+  email: user_for_update_username_2@example.com
+  password: $2a$12$XdlUDZi1gzz8ClwQlp0DOOrNjuCh8YR4iNE9mNO2mnbpzHwrycObm # user_for_update_username_2
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# PATCH /v0/account/email
+- id: d76d9da5-ff66-4397-99cb-8b0298e887bd
+  username: user_for_update_email_1
+  email: user_for_update_email_1@example.com
+  password: $2a$12$cfjXzgolp1b2sdoP7RNX4ui/cLtoHrTUF.c7JIphuPNWCPVB1s3.2  # user_for_update_email_1
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 91467c6a-18bd-4cd0-818f-324e68512d4f
+  username: user_for_update_email_2
+  email: user_for_update_email_2@example.com
+  password: $2a$12$qFmEcdDfIqHvn4BSnvBQou1t.V/wjrr5z5x3hHtEqt8PjfQzQ2JUa # user_for_update_email_2
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# POST /v0/account/email/verify
+- id: 8bffbff2-1653-4aa7-8402-1d29c4a5cae1
+  username: user_for_verify_email
+  email: user_for_verify_email@example.com
+  password: $2a$12$ALU3HAOtZpp22.WQVFZvnO.17WcwFrxCabnVuuz3FvPzh7TsXU8Ve  # user_for_verify_email
+  role_id: 1
+  is_enabled: true
+  is_email_verified: false
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# POST /v0/account/password
+- id: e5750b61-7eda-41dd-b4ab-0097d4dbc92e
+  username: user_for_set_password_1
+  email: user_for_set_password_1@example.com
+  password: ''
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: true
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 33dcd273-f31f-4dde-a37e-9cd2b3e16fcc
+  username: user_for_set_password_2
+  email: user_for_set_password_2@example.com
+  password: $2a$12$73YldSJbBrnmPj65mIObHOob2RCvMv5ZnuqRlcfrOGfBNqaCp5.aa
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# PATCH /v0/account/password
+- id: b03643e2-263d-406d-ac8f-02e51fe8927e
+  username: user_for_update_password_1
+  email: user_for_update_password_1@example.com
+  password: $2a$12$.s1AcMGZNlbGfWCUebmcGeHpV0bMUWorZ4Zmx/YwY5RVfp.OZbpDG
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: true
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# GET /v0/account/restore
+- id: fb22c374-e2c9-4f47-aa17-a9853bd29a58
+  username: user_for_restore_1
+  email: user_for_restore_1@example.com
+  password: $2a$12$pwK/qEPMowFymmEZEzoe7.eRPbVlLIsWiT5eh28CrYMmAiVWS3.y6
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: 2024-10-12 00:00:00.000000 +00:00
+- id: 8e2e4465-87d9-4156-84c8-49fa0afe2809
+  username: user_for_restore_2
+  email: user_for_restore_2@example.com
+  password: $2a$12$WHR344VpDhbSglKQG6ZnF.sC6Eik0sSkqMlP6H8qA0bSV./JAuLBu
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# DELETE /v0/account
+- id: aa693ac7-5f36-47d4-b7e0-582c5eab3d0f
+  username: user_for_delete_1
+  email: user_for_delete_1@example.com
+  password: $2a$12$5yMOTS9P165lNvD2.WBLMukJP6j7d7bwJ4fDnTtVlHvA8biM/AYYm
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 585d8642-e4bf-40aa-9084-89890fc1639f
+  username: user_for_delete_2
+  email: user_for_delete_2@example.com
+  password: $2a$12$bs2tyatxWW4RbiFPn48oUOIfUflRTS9nrHqUAWt.ZLLVjksRAb6oy
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: 2024-10-12 00:00:00.000000 +00:00
