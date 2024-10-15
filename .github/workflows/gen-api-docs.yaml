@@ -20,7 +20,7 @@ jobs:
       - name: Upload docs folder
         uses: actions/upload-artifact@master
         with:
-          name: docs/api
+          name: docs_api
           path: docs/api
       - name: Save Golang cache
         if: always()
@@ -50,14 +50,14 @@ jobs:
       - name: Download docs folder
         uses: actions/download-artifact@master
         with:
-          name: docs/api
+          name: docs_api
           path: docs/api
       - name: Generate OpenAPI specification
         run: make openapi.gen
       - name: Upload docs folder
         uses: actions/upload-artifact@master
         with:
-          name: docs/api
+          name: docs_api
           path: docs/api
           overwrite: true
   gen-redoc:
@@ -80,14 +80,14 @@ jobs:
       - name: Download docs folder
         uses: actions/download-artifact@master
         with:
-          name: docs/api
+          name: docs_api
           path: docs/api
       - name: Generate Redoc documentation
         run: make redoc.gen
       - name: Upload docs folder
         uses: actions/upload-artifact@master
         with:
-          name: docs/api
+          name: docs_api
           path: docs/api
           overwrite: true
   commit-and-push-docs:
@@ -100,7 +100,7 @@ jobs:
       - name: Download docs folder
         uses: actions/download-artifact@master
         with:
-          name: docs/api
+          name: docs_api
           path: docs/api
       - name: Commit and Push Swagger specification
         uses: actions-js/push@master
