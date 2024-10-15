@@ -27,7 +27,5 @@ jobs:
           context: .
           file: ./deploy/images/app.Dockerfile
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}-console:latest
-            ghcr.io/${{ github.repository }}-console:${{ github.ref_name }}
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
           labels: ${{ steps.meta.outputs.labels }}
