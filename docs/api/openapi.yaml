@@ -1,0 +1,984 @@
+openapi: 3.0.0
+info:
+  contact:
+    email: mandarine.app@yandex.ru
+    name: Mandarine Support
+  description: API for web and mobile application Mandarine
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Mandarine API
+  version: 0.0.0
+paths:
+  /health:
+    get:
+      description: Request for getting health status. In response will be status of
+        all checks (database, minio, smtp, redis).
+      operationId: Health
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/dto.HealthResponse"
+                type: array
+      summary: Health
+      tags:
+        - Metrics API
+  /v0/account:
+    delete:
+      description: Request for deleting account. User must be logged in. User must not
+        be deleted.
+      operationId: DeleteAccount
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Delete account
+      tags:
+        - Account API
+    get:
+      description: Request for receiving own account. User must be logged in. In
+        response will be returned own account info.
+      operationId: GetAccount
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.AccountOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Get account
+      tags:
+        - Account API
+  /v0/account/email:
+    patch:
+      description: Request for updating email. User must be logged in. In process will
+        be sent verification email. In response will be returned updated account
+        info.
+      operationId: UpdateEmail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.UpdateEmailInput"
+        description: Update email request body
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.AccountOutput"
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.AccountOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Update email
+      tags:
+        - Account API
+  /v0/account/email/verify:
+    post:
+      description: Request for verify email. User must be logged in.
+      operationId: VerifyEmail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.VerifyEmailInput"
+        description: Verify email request body
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Verify email
+      tags:
+        - Account API
+  /v0/account/password:
+    patch:
+      description: Request for updating password. User must be logged in.
+      operationId: UpdatePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.UpdatePasswordInput"
+        description: Update password request body
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Update password
+      tags:
+        - Account API
+    post:
+      description: Request for setting password. User must be logged in.
+      operationId: SetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.SetPasswordInput"
+        description: Set password request body
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Set password
+      tags:
+        - Account API
+  /v0/account/restore:
+    get:
+      description: Request for restoring account. User must be logged in. User must be
+        deleted. In response will be returned restored account info.
+      operationId: RestoreAccount
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.AccountOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Restore account
+      tags:
+        - Account API
+  /v0/account/username:
+    patch:
+      description: Request for updating username. User must be logged in. In response
+        will be returned updated account info.
+      operationId: UpdateUsername
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.UpdateUsernameInput"
+        description: Update username request body
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.AccountOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Update username
+      tags:
+        - Account API
+  /v0/auth/login:
+    post:
+      description: Request for authentication. In response will be new access token in
+        body and new refresh tokens in http-only cookie.
+      operationId: Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.LoginInput"
+        description: Login request body
+        required: true
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: RefreshToken=; HttpOnly; Max-Age=86400; Secure
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.JwtTokensOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Sign in
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/logout:
+    get:
+      description: Request for logout. User must be logged in.
+      operationId: Logout
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Logout
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/recovery-password:
+    post:
+      description: Request for recovery password. At the end will be sent email with code
+      operationId: RecoveryPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.RecoveryPasswordInput"
+        description: Recovery password body
+        required: true
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Recovery password
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/recovery-password/verify:
+    post:
+      description: Request for verify recovery code. If code is correct will be sent
+        status 200
+      operationId: VerifyRecoveryCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.VerifyRecoveryCodeInput"
+        description: Verify recovery code body
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Verify recovery code
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/refresh:
+    get:
+      description: Request for refreshing tokens. In response will be new access token
+        in body and new refresh tokens in http-only cookie.
+      operationId: RefreshTokens
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: RefreshToken=; HttpOnly; Max-Age=86400; Secure
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.JwtTokensOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Refresh tokens
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/register:
+    post:
+      description: Request for creating new user. At the end will be sent confirmation
+        email with code
+      operationId: Register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.RegisterInput"
+        description: Register request body
+        required: true
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Register
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/register/confirm:
+    post:
+      description: Request for confirming registration. At the end will be created new user
+      operationId: RegisterConfirm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.RegisterConfirmInput"
+        description: Register confirm body
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Register confirmation
+      tags:
+        - Authentication and Authorization API
+  /v0/auth/reset-password:
+    post:
+      description: Request for reset password. If code is correct will be updated password
+      operationId: ResetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.ResetPasswordInput"
+        description: Reset password body
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Reset password
+      tags:
+        - Authentication and Authorization API
+  "/v0/auth/social/{provider}":
+    get:
+      description: Request for redirecting to OAuth consent page. After authorization,
+        it will redirect to redirectUrl with authorization code and state
+      operationId: SocialLogin
+      parameters:
+        - description: Social login provider (yandex, google, mailru)
+          in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+        - description: Redirect URL
+          in: query
+          name: redirectUrl
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Found
+          headers:
+            Set-Cookie:
+              description: OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure
+              schema:
+                type: string
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Social login
+      tags:
+        - Authentication and Authorization API
+  "/v0/auth/social/{provider}/callback":
+    post:
+      description: Request for exchanging authorization code to token pairs. In
+        process, it will exchange code to user info and register new user or
+        login existing user. In response will be new access token in body and
+        new refresh tokens in http-only cookie.
+      operationId: SocialLoginCallback
+      parameters:
+        - description: Social login provider (yandex, google, mailru)
+          in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.SocialLoginCallbackInput"
+        description: Social login callback request body
+        required: true
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: RefreshToken=; HttpOnly; Max-Age=86400; Secure
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.JwtTokensOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Social login callback
+      tags:
+        - Authentication and Authorization API
+tags:
+  - description: API for account management
+    name: Account API
+  - description: API for authentication and authorization
+    name: Authentication and Authorization API
+  - description: API for getting metrics
+    name: Metrics API
+servers:
+  - url: //localhost:8080
+components:
+  securitySchemes:
+    BearerAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+  schemas:
+    dto.AccountOutput:
+      properties:
+        email:
+          format: email
+          type: string
+        isDeleted:
+          type: boolean
+        isEmailVerified:
+          type: boolean
+        isEnabled:
+          type: boolean
+        isPasswordTemp:
+          type: boolean
+        username:
+          maxLength: 255
+          minLength: 1
+          type: string
+      required:
+        - email
+        - isDeleted
+        - isEmailVerified
+        - isEnabled
+        - isPasswordTemp
+        - username
+      type: object
+    dto.ErrorResponse:
+      properties:
+        message:
+          type: string
+        path:
+          example: /api/v0/example
+          format: url_path
+          type: string
+        status:
+          maximum: 599
+          minimum: 400
+          type: integer
+        timestamp:
+          type: string
+      required:
+        - message
+        - path
+        - status
+        - timestamp
+      type: object
+    dto.HealthResponse:
+      properties:
+        name:
+          type: string
+        pass:
+          type: boolean
+      type: object
+    dto.JwtTokensOutput:
+      properties:
+        accessToken:
+          format: jwt
+          type: string
+      required:
+        - accessToken
+      type: object
+    dto.LoginInput:
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+      required:
+        - login
+        - password
+      type: object
+    dto.RecoveryPasswordInput:
+      properties:
+        email:
+          format: email
+          type: string
+      required:
+        - email
+      type: object
+    dto.RegisterConfirmInput:
+      properties:
+        email:
+          format: email
+          type: string
+        otp:
+          type: string
+      required:
+        - email
+        - otp
+      type: object
+    dto.RegisterInput:
+      properties:
+        email:
+          format: email
+          type: string
+        password:
+          format: zxcvbn
+          type: string
+        username:
+          format: username
+          type: string
+      required:
+        - email
+        - password
+        - username
+      type: object
+    dto.ResetPasswordInput:
+      properties:
+        email:
+          format: email
+          type: string
+        otp:
+          type: string
+        password:
+          format: zxcvbn
+          type: string
+      required:
+        - email
+        - otp
+        - password
+      type: object
+    dto.SetPasswordInput:
+      properties:
+        password:
+          format: zxcvbn
+          type: string
+      required:
+        - password
+      type: object
+    dto.SocialLoginCallbackInput:
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+      required:
+        - code
+        - state
+      type: object
+    dto.UpdateEmailInput:
+      properties:
+        email:
+          format: email
+          type: string
+      required:
+        - email
+      type: object
+    dto.UpdatePasswordInput:
+      properties:
+        newPassword:
+          format: zxcvbn
+          type: string
+        oldPassword:
+          type: string
+      required:
+        - newPassword
+        - oldPassword
+      type: object
+    dto.UpdateUsernameInput:
+      properties:
+        username:
+          format: username
+          type: string
+      required:
+        - username
+      type: object
+    dto.VerifyEmailInput:
+      properties:
+        email:
+          format: email
+          type: string
+        otp:
+          type: string
+      required:
+        - email
+        - otp
+      type: object
+    dto.VerifyRecoveryCodeInput:
+      properties:
+        email:
+          format: email
+          type: string
+        otp:
+          type: string
+      required:
+        - email
+        - otp
+      type: object

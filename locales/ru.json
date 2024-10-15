@@ -1,0 +1,52 @@
+{
+  "errors": {
+    "validation" : {
+      "oneof": "Неподдерживаемое значение",
+      "email": "Неверный адрес электронной почты",
+      "http_url": "Неверный URL",
+      "datetime": "Неверная дата и время",
+      "zxcvbn": "Ненадежный пароль",
+      "required": "Обязательное поле",
+      "uri": "Неверный URI",
+      "lowercase": "Может содержать только строчные буквы",
+      "alphanum": "Может содержать только буквы и цифры",
+      "max": "Максимум {{.param}} символов"
+    },
+    "access_denied": "Доступ запрещен",
+    "too_many_requests": "Слишком много запросов",
+    "jwt_token_is_missing": "Токен JWT отсутствует",
+    "invalid_jwt_token": "Невалидный JWT токен",
+    "expired_jwt_token": "Истекший JWT токен",
+    "user_not_found": "Пользователь не найден",
+    "duplicate_user": "Такой пользователь уже существует",
+    "invalid_provider": "Неподдерживаемый провайдер",
+    "invalid_state": "Невалидное состояние",
+    "invalid_code": "Невалидный код авторизации",
+    "invalid_or_expired_otp": "Код недействителен или его срок действия истек",
+    "duplicate_username": "Такое имя пользователя уже существует",
+    "duplicate_email": "Такая электронная почта уже существует",
+    "password_is_set": "Пароль уже установлен",
+    "incorrect_old_password": "Неверный старый пароль",
+    "user_not_deleted": "Пользователь не удален",
+    "user_already_deleted": "Пользователь уже удален",
+    "bad_credentials": "Неверный пароль",
+    "user_is_blocked": "Пользователь заблокирован",
+    "userinfo_not_received": "Не удалось получить информацию о пользователе",
+    "internal_error": "Внутренняя ошибка",
+    "session_expired": "Срок действия сессии истек",
+    "route_not_found": "Маршрут не найден",
+    "method_not_allowed": "Метод не разрешен",
+    "redirect_url_not_found": "URL-адрес перенаправления не найден"
+  },
+  "email": {
+    "register-confirm": {
+      "title": "Подтверждение регистрации"
+    },
+    "email-verify": {
+      "title": "Подтверждение электронной почты"
+    },
+    "recovery-password": {
+      "title": "Восстановление пароля"
+    }
+  }
+}

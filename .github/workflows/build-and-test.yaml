@@ -1,0 +1,125 @@
+name: Build and Test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        id: golang-with-cache
+        uses: magnetikonline/action-golang-cache@v5
+        with:
+          go-version-file: go.mod
+      - name: Resolve dependencies
+        run: go mod tidy
+      - name: Build
+        run: go build -o build/server cmd/api/main.go
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: build
+      - name: Save Golang cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ steps.golang-with-cache.outputs.build-cache-path }}
+            ${{ steps.golang-with-cache.outputs.module-cache-path }}
+          key: ${{ steps.golang-with-cache.outputs.cache-key }}
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        id: golang-with-cache
+        uses: magnetikonline/action-golang-cache@v5
+        with:
+          go-version-file: go.mod
+      - name: Create directory
+        run: mkdir -p logs && mkdir -p logs/format
+      - name: Format
+        run: |
+          (gofmt -w .; (echo $? > code)) | tee logs/format/output-$(date +%s).log
+          exit $(cat code)
+      - name: Formatting
+        run: make format
+      - name: Archive formatting artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: format
+          path: logs/format
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        id: golang-with-cache
+        uses: magnetikonline/action-golang-cache@v5
+        with:
+          go-version-file: go.mod
+      - name: Install dependencies
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: Create directory
+        run: mkdir -p logs && mkdir -p logs/lint
+      - name: Lint
+        run: |
+          (golangci-lint run --timeout 10m0s; (echo $? > code)) | tee logs/lint/output-$(date +%s).log
+           exit $(cat code)
+      - name: Archive lint artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint
+          path: logs/lint
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        id: golang-with-cache
+        uses: magnetikonline/action-golang-cache@v5
+        with:
+          go-version-file: go.mod
+      - name: Create directory
+        run: mkdir -p logs && mkdir -p logs/unit-tests
+      - name: Unit test
+        run: |
+          (go test ./tests/unit/... -v -shuffle on -covermode atomic -coverprofile logs/unit-tests/cover.out; (echo $? > code)) | tee logs/unit-tests/output-$(date +%s).log
+          exit $(cat code)
+      - name: Coverage report
+        run: go tool cover -html logs/unit-tests/cover.out -o logs/unit-tests/cover.html
+      - name: Archive unit tests artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests
+          path: logs/unit-tests
+  e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        id: golang-with-cache
+        uses: magnetikonline/action-golang-cache@v5
+        with:
+          go-version-file: go.mod
+      - name: Create directory
+        run: mkdir -p logs && mkdir -p logs/e2e-tests
+      - name: E2E test
+        run: |
+          (go test ./tests/e2e/... -v -shuffle on -covermode atomic -coverprofile logs/e2e-tests/cover.out; (echo $? > code)) | tee logs/e2e-tests/output-$(date +%s).log
+          exit $(cat code)
+      - name: Coverage report
+        run: go tool cover -html logs/e2e-tests/cover.out -o logs/e2e-tests/cover.html
+      - name: Archive e2e tests artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-tests
+          path: logs/e2e-tests

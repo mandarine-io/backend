@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mandarine (Backend)</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="pages/assets/logo.svg">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
+    <style type="text/css">
+        @keyframes ldio-yzaezf3dcmj {
+            0%, 100% {
+                animation-timing-function: cubic-bezier(0.45, 0, 0.9, 0.55)
+            }
+            0% {
+                transform: translate(0, 0)
+            }
+            50% {
+                transform: translate(0, 108px);
+                animation-timing-function: cubic-bezier(0, 0.45, 0.55, 0.9);
+            }
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        .ldio-yzaezf3dcmj div {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-image: url("pages/assets/logo.svg");
+            left: 50%;
+            top: 30%;
+            animation: ldio-yzaezf3dcmj 1s linear infinite;
+        }
+
+        .loadingio-spinner-ball-2by998twmg8 {
+            width: 100vw;
+            height: 100vh;
+            display: inline-block;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .ldio-yzaezf3dcmj {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform: translateZ(0) scale(1);
+            backface-visibility: hidden;
+            transform-origin: 0 0; /* see note above */
+            overflow: hidden;
+        }
+
+        .ldio-yzaezf3dcmj div {
+            box-sizing: content-box;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="loadingio-spinner-ball-2by998twmg8">
+        <div class="ldio-yzaezf3dcmj">
+            <div></div>
+        </div>
+    </div>
+</div>
+<script>
+    window.$docsify = {
+        name:
+            '<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">' +
+            '<img alt="" src="pages/assets/logo.svg" width="30" />' +
+            '<span style="font-weight: bold; font-size: 32px">Mandarine</span>' +
+            '</div>',
+        nameLink: '/',
+        basePath: '/pages',
+        homepage: 'home.md',
+        loadSidebar: 'sidebar.md',
+        coverpage: 'cover.md',
+        autoHeader: true,
+        onlyCover: true,
+        mergeNavbar: true,
+        auto2top: true,
+        themeColor: '#FE870C',
+        routerMode: 'history',
+        relativePath: true,
+    }
+</script>
+<script>
+    window.navigation.addEventListener('navigate', (event) => {
+        const url = event.destination.url
+        if (url.endsWith('redoc.html')) {
+            window.open(url, '_blank');
+            window.location.href = window.location.href
+        }
+    });
+</script>
+<script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+<script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+</body>
+</html>

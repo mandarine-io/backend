@@ -1,0 +1,110 @@
+name: Generate API documentation
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  gen-swagger-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Golang with cache
+        id: golang-with-cache
+        uses: magnetikonline/action-golang-cache@v5
+        with:
+          go-version-file: ./go.mod
+      - name: Generate Swagger Specification
+        run: make swagger.gen
+      - name: Upload docs folder
+        uses: actions/upload-artifact@master
+        with:
+          name: docs/api
+          path: docs/api
+      - name: Save Golang cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ steps.golang-with-cache.outputs.build-cache-path }}
+            ${{ steps.golang-with-cache.outputs.module-cache-path }}
+          key: ${{ steps.golang-with-cache.outputs.cache-key }}
+  gen-openapi-spec:
+    runs-on: ubuntu-latest
+    needs:
+      - gen-swagger-spec
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-swagger2openapi
+          restore-keys: |
+            ${{ runner.os }}-node-swagger2openapi
+      - name: Download docs folder
+        uses: actions/download-artifact@master
+        with:
+          name: docs/api
+          path: docs/api
+      - name: Generate OpenAPI specification
+        run: make openapi.gen
+      - name: Upload docs folder
+        uses: actions/upload-artifact@master
+        with:
+          name: docs/api
+          path: docs/api
+          overwrite: true
+  gen-redoc:
+    runs-on: ubuntu-latest
+    needs:
+      - gen-openapi-spec
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-widdershins
+          restore-keys: |
+            ${{ runner.os }}-node-widdershins
+      - name: Download docs folder
+        uses: actions/download-artifact@master
+        with:
+          name: docs/api
+          path: docs/api
+      - name: Generate Redoc documentation
+        run: make redoc.gen
+      - name: Upload docs folder
+        uses: actions/upload-artifact@master
+        with:
+          name: docs/api
+          path: docs/api
+          overwrite: true
+  commit-and-push-docs:
+    runs-on: ubuntu-latest
+    needs:
+      - gen-redoc
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download docs folder
+        uses: actions/download-artifact@master
+        with:
+          name: docs/api
+          path: docs/api
+      - name: Commit and Push Swagger specification
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.ACCESS_TOKEN }}
+          message: '[main] Generate API docs'
+          directory: docs/api
