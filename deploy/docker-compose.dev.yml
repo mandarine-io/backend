@@ -93,12 +93,11 @@ services:
   ######### Backend #########
   ###########################
   backend:
-#    image: ghcr.io/mandarine/backend:${MANDARINE_SERVER__VERSION:-0.0.0}
-    image: manadrine/app:0.0.0
+    image: ghcr.io/mandarine-io/backend:${MANDARINE_SERVER__VERSION}
     container_name: mandarine-dev-backend
     restart: unless-stopped
     environment:
-      MANDARINE_SERVER__VERSION: ${MANDARINE_SERVER__VERSION:-0.0.0}
+      MANDARINE_SERVER__VERSION: ${MANDARINE_SERVER__VERSION}
       MANDARINE_POSTGRES__HOST: postgres
       MANDARINE_POSTGRES__PORT: 5432
       MANDARINE_POSTGRES__USERNAME: ${MANDARINE_POSTGRES__USERNAME}

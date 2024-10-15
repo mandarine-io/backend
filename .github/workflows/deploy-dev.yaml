@@ -1,0 +1,51 @@
+name: Deploy to DEV infrastructure
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Backend image tag'
+        required: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+      - name: Create env file
+        uses: mobiledevops/secret-to-file-action@v1
+        with:
+          base64-encoded-secret: ${{ secrets.DEV_ENV_FILE_CONTENT }}
+          filename: ".env"
+          working-directory: deploy
+      - name: Copy env and docker compose file via scp
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_DEV_HOST }}
+          username: ${{ secrets.SSH_DEV_USER }}
+          port: 22
+          key: ${{ secrets.SSH_DEV_PRIVATE_KEY }}
+          overwrite: true
+          source: "deploy/.env,deploy/docker-compose.dev.yml,deploy/nginx/nginx.conf"
+          target: "."
+      - name: Pull and restart services via ssh
+        uses: appleboy/ssh-action@v1.1.0
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          USERNAME: ${{ github.repository_owner }}
+          MANDARINE_SERVER__VERSION: ${{ github.event.inputs.image_tag }}
+        with:
+          host: ${{ secrets.SSH_DEV_HOST }}
+          username: ${{ secrets.SSH_DEV_USER }}
+          port: 22
+          key: ${{ secrets.SSH_DEV_PRIVATE_KEY }}
+          envs: ACCESS_TOKEN,USERNAME,MANDARINE_SERVER__VERSION
+          script: |
+            echo $ACCESS_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
+            cd deploy
+            echo "Stopping and removing containers"
+            docker compose -f docker-compose.dev.yml stop
+            docker compose -f docker-compose.dev.yml rm -f
+            echo "Pulling images"
+            docker compose --env-file .env -f docker-compose.dev.yml pull
+            echo "Starting containers"
+            docker compose --env-file .env -f docker-compose.dev.yml up -d
