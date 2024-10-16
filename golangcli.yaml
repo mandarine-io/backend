@@ -1,4 +1,4 @@
-run:  
+run:
   timeout: 3m
 linters-settings:
   cyclop:
@@ -63,7 +63,7 @@ linters-settings:
   govet:
     enable-all: true
     disable:
-      - fieldalignment 
+      - fieldalignment
     settings:
       shadow:
         strict: true
@@ -85,7 +85,7 @@ linters-settings:
       - prometheus.LinearBuckets
   nakedret:
     max-func-lines: 0
-  nolintlint:  
+  nolintlint:
     allow-no-explanation: [ funlen, gocognit, lll ]
     require-explanation: true
     require-specific: true
@@ -102,75 +102,75 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - errcheck 
-    - gosimple 
-    - govet 
-    - ineffassign 
-    - staticcheck 
-    - typecheck 
-    - unused 
-    - asasalint 
-    - asciicheck 
-    - bidichk 
-    - bodyclose 
-    - canonicalheader 
-    - cyclop 
-    - dupl 
-    - durationcheck 
-    - errname 
-    - errorlint 
-    - exhaustive 
-    - fatcontext 
-    - forbidigo 
-    - funlen 
-    - gocheckcompilerdirectives 
-    - gochecknoinits 
-    - gochecksumtype 
-    - gocognit 
-    - goconst 
-    - gocritic 
-    - gocyclo 
-    - godot 
-    - goimports 
-    - gomoddirectives 
-    - gomodguard 
-    - goprintffuncname 
-    - gosec 
-    - intrange 
-    - lll 
-    - loggercheck 
-    - makezero 
-    - mirror 
-    - mnd 
-    - musttag 
-    - nakedret 
-    - nestif 
-    - nilerr 
-    - nilnil 
-    - noctx 
-    - nolintlint 
-    - nonamedreturns 
-    - nosprintfhostport 
-    - perfsprint 
-    - predeclared 
-    - promlinter 
-    - protogetter 
-    - revive 
-    - rowserrcheck 
-    - sloglint 
-    - spancheck 
-    - sqlclosecheck 
-    - stylecheck 
-    - tenv 
-    - testableexamples 
-    - testifylint 
-    - testpackage 
-    - tparallel 
-    - unconvert 
-    - unparam 
-    - usestdlibvars 
-    - wastedassign 
-    - whitespace 
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - cyclop
+    - dupl
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - intrange
+    - lll
+    - loggercheck
+    - makezero
+    - mirror
+    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - perfsprint
+    - predeclared
+    - promlinter
+    - protogetter
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - stylecheck
+    - tenv
+    - testableexamples
+    - testifylint
+    - testpackage
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
 issues:
   max-same-issues: 50
   exclude-rules:

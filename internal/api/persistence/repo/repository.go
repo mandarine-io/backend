@@ -25,8 +25,3 @@ type BannedTokenRepository interface {
 	ExistsBannedTokenByJTI(ctx context.Context, jti string) (bool, error)
 	DeleteExpiredBannedToken(ctx context.Context) error
 }
-
-type Repositories struct {
-	User        UserRepository
-	BannedToken BannedTokenRepository
-}

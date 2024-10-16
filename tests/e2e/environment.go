@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	appconfig "mandarine/internal/api/config"
 	"mandarine/internal/api/registry"
-	"mandarine/internal/api/service/auth"
 	"mandarine/pkg/logging"
 	mock3 "mandarine/pkg/oauth/mock"
 	"os"
@@ -58,14 +57,12 @@ func (tc *TestEnvironment) MustInitialize(cfg *appconfig.Config) {
 	tc.SmtpC = mustSetupSmtpContainer(cfg)
 
 	// Setup container
-	tc.Container = registry.MustNewContainer(cfg)
+	tc.Container = registry.NewContainer()
+	tc.Container.MustInitialize(cfg)
 
 	// Add mock oauth2 provider
 	oauthProvider := new(mock3.OAuthProviderMock)
 	tc.Container.OauthProviders["mock"] = oauthProvider
-
-	// Add mock social login service
-	tc.Container.Services.SocialLogins["mock"] = auth.NewSocialLoginService(tc.Container.Repositories.User, oauthProvider, "mock", cfg)
 }
 
 func (tc *TestEnvironment) Close() {

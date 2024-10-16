@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-const (
-	SexMale   = "MALE"
-	SexFemale = "FEMALE"
-)
-
 type UserEntity struct {
 	ID              uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:uuid_generate_v4()"`
 	Username        string     `gorm:"column:username;type:varchar(255);not null;unique"`

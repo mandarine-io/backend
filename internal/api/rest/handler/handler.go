@@ -1,17 +1,10 @@
 package handler
 
 import (
-	"mandarine/internal/api/config"
-	v0 "mandarine/internal/api/rest/handler/v0"
-	"mandarine/internal/api/service"
+	"github.com/gin-gonic/gin"
+	"mandarine/pkg/rest/middleware"
 )
 
-type Handlers struct {
-	V0 *v0.Handlers
-}
-
-func NewHandlers(services *service.Services, cfg *config.Config) *Handlers {
-	return &Handlers{
-		V0: v0.NewHandlers(services, cfg),
-	}
+type ApiHandler interface {
+	RegisterRoutes(router *gin.Engine, requireAuth middleware.RequireAuth, requireRole middleware.RequireRoleFactory)
 }

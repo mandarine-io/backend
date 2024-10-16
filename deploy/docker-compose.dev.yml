@@ -27,7 +27,7 @@ services:
     environment:
       POSTGRES_USER: ${MANDARINE_POSTGRES__USERNAME}
       POSTGRES_PASSWORD: ${MANDARINE_POSTGRES__PASSWORD}
-#      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+      #      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
       POSTGRES_DB: ${MANDARINE_POSTGRES__DB_NAME}
     secrets:
       - postgres-password
@@ -51,7 +51,7 @@ services:
     environment:
       REDIS_USER: ${MANDARINE_REDIS__USERNAME}
       REDIS_PASSWORD: ${MANDARINE_REDIS__PASSWORD}
-#      REDIS_PASSWORD_FILE: /run/secrets/redis-password
+      #      REDIS_PASSWORD_FILE: /run/secrets/redis-password
       REDIS_ARGS: '--requirepass ${MANDARINE_REDIS__PASSWORD} --user ${MANDARINE_REDIS__USERNAME} on >${MANDARINE_REDIS__PASSWORD} ~* allcommands'
     secrets:
       - redis-password
@@ -75,7 +75,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MANDARINE_MINIO__ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MANDARINE_MINIO__SECRET_KEY}
-#      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio-secret-key
+      #      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio-secret-key
       MINIO_DEFAULT_BUCKETS: ${MANDARINE_MINIO__BUCKET_NAME}
     secrets:
       - minio-secret-key

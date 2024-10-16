@@ -9,12 +9,23 @@ import (
 	"net/http"
 )
 
-type AccountHandler struct {
-	accountService *account.AccountService
+type Handler struct {
+	svc *account.Service
 }
 
-func NewAccountHandler(accountService *account.AccountService) AccountHandler {
-	return AccountHandler{accountService: accountService}
+func NewHandler(svc *account.Service) *Handler {
+	return &Handler{svc: svc}
+}
+
+func (h *Handler) RegisterRoutes(router *gin.Engine, requireAuth middleware.RequireAuth, _ middleware.RequireRoleFactory) {
+	router.GET("v0/account", requireAuth, h.GetAccount)
+	router.PATCH("v0/account/username", requireAuth, h.UpdateUsername)
+	router.PATCH("v0/account/email", requireAuth, h.UpdateEmail)
+	router.POST("v0/account/email/verify", requireAuth, h.VerifyEmail)
+	router.POST("v0/account/password", requireAuth, h.SetPassword)
+	router.PATCH("v0/account/password", requireAuth, h.UpdatePassword)
+	router.DELETE("v0/account/", requireAuth, h.DeleteAccount)
+	router.GET("v0/account/restore", requireAuth, h.RestoreAccount)
 }
 
 // GetAccount godoc
@@ -31,14 +42,14 @@ func NewAccountHandler(accountService *account.AccountService) AccountHandler {
 //	@Failure		404	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account [get]
-func (h AccountHandler) GetAccount(ctx *gin.Context) {
+func (h *Handler) GetAccount(ctx *gin.Context) {
 	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
 		return
 	}
 
-	res, err := h.accountService.GetAccount(ctx, principal.ID)
+	res, err := h.svc.GetAccount(ctx, principal.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
@@ -69,7 +80,7 @@ func (h AccountHandler) GetAccount(ctx *gin.Context) {
 //	@Failure		409		{object}	dto.ErrorResponse
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/account/username [patch]
-func (h AccountHandler) UpdateUsername(ctx *gin.Context) {
+func (h *Handler) UpdateUsername(ctx *gin.Context) {
 	req := dto.UpdateUsernameInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -82,7 +93,7 @@ func (h AccountHandler) UpdateUsername(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.accountService.UpdateUsername(ctx, principal.ID, req)
+	res, err := h.svc.UpdateUsername(ctx, principal.ID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
@@ -116,7 +127,7 @@ func (h AccountHandler) UpdateUsername(ctx *gin.Context) {
 //	@Failure		409		{object}	dto.ErrorResponse
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/account/email [patch]
-func (h AccountHandler) UpdateEmail(ctx *gin.Context) {
+func (h *Handler) UpdateEmail(ctx *gin.Context) {
 	req := dto.UpdateEmailInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -129,13 +140,15 @@ func (h AccountHandler) UpdateEmail(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.accountService.UpdateEmail(ctx, principal.ID, req)
+	res, err := h.svc.UpdateEmail(ctx, principal.ID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
 			_ = ctx.AbortWithError(http.StatusNotFound, err)
 		case errors.Is(err, account.ErrDuplicateEmail):
 			_ = ctx.AbortWithError(http.StatusConflict, err)
+		case errors.Is(err, account.ErrSendEmail):
+			_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		default:
 			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
@@ -165,7 +178,7 @@ func (h AccountHandler) UpdateEmail(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/email/verify [post]
-func (h AccountHandler) VerifyEmail(ctx *gin.Context) {
+func (h *Handler) VerifyEmail(ctx *gin.Context) {
 	req := dto.VerifyEmailInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -178,7 +191,7 @@ func (h AccountHandler) VerifyEmail(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.accountService.VerifyEmail(ctx, principal.ID, req); err != nil {
+	if err := h.svc.VerifyEmail(ctx, principal.ID, req); err != nil {
 		switch {
 		case errors.Is(err, account.ErrInvalidOrExpiredOtp):
 			_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -210,7 +223,7 @@ func (h AccountHandler) VerifyEmail(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/password [post]
-func (h AccountHandler) SetPassword(ctx *gin.Context) {
+func (h *Handler) SetPassword(ctx *gin.Context) {
 	req := dto.SetPasswordInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -223,7 +236,7 @@ func (h AccountHandler) SetPassword(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.accountService.SetPassword(ctx, principal.ID, req); err != nil {
+	if err := h.svc.SetPassword(ctx, principal.ID, req); err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
 			_ = ctx.AbortWithError(http.StatusNotFound, err)
@@ -254,7 +267,7 @@ func (h AccountHandler) SetPassword(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/password [patch]
-func (h AccountHandler) UpdatePassword(ctx *gin.Context) {
+func (h *Handler) UpdatePassword(ctx *gin.Context) {
 	req := dto.UpdatePasswordInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -267,7 +280,7 @@ func (h AccountHandler) UpdatePassword(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.accountService.UpdatePassword(ctx, principal.ID, req); err != nil {
+	if err := h.svc.UpdatePassword(ctx, principal.ID, req); err != nil {
 		switch {
 		case errors.Is(err, account.ErrIncorrectOldPassword):
 			_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -297,14 +310,14 @@ func (h AccountHandler) UpdatePassword(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/restore [get]
-func (h AccountHandler) RestoreAccount(ctx *gin.Context) {
+func (h *Handler) RestoreAccount(ctx *gin.Context) {
 	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
 		return
 	}
 
-	res, err := h.accountService.RestoreAccount(ctx, principal.ID)
+	res, err := h.svc.RestoreAccount(ctx, principal.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
@@ -335,14 +348,14 @@ func (h AccountHandler) RestoreAccount(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account [delete]
-func (h AccountHandler) DeleteAccount(ctx *gin.Context) {
+func (h *Handler) DeleteAccount(ctx *gin.Context) {
 	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
 		return
 	}
 
-	if err := h.accountService.DeleteAccount(ctx, principal.ID); err != nil {
+	if err := h.svc.DeleteAccount(ctx, principal.ID); err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
 			_ = ctx.AbortWithError(http.StatusNotFound, err)

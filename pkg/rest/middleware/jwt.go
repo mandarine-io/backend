@@ -34,6 +34,8 @@ type AuthUser struct {
 	JTI      string    `json:"jti"`
 }
 
+type RequireAuth = gin.HandlerFunc
+
 func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		factoryErr := func(err error) {

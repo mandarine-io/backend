@@ -48,7 +48,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.HealthResponse"
+                                "$ref": "#/definitions/health.Response"
                             }
                         }
                     }
@@ -977,8 +977,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1063,6 +1063,151 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v0/resources/many": {
+            "post": {
+                "description": "Request for uploading resources. Return the array of object ids in S3 storage for successful uploaded files.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resource API"
+                ],
+                "summary": "Upload resources",
+                "operationId": "UploadResources",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "file"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Files to upload",
+                        "name": "resources",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UploadResourcesOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v0/resources/one": {
+            "post": {
+                "description": "Request for uploading resource. Return the object id in S3 storage.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resource API"
+                ],
+                "summary": "Upload resource",
+                "operationId": "UploadResource",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File to upload",
+                        "name": "resource",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UploadResourceOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v0/resources/{objectId}": {
+            "get": {
+                "description": "Request for getting resource. Return the resource in S3 storage.",
+                "produces": [
+                    "*/*"
+                ],
+                "tags": [
+                    "Resource API"
+                ],
+                "summary": "Download resource",
+                "operationId": "DownloadResource",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Object id",
+                        "name": "objectId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1124,17 +1269,6 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.HealthResponse": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "pass": {
-                    "type": "boolean"
                 }
             }
         },
@@ -1303,6 +1437,28 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.UploadResourceOutput": {
+            "type": "object",
+            "properties": {
+                "object_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UploadResourcesOutput": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/dto.UploadResourceOutput"
+                    }
+                }
+            }
+        },
         "dto.VerifyEmailInput": {
             "type": "object",
             "required": [
@@ -1334,6 +1490,17 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "health.Response": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "pass": {
+                    "type": "boolean"
+                }
+            }
         }
     },
     "securityDefinitions": {
@@ -1351,6 +1518,10 @@ const docTemplate = `{
         {
             "description": "API for authentication and authorization",
             "name": "Authentication and Authorization API"
+        },
+        {
+            "description": "API for resource management",
+            "name": "Resource API"
         },
         {
             "description": "API for getting metrics",

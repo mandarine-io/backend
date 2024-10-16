@@ -9,10 +9,6 @@ import (
 	"gorm.io/gorm"
 	"log/slog"
 	"mandarine/internal/api/config"
-	"mandarine/internal/api/persistence/repo"
-	gorm2 "mandarine/internal/api/persistence/repo/gorm"
-	"mandarine/internal/api/rest/handler"
-	"mandarine/internal/api/service"
 	"mandarine/pkg/locale"
 	"mandarine/pkg/logging"
 	"mandarine/pkg/oauth"
@@ -47,29 +43,39 @@ type Container struct {
 	S3Client       s3.Client
 	SmtpSender     smtp.Sender
 
-	Repositories *repo.Repositories
-	Services     *service.Services
-	Handlers     *handler.Handlers
+	Repositories *Repositories
+	Services     *Services
+	Handlers     Handlers
 }
 
-func MustNewContainer(cfg *config.Config) *Container {
+func NewContainer() *Container {
+	return &Container{}
+}
+
+func (c *Container) MustInitialize(cfg *config.Config) {
+	// Setup config
+	c.Config = cfg
+
+	// Setup logger
+	c.Logger = slog.Default()
+
 	// Setup locale
 	localeConfig := mapAppLocaleConfigToLocaleConfig(&cfg.Locale)
-	bundle := locale.MustLoadLocales(localeConfig)
+	c.Bundle = locale.MustLoadLocales(localeConfig)
 
 	// Setup template engine
 	templateConfig := mapAppTemplateConfigToTemplateConfig(&cfg.Template)
-	templateEngine := template.MustLoadTemplates(templateConfig)
+	c.TemplateEngine = template.MustLoadTemplates(templateConfig)
 
 	// Setup cache manager
 	redisConfig := mapAppRedisConfigToRedisConfig(&cfg.Redis)
-	redisClient := cacheResource.MustConnectRedis(redisConfig)
-	cacheManager := manager.NewRedisCacheManager(redisClient, time.Duration(cfg.Cache.TTL)*time.Second)
+	c.RedisClient = cacheResource.MustConnectRedis(redisConfig)
+	c.CacheManager = manager.NewRedisCacheManager(c.RedisClient, time.Duration(cfg.Cache.TTL)*time.Second)
 
 	// Setup database
 	postgresConfig := mapAppPostgresConfigToPostgresConfig(&cfg.Postgres)
-	postgresDB := dbResource.MustConnectPostgres(postgresConfig)
-	err := database.UseCachePlugin(postgresDB, db_cacher.NewDbCacher(cacheManager))
+	c.DB = dbResource.MustConnectPostgres(postgresConfig)
+	err := database.UseCachePlugin(c.DB, db_cacher.NewDbCacher(c.CacheManager))
 	if err != nil {
 		slog.Warn("Database cache setup error", logging.ErrorAttr(err))
 	}
@@ -82,55 +88,27 @@ func MustNewContainer(cfg *config.Config) *Container {
 
 	// Setup S3
 	minioConfig := mapAppMinioConfigToMinioConfig(&cfg.Minio)
-	minio := s3Resource.MustConnectMinio(minioConfig)
-	s3Client := s3.NewClient(minio, cfg.Minio.BucketName)
+	c.S3 = s3Resource.MustConnectMinio(minioConfig)
+	c.S3Client = s3.NewClient(c.S3, cfg.Minio.BucketName)
 
 	// Setup SMTP sender
 	smtpConfig := mapAppSmtpConfigToSmtpConfig(&cfg.SMTP)
-	smtpSender := smtp.MustNewSender(smtpConfig)
+	c.SmtpSender = smtp.MustNewSender(smtpConfig)
 
 	// Setup HTTP client
-	httpClient := resty.New()
+	c.HttpClient = resty.New()
 
 	// Setup OAuth clients
-	oauthProviders := map[string]oauth.Provider{
+	c.OauthProviders = map[string]oauth.Provider{
 		google.ProviderKey: google.NewOAuthGoogleProvider(cfg.OAuthClient.Google.ClientID, cfg.OAuthClient.Google.ClientSecret),
 		yandex.ProviderKey: yandex.NewOAuthYandexProvider(cfg.OAuthClient.Yandex.ClientID, cfg.OAuthClient.Yandex.ClientSecret),
 		mailru.ProviderKey: mailru.NewOAuthMailRuProvider(cfg.OAuthClient.MailRu.ClientID, cfg.OAuthClient.MailRu.ClientSecret),
 	}
 
 	// Setup CSR components
-	repos := gorm2.NewRepositories(postgresDB)
-	services := service.NewServices(
-		repos,
-		cacheManager,
-		smtpSender,
-		templateEngine,
-		oauthProviders,
-		cfg,
-	)
-	handlers := handler.NewHandlers(services, cfg)
-
-	return &Container{
-		Config: cfg,
-
-		Logger:         slog.Default(),
-		Bundle:         bundle,
-		RedisClient:    redisClient,
-		DB:             postgresDB,
-		S3:             minio,
-		HttpClient:     httpClient,
-		OauthProviders: oauthProviders,
-
-		TemplateEngine: templateEngine,
-		CacheManager:   cacheManager,
-		S3Client:       s3Client,
-		SmtpSender:     smtpSender,
-
-		Repositories: repos,
-		Services:     services,
-		Handlers:     handlers,
-	}
+	c.Repositories = newGormRepositories(c.DB)
+	c.Services = newServices(c)
+	c.Handlers = newHandlers(c)
 }
 
 func (c *Container) Close() error {

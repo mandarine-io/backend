@@ -58,7 +58,7 @@ To overwrite some properties from YAML file, you can use environment variables.
 Use the `config/.env.example` as reference to create your env file `.env`:
 
 ```bash
-cp config/.env.example .env
+cp config/.env.local.example .env
 nano .env
 ```
 

@@ -9,6 +9,7 @@ import (
 	"mandarine/pkg/logging"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 type Engine interface {
@@ -35,9 +36,15 @@ func MustLoadTemplates(cfg *Config) Engine {
 	}
 	for _, f := range files {
 		filePath := path.Join(cfg.Path, f)
+		absFilePath, err := filepath.Abs(filePath)
+		if err != nil {
+			slog.Error("Templates set up error", logging.ErrorAttr(err))
+			os.Exit(1)
+		}
+
 		tmplName := file.GetFileNameWithoutExt(f)
-		slog.Info("Read template file: " + filePath)
-		tmplEngine.templates[tmplName] = filePath
+		slog.Info("Read template file: " + absFilePath)
+		tmplEngine.templates[tmplName] = absFilePath
 	}
 
 	return tmplEngine
