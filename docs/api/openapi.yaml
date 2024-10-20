@@ -852,6 +852,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
       summary: Upload resources
       tags:
         - Resource API
@@ -897,6 +899,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
       summary: Upload resource
       tags:
         - Resource API

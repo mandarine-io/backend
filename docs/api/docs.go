@@ -1066,6 +1066,11 @@ const docTemplate = `{
         },
         "/v0/resources/many": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Request for uploading resources. Return the array of object ids in S3 storage for successful uploaded files.",
                 "consumes": [
                     "multipart/form-data"
@@ -1121,6 +1126,11 @@ const docTemplate = `{
         },
         "/v0/resources/one": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Request for uploading resource. Return the object id in S3 storage.",
                 "consumes": [
                     "multipart/form-data"

@@ -40,6 +40,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, requireAuth middleware.Requ
 //	@Summary		Upload resource
 //	@Description	Request for uploading resource. Return the object id in S3 storage.
 //	@Tags			Resource API
+//	@Security		BearerAuth
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Param			resource formData		file	true	"File to upload"
@@ -75,6 +76,7 @@ func (h *Handler) UploadResource(ctx *gin.Context) {
 //	@Summary		Upload resources
 //	@Description	Request for uploading resources. Return the array of object ids in S3 storage for successful uploaded files.
 //	@Tags			Resource API
+//	@Security		BearerAuth
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Param			resources	formData	[]file	true	"Files to upload"
