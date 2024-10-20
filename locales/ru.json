@@ -1,6 +1,6 @@
 {
   "errors": {
-    "validation" : {
+    "validation": {
       "oneof": "Неподдерживаемое значение",
       "email": "Неверный адрес электронной почты",
       "http_url": "Неверный URL",
@@ -14,9 +14,8 @@
     },
     "access_denied": "Доступ запрещен",
     "too_many_requests": "Слишком много запросов",
-    "jwt_token_is_missing": "Токен JWT отсутствует",
-    "invalid_jwt_token": "Невалидный JWT токен",
-    "expired_jwt_token": "Истекший JWT токен",
+    "session_invalid": "Неверный сеанс",
+    "session_expired": "Срок действия сеанса истек",
     "user_not_found": "Пользователь не найден",
     "duplicate_user": "Такой пользователь уже существует",
     "invalid_provider": "Неподдерживаемый провайдер",
@@ -33,10 +32,11 @@
     "user_is_blocked": "Пользователь заблокирован",
     "userinfo_not_received": "Не удалось получить информацию о пользователе",
     "internal_error": "Внутренняя ошибка",
-    "session_expired": "Срок действия сессии истек",
     "route_not_found": "Маршрут не найден",
     "method_not_allowed": "Метод не разрешен",
-    "redirect_url_not_found": "URL-адрес перенаправления не найден"
+    "redirect_url_not_found": "URL-адрес перенаправления не найден",
+    "resource_not_uploaded": "Ресурс не загружен",
+    "failed_to_send_email": "Не удалось отправить письмо"
   },
   "email": {
     "register-confirm": {

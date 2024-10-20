@@ -9,6 +9,7 @@ import (
 	"mandarine/pkg/logging"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 type Config struct {
@@ -37,8 +38,15 @@ func MustLoadLocales(cfg *Config) *i18n.Bundle {
 
 	for _, f := range files {
 		filePath := path.Join(cfg.Path, f)
-		slog.Info("Read translation file: " + filePath)
-		if _, err = bundle.LoadMessageFile(filePath); err != nil {
+		absFilePath, err := filepath.Abs(filePath)
+		if err != nil {
+			slog.Error("Locales set up error", logging.ErrorAttr(err))
+			os.Exit(1)
+		}
+
+		slog.Info("Read translation file: " + absFilePath)
+		_, err = bundle.LoadMessageFile(absFilePath)
+		if err != nil {
 			slog.Error("Locales set up error", logging.ErrorAttr(err))
 			os.Exit(1)
 		}

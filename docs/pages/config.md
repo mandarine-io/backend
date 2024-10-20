@@ -1,6 +1,7 @@
 # Configuration
 
 <a id="server"></a>
+
 ## Server settings
 
 ### Name
@@ -11,6 +12,7 @@ Set server name (default: mandarine-server)
 server:
     name: mandarine-server
 ```
+
 ```dotenv
 MANDARINE_SERVER__NAME=mandarine-server
 ```
@@ -23,6 +25,7 @@ Set server port (default: 8080)
 server:
     port: 8080
 ```
+
 ```dotenv
 MANDARINE_SERVER__PORT=8080
 ```
@@ -35,6 +38,7 @@ Set server external origin (default: http://localhost:8080)
 server:
     external_origin: http://localhost:8080
 ```
+
 ```dotenv
 MANDARINE_SERVER__EXTERNAL_ORIGIN=http://localhost:8080
 ```
@@ -47,6 +51,7 @@ Set server mode (development, production, local) (default: local)
 server:
     mode: local
 ```
+
 ```dotenv
 MANDARINE_SERVER__MODE=development
 ```
@@ -59,11 +64,13 @@ Set server version (default: 0.0.0)
 server:
     version: 0.0.0
 ```
+
 ```dotenv
 MANDARINE_SERVER__VERSION=0.0.0
 ```
 
 <a id="database-provider"></a>
+
 ## Database provider settings (PostgreSQL)
 
 ### Host
@@ -74,6 +81,7 @@ Set database host (default: localhost)
 postgres:
     host: localhost
 ```
+
 ```dotenv
 MANDARINE_POSTGRES__HOST=localhost
 ```
@@ -86,6 +94,7 @@ Set database port (default: 5432)
 postgres:
     port: 5432
 ```
+
 ```dotenv
 MANDARINE_POSTGRES__PORT=5432
 ```
@@ -98,6 +107,7 @@ Set database username
 postgres:
     username: admin
 ```
+
 ```dotenv
 MANDARINE_POSTGRES__USERNAME=admin
 ```
@@ -110,6 +120,7 @@ Set database password
 postgres:
     password: password
 ```
+
 ```dotenv
 MANDARINE_POSTGRES__PASSWORD=password
 ```
@@ -122,6 +133,7 @@ Set database password file
 postgres:
     password_file: /run/secrets/postgres-password
 ```
+
 ```dotenv
 MANDARINE_POSTGRES__PASSWORD_FILE=/run/secrets/postgres-password
 ```
@@ -134,11 +146,13 @@ Set database name
 postgres:
     db_name: mandarine
 ```
+
 ```dotenv
 MANDARINE_POSTGRES__DB_NAME=mandarine
 ```
 
 <a id="cache-provider"></a>
+
 ## Cache provider settings (Redis)
 
 ### Host
@@ -149,6 +163,7 @@ Set cache host (default: localhost)
 redis:
     host: localhost
 ```
+
 ```dotenv
 MANDARINE_REDIS__HOST=localhost
 ```
@@ -161,6 +176,7 @@ Set cache port (default: 6379)
 redis:
     port: 6379
 ```
+
 ```dotenv
 MANDARINE_REDIS__PORT=6379
 ```
@@ -173,6 +189,7 @@ Set cache username
 redis:
     username: default
 ```
+
 ```dotenv
 MANDARINE_REDIS__USERNAME=default
 ```
@@ -185,6 +202,7 @@ Set cache password
 redis:
     password: password
 ```
+
 ```dotenv
 MANDARINE_REDIS__PASSWORD=password
 ```
@@ -197,6 +215,7 @@ Set cache password file
 redis:
     password_file: /run/secrets/redis-password
 ```
+
 ```dotenv
 MANDARINE_REDIS__PASSWORD_FILE=/run/secrets/redis-password
 ```
@@ -209,11 +228,13 @@ Set cache database index (default: 0)
 redis:
     db_index: 0
 ```
+
 ```dotenv
 MANDARINE_REDIS__DB_INDEX=0
 ```
 
 <a id="s3-provider"></a>
+
 ## S3 provider settings (MinIO)
 
 ### Host
@@ -224,6 +245,7 @@ Set S3 host (default: localhost)
 minio:
     host: localhost
 ```
+
 ```dotenv
 MANDARINE_MINIO__HOST=localhost
 ```
@@ -236,6 +258,7 @@ Set S3 port (default: 9000)
 minio:
     port: 9000
 ```
+
 ```dotenv
 MANDARINE_MINIO__PORT=9000
 ```
@@ -248,6 +271,7 @@ Set S3 access key
 minio:
     access_key: admin
 ```
+
 ```dotenv
 MANDARINE_MINIO__ACCESS_KEY=admin
 ```
@@ -260,6 +284,7 @@ Set S3 secret key
 minio:
     secret_key: secret_key
 ```
+
 ```dotenv
 MANDARINE_MINIO__SECRET_KEY=secret_key
 ```
@@ -272,6 +297,7 @@ Set S3 secret key file
 minio:
     secret_key_file: /run/secrets/minio-secret-key
 ```
+
 ```dotenv
 MANDARINE_MINIO__SECRET_KEY_FILE=/run/secrets/minio-secret-key
 ```
@@ -284,11 +310,13 @@ Set S3 bucket name
 minio:
     bucket_name: mandarine
 ```
+
 ```dotenv
 MANDARINE_MINIO__BUCKET_NAME=mandarine
 ```
 
 <a id="smtp"></a>
+
 ## SMTP settings
 
 ### Host
@@ -299,6 +327,7 @@ Set SMTP host (default: smtp.yandex.ru)
 smtp:
     host: smtp.yandex.ru
 ```
+
 ```dotenv
 MANDARINE_SMTP__HOST=smtp.yandex.ru
 ```
@@ -311,6 +340,7 @@ Set SMTP port (default: 465)
 smtp:
     port: 465
 ```
+
 ```dotenv
 MANDARINE_SMTP__PORT=465
 ```
@@ -323,6 +353,7 @@ Set SMTP username
 smtp:
     username: example@yandex.ru
 ```
+
 ```dotenv
 MANDARINE_SMTP__USERNAME=example@yandex.ru
 ```
@@ -335,6 +366,7 @@ Set SMTP password
 smtp:
     password: password
 ```
+
 ```dotenv
 MANDARINE_SMTP__PASSWORD=password
 ```
@@ -347,6 +379,7 @@ Set SMTP password file
 smtp:
     password_file: /run/secrets/smtp-password
 ```
+
 ```dotenv
 MANDARINE_SMTP__PASSWORD_FILE=/run/secrets/smtp-password
 ```
@@ -359,6 +392,7 @@ Set SMTP SSL mode (default: true)
 smtp:
     ssl: true
 ```
+
 ```dotenv
 MANDARINE_SMTP__SSL=true
 ```
@@ -371,11 +405,13 @@ Set SMTP from
 smtp:
     from: 'Mandarine <example@yandex.ru>'
 ```
+
 ```dotenv
 MANDARINE_SMTP__FROM='Mandarine <example@yandex.ru>'
 ```
 
 <a id="oauth-provider"></a>
+
 ## OAuth provider settings (Google, Yandex, Mail.ru)
 
 ### Client ID
@@ -387,6 +423,7 @@ oauth:
     google:
         client_id: client_id
 ```
+
 ```dotenv
 MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID=client_id
 ```
@@ -400,6 +437,7 @@ oauth:
     google:
         client_secret: client_secret
 ```
+
 ```dotenv
 MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET=client_secret
 ```
@@ -413,11 +451,13 @@ oauth:
     google:
         client_secret_file: /run/secrets/google_client_secret
 ```
+
 ```dotenv
 MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET_FILE=/run/secrets/google_client_secret
 ```
 
 <a id="cache"></a>
+
 ## Cache settings
 
 ### TTL
@@ -428,14 +468,17 @@ Set cache TTL (default: 120)
 cache:
     ttl: 120
 ```
+
 ```dotenv
 MANDARINE_CACHE__TTL=120
 ```
 
 <a id="security"></a>
+
 ## Security settings
 
 <a id="security-jwt"></a>
+
 ### JWT
 
 #### Secret
@@ -447,6 +490,7 @@ security:
     jwt:
         secret: secret
 ```
+
 ```dotenv
 MANDARINE_JWT__SECRET=secret
 ```
@@ -460,6 +504,7 @@ security:
     jwt:
         secret_file: /run/secrets/jwt-secret
 ```
+
 ```dotenv
 MANDARINE_JWT__SECRET_FILE=/run/secrets/jwt-secret
 ```
@@ -473,6 +518,7 @@ security:
     jwt:
         access_token_ttl: 3600
 ```
+
 ```dotenv
 MANDARINE_JWT__ACCESS_TOKEN_TTL=3600
 ```
@@ -486,11 +532,13 @@ security:
     jwt:
         refresh_token_ttl: 86400
 ```
+
 ```dotenv
 MANDARINE_JWT__REFRESH_TOKEN_TTL=86400
 ```
 
 <a id="security-otp"></a>
+
 ### OTP
 
 #### Length
@@ -502,6 +550,7 @@ security:
     otp:
         length: 6
 ```
+
 ```dotenv
 MANDARINE_OTP__LENGTH=6
 ```
@@ -515,11 +564,13 @@ security:
     otp:
         ttl: 600
 ```
+
 ```dotenv
 MANDARINE_OTP__TTL=600
 ```
 
 <a id="security-rate-limit"></a>
+
 ### Rate limit
 
 #### RPS
@@ -531,11 +582,13 @@ security:
     rate_limit:
         rps: 100
 ```
+
 ```dotenv
 MANDARINE_RATE_LIMIT__RPS=100
 ```
 
 <a id="locale"></a>
+
 ## Locale settings
 
 ### Path
@@ -546,6 +599,7 @@ Set locale path (default: locales)
 locale:
     path: locales
 ```
+
 ```dotenv
 MANDARINE_LOCALE__PATH=locales
 ```
@@ -558,11 +612,13 @@ Set locale default language (default: ru)
 locale:
     language: ru
 ```
+
 ```dotenv
 MANDARINE_LOCALE__LANGUAGE=ru
 ```
 
 <a id="template"></a>
+
 ## Template settings
 
 ### Path
@@ -573,11 +629,13 @@ Set template path (default: templates)
 template:
     path: templates
 ```
+
 ```dotenv
 MANDARINE_TEMPLATE__PATH=templates
 ```
 
 <a id="migrations"></a>
+
 ## Migrations settings
 
 ### Path
@@ -588,14 +646,17 @@ Set migrations path (default: migrations)
 migrations:
     path: migrations
 ```
+
 ```dotenv
 MANDARINE_MIGRATIONS__PATH=migrations
 ```
 
 <a id="logger"></a>
+
 ## Logger settings
 
 <a id="logger-console"></a>
+
 ### Console
 
 #### Level
@@ -607,6 +668,7 @@ logger:
     console:
         level: info
 ```
+
 ```dotenv
 MANDARINE_LOGGER__CONSOLE_LEVEL=info
 ```
@@ -620,11 +682,13 @@ logger:
     console:
         encoding: text
 ```
+
 ```dotenv
 MANDARINE_LOGGER__CONSOLE_ENCODING=text
 ```
 
 <a id="logger-file"></a>
+
 ### File
 
 #### Enable
@@ -636,19 +700,21 @@ logger:
     file:
         enable: false
 ```
+
 ```dotenv
 MANDARINE_LOGGER__FILE_ENABLE=false
 ```
 
 #### Level
 
-Set file logger level (default: info) 
+Set file logger level (default: info)
 
 ```yaml
 logger:
     file:
         level: info
 ```
+
 ```dotenv
 MANDARINE_LOGGER__FILE_LEVEL=info
 ```
@@ -662,6 +728,7 @@ logger:
     file:
         dir_path: logs
 ```
+
 ```dotenv
 MANDARINE_LOGGER__FILE_DIR_PATH=logs
 ```
@@ -675,6 +742,7 @@ logger:
     file:
         max_size: 1
 ```
+
 ```dotenv
 MANDARINE_LOGGER__FILE_MAX_SIZE=1
 ```
@@ -688,6 +756,7 @@ logger:
     file:
         max_age: 30
 ```
+
 ```dotenv
 MANDARINE_LOGGER__FILE_MAX_AGE=30
 ```

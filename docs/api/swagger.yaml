@@ -1,5 +1,5 @@
 consumes:
-- application/json
+  - application/json
 definitions:
   dto.AccountOutput:
     properties:
@@ -19,12 +19,12 @@ definitions:
         minLength: 1
         type: string
     required:
-    - email
-    - isDeleted
-    - isEmailVerified
-    - isEnabled
-    - isPasswordTemp
-    - username
+      - email
+      - isDeleted
+      - isEmailVerified
+      - isEnabled
+      - isPasswordTemp
+      - username
     type: object
   dto.ErrorResponse:
     properties:
@@ -41,17 +41,10 @@ definitions:
       timestamp:
         type: string
     required:
-    - message
-    - path
-    - status
-    - timestamp
-    type: object
-  dto.HealthResponse:
-    properties:
-      name:
-        type: string
-      pass:
-        type: boolean
+      - message
+      - path
+      - status
+      - timestamp
     type: object
   dto.JwtTokensOutput:
     properties:
@@ -59,7 +52,7 @@ definitions:
         format: jwt
         type: string
     required:
-    - accessToken
+      - accessToken
     type: object
   dto.LoginInput:
     properties:
@@ -68,8 +61,8 @@ definitions:
       password:
         type: string
     required:
-    - login
-    - password
+      - login
+      - password
     type: object
   dto.RecoveryPasswordInput:
     properties:
@@ -77,7 +70,7 @@ definitions:
         format: email
         type: string
     required:
-    - email
+      - email
     type: object
   dto.RegisterConfirmInput:
     properties:
@@ -87,8 +80,8 @@ definitions:
       otp:
         type: string
     required:
-    - email
-    - otp
+      - email
+      - otp
     type: object
   dto.RegisterInput:
     properties:
@@ -102,9 +95,9 @@ definitions:
         format: username
         type: string
     required:
-    - email
-    - password
-    - username
+      - email
+      - password
+      - username
     type: object
   dto.ResetPasswordInput:
     properties:
@@ -117,9 +110,9 @@ definitions:
         format: zxcvbn
         type: string
     required:
-    - email
-    - otp
-    - password
+      - email
+      - otp
+      - password
     type: object
   dto.SetPasswordInput:
     properties:
@@ -127,7 +120,7 @@ definitions:
         format: zxcvbn
         type: string
     required:
-    - password
+      - password
     type: object
   dto.SocialLoginCallbackInput:
     properties:
@@ -136,8 +129,8 @@ definitions:
       state:
         type: string
     required:
-    - code
-    - state
+      - code
+      - state
     type: object
   dto.UpdateEmailInput:
     properties:
@@ -145,7 +138,7 @@ definitions:
         format: email
         type: string
     required:
-    - email
+      - email
     type: object
   dto.UpdatePasswordInput:
     properties:
@@ -155,8 +148,8 @@ definitions:
       oldPassword:
         type: string
     required:
-    - newPassword
-    - oldPassword
+      - newPassword
+      - oldPassword
     type: object
   dto.UpdateUsernameInput:
     properties:
@@ -164,7 +157,21 @@ definitions:
         format: username
         type: string
     required:
-    - username
+      - username
+    type: object
+  dto.UploadResourceOutput:
+    properties:
+      object_id:
+        type: string
+    type: object
+  dto.UploadResourcesOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        additionalProperties:
+          $ref: '#/definitions/dto.UploadResourceOutput'
+        type: object
     type: object
   dto.VerifyEmailInput:
     properties:
@@ -174,8 +181,8 @@ definitions:
       otp:
         type: string
     required:
-    - email
-    - otp
+      - email
+      - otp
     type: object
   dto.VerifyRecoveryCodeInput:
     properties:
@@ -185,8 +192,15 @@ definitions:
       otp:
         type: string
     required:
-    - email
-    - otp
+      - email
+      - otp
+    type: object
+  health.Response:
+    properties:
+      name:
+        type: string
+      pass:
+        type: boolean
     type: object
 host: localhost:8080
 info:
@@ -203,31 +217,31 @@ paths:
   /health:
     get:
       consumes:
-      - application/json
+        - application/json
       description: Request for getting health status. In response will be status of
         all checks (database, minio, smtp, redis).
       operationId: Health
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dto.HealthResponse'
+              $ref: '#/definitions/health.Response'
             type: array
       summary: Health
       tags:
-      - Metrics API
+        - Metrics API
   /v0/account:
     delete:
       consumes:
-      - application/json
+        - application/json
       description: Request for deleting account. User must be logged in. User must
         not be deleted.
       operationId: DeleteAccount
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -248,18 +262,18 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Delete account
       tags:
-      - Account API
+        - Account API
     get:
       consumes:
-      - application/json
+        - application/json
       description: Request for receiving own account. User must be logged in. In response
         will be returned own account info.
       operationId: GetAccount
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -278,27 +292,27 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Get account
       tags:
-      - Account API
+        - Account API
   /v0/account/email:
     patch:
       consumes:
-      - application/json
+        - application/json
       description: Request for updating email. User must be logged in. In process
         will be sent verification email. In response will be returned updated account
         info.
       operationId: UpdateEmail
       parameters:
-      - description: Update email request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateEmailInput'
+        - description: Update email request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.UpdateEmailInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -329,25 +343,25 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Update email
       tags:
-      - Account API
+        - Account API
   /v0/account/email/verify:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for verify email. User must be logged in.
       operationId: VerifyEmail
       parameters:
-      - description: Verify email request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.VerifyEmailInput'
+        - description: Verify email request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.VerifyEmailInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -368,25 +382,25 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Verify email
       tags:
-      - Account API
+        - Account API
   /v0/account/password:
     patch:
       consumes:
-      - application/json
+        - application/json
       description: Request for updating password. User must be logged in.
       operationId: UpdatePassword
       parameters:
-      - description: Update password request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdatePasswordInput'
+        - description: Update password request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.UpdatePasswordInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -407,24 +421,24 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Update password
       tags:
-      - Account API
+        - Account API
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for setting password. User must be logged in.
       operationId: SetPassword
       parameters:
-      - description: Set password request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.SetPasswordInput'
+        - description: Set password request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.SetPasswordInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -449,19 +463,19 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Set password
       tags:
-      - Account API
+        - Account API
   /v0/account/restore:
     get:
       consumes:
-      - application/json
+        - application/json
       description: Request for restoring account. User must be logged in. User must
         be deleted. In response will be returned restored account info.
       operationId: RestoreAccount
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -484,26 +498,26 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Restore account
       tags:
-      - Account API
+        - Account API
   /v0/account/username:
     patch:
       consumes:
-      - application/json
+        - application/json
       description: Request for updating username. User must be logged in. In response
         will be returned updated account info.
       operationId: UpdateUsername
       parameters:
-      - description: Update username request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateUsernameInput'
+        - description: Update username request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.UpdateUsernameInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -530,26 +544,26 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Update username
       tags:
-      - Account API
+        - Account API
   /v0/auth/login:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for authentication. In response will be new access token
         in body and new refresh tokens in http-only cookie.
       operationId: Login
       parameters:
-      - description: Login request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.LoginInput'
+        - description: Login request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.LoginInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -577,15 +591,15 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Sign in
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/logout:
     get:
       consumes:
-      - application/json
+        - application/json
       description: Request for logout. User must be logged in.
       operationId: Logout
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -598,26 +612,26 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Logout
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/recovery-password:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for recovery password. At the end will be sent email with
         code
       operationId: RecoveryPassword
       parameters:
-      - description: Recovery password body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RecoveryPasswordInput'
+        - description: Recovery password body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.RecoveryPasswordInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "202":
           description: Accepted
@@ -635,23 +649,23 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Recovery password
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/recovery-password/verify:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for verify recovery code. If code is correct will be sent
         status 200
       operationId: VerifyRecoveryCode
       parameters:
-      - description: Verify recovery code body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.VerifyRecoveryCodeInput'
+        - description: Verify recovery code body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.VerifyRecoveryCodeInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -665,16 +679,16 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Verify recovery code
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/refresh:
     get:
       consumes:
-      - application/json
+        - application/json
       description: Request for refreshing tokens. In response will be new access token
         in body and new refresh tokens in http-only cookie.
       operationId: RefreshTokens
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -702,23 +716,23 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Refresh tokens
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/register:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for creating new user. At the end will be sent confirmation
         email with code
       operationId: Register
       parameters:
-      - description: Register request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterInput'
+        - description: Register request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.RegisterInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "202":
           description: Accepted
@@ -736,23 +750,23 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Register
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/register/confirm:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for confirming registration. At the end will be created
         new user
       operationId: RegisterConfirm
       parameters:
-      - description: Register confirm body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterConfirmInput'
+        - description: Register confirm body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.RegisterConfirmInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -770,23 +784,23 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Register confirmation
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/reset-password:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for reset password. If code is correct will be updated
         password
       operationId: ResetPassword
       parameters:
-      - description: Reset password body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ResetPasswordInput'
+        - description: Reset password body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.ResetPasswordInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -804,27 +818,27 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Reset password
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/social/{provider}:
     get:
       consumes:
-      - application/json
+        - application/json
       description: Request for redirecting to OAuth consent page. After authorization,
         it will redirect to redirectUrl with authorization code and state
       operationId: SocialLogin
       parameters:
-      - description: Social login provider (yandex, google, mailru)
-        in: path
-        name: provider
-        required: true
-        type: string
-      - description: Redirect URL
-        in: query
-        name: redirectUrl
-        required: true
-        type: string
+        - description: Social login provider (yandex, google, mailru)
+          in: path
+          name: provider
+          required: true
+          type: string
+        - description: Redirect URL
+          in: query
+          name: redirectUrl
+          required: true
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "302":
           description: Found
@@ -832,8 +846,8 @@ paths:
             Set-Cookie:
               description: OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure
               type: string
-        "400":
-          description: Bad Request
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
         "500":
@@ -842,30 +856,30 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Social login
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
   /v0/auth/social/{provider}/callback:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Request for exchanging authorization code to token pairs. In process,
         it will exchange code to user info and register new user or login existing
         user. In response will be new access token in body and new refresh tokens
         in http-only cookie.
       operationId: SocialLoginCallback
       parameters:
-      - description: Social login provider (yandex, google, mailru)
-        in: path
-        name: provider
-        required: true
-        type: string
-      - description: Social login callback request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.SocialLoginCallbackInput'
+        - description: Social login provider (yandex, google, mailru)
+          in: path
+          name: provider
+          required: true
+          type: string
+        - description: Social login callback request body
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/dto.SocialLoginCallbackInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -893,9 +907,107 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Social login callback
       tags:
-      - Authentication and Authorization API
+        - Authentication and Authorization API
+  /v0/resources/{objectId}:
+    get:
+      description: Request for getting resource. Return the resource in S3 storage.
+      operationId: DownloadResource
+      parameters:
+        - description: Object id
+          in: path
+          name: objectId
+          required: true
+          type: string
+      produces:
+        - '*/*'
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Download resource
+      tags:
+        - Resource API
+  /v0/resources/many:
+    post:
+      consumes:
+        - multipart/form-data
+      description: Request for uploading resources. Return the array of object ids
+        in S3 storage for successful uploaded files.
+      operationId: UploadResources
+      parameters:
+        - collectionFormat: csv
+          description: Files to upload
+          in: formData
+          items:
+            type: file
+          name: resources
+          required: true
+          type: array
+      produces:
+        - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.UploadResourcesOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Upload resources
+      tags:
+        - Resource API
+  /v0/resources/one:
+    post:
+      consumes:
+        - multipart/form-data
+      description: Request for uploading resource. Return the object id in S3 storage.
+      operationId: UploadResource
+      parameters:
+        - description: File to upload
+          in: formData
+          name: resource
+          required: true
+          type: file
+      produces:
+        - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.UploadResourceOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Upload resource
+      tags:
+        - Resource API
 produces:
-- application/json
+  - application/json
 securityDefinitions:
   BearerAuth:
     in: header
@@ -903,9 +1015,11 @@ securityDefinitions:
     type: apiKey
 swagger: "2.0"
 tags:
-- description: API for account management
-  name: Account API
-- description: API for authentication and authorization
-  name: Authentication and Authorization API
-- description: API for getting metrics
-  name: Metrics API
+  - description: API for account management
+    name: Account API
+  - description: API for authentication and authorization
+    name: Authentication and Authorization API
+  - description: API for resource management
+    name: Resource API
+  - description: API for getting metrics
+    name: Metrics API

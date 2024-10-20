@@ -51,7 +51,8 @@ func main() {
 	config.MustLoadConfig(options.ConfigFilePath, options.EnvFilePath, &cfg)
 
 	// Setup container
-	container := registry.MustNewContainer(&cfg)
+	container := registry.NewContainer()
+	container.MustInitialize(&cfg)
 	defer func() {
 		_ = container.Close()
 	}()
@@ -77,7 +78,7 @@ func main() {
 	// Run server
 	slog.Info(fmt.Sprintf("The server listens on port %d", cfg.Server.Port))
 	go func() {
-		if err := srv.Run(); err != nil && !errors.Is(err, syshttp.ErrServerClosed) {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, syshttp.ErrServerClosed) {
 			slog.Error("Server error", logging.ErrorAttr(err))
 			stop()
 		}

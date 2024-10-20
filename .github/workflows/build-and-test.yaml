@@ -45,6 +45,7 @@ jobs:
         run: mkdir -p logs && mkdir -p logs/format
       - name: Format
         run: |
+          echo 1 > code
           (gofmt -w .; (echo $? > code)) | tee logs/format/output-$(date +%s).log
           exit $(cat code)
       - name: Formatting
@@ -70,8 +71,9 @@ jobs:
         run: mkdir -p logs && mkdir -p logs/lint
       - name: Lint
         run: |
+          echo 1 > code
           (golangci-lint run --timeout 10m0s; (echo $? > code)) | tee logs/lint/output-$(date +%s).log
-           exit $(cat code)
+          exit $(cat code)
       - name: Archive lint artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -91,6 +93,7 @@ jobs:
         run: mkdir -p logs && mkdir -p logs/unit-tests
       - name: Unit test
         run: |
+          echo 1 > code
           (go test ./tests/unit/... -v -shuffle on -covermode atomic -coverprofile logs/unit-tests/cover.out; (echo $? > code)) | tee logs/unit-tests/output-$(date +%s).log
           exit $(cat code)
       - name: Coverage report
@@ -114,6 +117,7 @@ jobs:
         run: mkdir -p logs && mkdir -p logs/e2e-tests
       - name: E2E test
         run: |
+          echo 1 > code
           (go test ./tests/e2e/... -v -shuffle on -covermode atomic -coverprofile logs/e2e-tests/cover.out; (echo $? > code)) | tee logs/e2e-tests/output-$(date +%s).log
           exit $(cat code)
       - name: Coverage report

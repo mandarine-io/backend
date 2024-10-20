@@ -4,25 +4,26 @@ import (
 	"context"
 	"errors"
 	"github.com/minio/minio-go/v7"
-	"io"
-	"strings"
+	dto2 "mandarine/pkg/rest/dto"
+	"mandarine/pkg/storage/s3/dto"
 	"sync"
 )
 
-type FileData struct {
-	FileName    string
-	FileSize    int64
-	ContentType string
-	Reader      io.Reader
-}
+const (
+	OriginalFilenameMetadata = "x-amz-meta-original-filename"
+)
+
+var (
+	ErrObjectNotFound = dto2.NewI18nError("object not found", "errors.object_not_found")
+)
 
 type Client interface {
-	CreateOne(ctx context.Context, file *FileData) (string, error)
-	CreateMany(ctx context.Context, files []*FileData) ([]string, error)
-	GetOne(ctx context.Context, objectID string) (io.Reader, error)
-	GetMany(ctx context.Context, objectIDs []string) ([]io.Reader, error)
+	CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateDto
+	CreateMany(ctx context.Context, files []*dto.FileData) map[string]*dto.CreateDto
+	GetOne(ctx context.Context, objectID string) *dto.GetDto
+	GetMany(ctx context.Context, objectIDs []string) map[string]*dto.GetDto
 	DeleteOne(ctx context.Context, objectID string) error
-	DeleteMany(ctx context.Context, objectIDs []string) error
+	DeleteMany(ctx context.Context, objectIDs []string) map[string]error
 }
 
 type client struct {
@@ -30,168 +31,138 @@ type client struct {
 	bucketName string
 }
 
-type operationError struct {
-	ObjectID string
-	Error    error
-}
-
 func NewClient(minio *minio.Client, bucketName string) Client {
 	return &client{minio: minio, bucketName: bucketName}
 }
 
-func (c *client) CreateOne(ctx context.Context, file *FileData) (string, error) {
+func (c *client) CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateDto {
 	if file == nil {
-		return "", errors.New("file is nil")
+		return &dto.CreateDto{Error: errors.New("file is nil")}
 	}
 
 	// Upload
-	info, err := c.minio.PutObject(ctx, c.bucketName, file.FileName, file.Reader, file.FileSize, minio.PutObjectOptions{
-		SendContentMd5:        true,
-		ConcurrentStreamParts: true,
-		ContentType:           file.ContentType,
-	})
+	info, err := c.minio.PutObject(
+		ctx, c.bucketName, file.ID, file.Reader, file.Size,
+		minio.PutObjectOptions{
+			SendContentMd5:        true,
+			PartSize:              10 * 1024 * 1024,
+			ConcurrentStreamParts: true,
+			ContentType:           file.ContentType,
+			UserMetadata:          file.UserMetadata,
+		})
 	if err != nil {
-		return "", err
+		return &dto.CreateDto{Error: err}
 	}
-	return info.Key, nil
+	return &dto.CreateDto{ObjectID: info.Key}
 }
 
-func (c *client) CreateMany(ctx context.Context, files []*FileData) ([]string, error) {
-	// Create channel and sync object
-	objectIdCh := make(chan string, len(files))
-	errCh := make(chan operationError, len(files))
+func (c *client) CreateMany(ctx context.Context, files []*dto.FileData) map[string]*dto.CreateDto {
+	type entry struct {
+		filename string
+		dto      *dto.CreateDto
+	}
 
-	_, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+	dtoCh := make(chan *entry, len(files))
 	var wg sync.WaitGroup
 
 	for _, file := range files {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
-			objectId, err := c.CreateOne(ctx, file)
-			if err != nil {
-				errCh <- operationError{ObjectID: objectId, Error: err}
-				cancel()
-				return
-			}
-
-			objectIdCh <- objectId
+			dtoCh <- &entry{filename: file.UserMetadata[OriginalFilenameMetadata], dto: c.CreateOne(ctx, file)}
 		}()
 	}
 
 	go func() {
 		wg.Wait()
-		close(objectIdCh)
-		close(errCh)
+		close(dtoCh)
 	}()
 
-	objectIds := make([]string, 0, len(files))
-	for objectId := range objectIdCh {
-		objectIds = append(objectIds, objectId)
+	dtoMap := make(map[string]*dto.CreateDto)
+	for entry := range dtoCh {
+		dtoMap[entry.filename] = entry.dto
 	}
 
-	errs := make([]operationError, 0, len(files))
-	for err := range errCh {
-		errs = append(errs, err)
-	}
-
-	return objectIds, mapOperationErrorsToError(errs)
+	return dtoMap
 }
 
-func (c *client) GetOne(ctx context.Context, objectID string) (io.Reader, error) {
+func (c *client) GetOne(ctx context.Context, objectID string) *dto.GetDto {
 	object, err := c.minio.GetObject(ctx, c.bucketName, objectID, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, err
+		if errors.As(err, &minio.ErrorResponse{}) && err.(minio.ErrorResponse).Code == "NoSuchKey" {
+			return &dto.GetDto{Error: ErrObjectNotFound}
+		}
+		return &dto.GetDto{Error: err}
 	}
 	if object == nil {
-		return nil, errors.New("object not found")
+		return &dto.GetDto{Error: ErrObjectNotFound}
 	}
-	return object, nil
+
+	stat, err := object.Stat()
+	if err != nil {
+		if errors.As(err, &minio.ErrorResponse{}) && err.(minio.ErrorResponse).Code == "NoSuchKey" {
+			return &dto.GetDto{Error: ErrObjectNotFound}
+		}
+		return &dto.GetDto{Error: err}
+	}
+
+	return &dto.GetDto{
+		Data: &dto.FileData{
+			Reader:      object,
+			ID:          stat.Key,
+			Size:        stat.Size,
+			ContentType: stat.ContentType,
+		},
+	}
 }
 
-func (c *client) GetMany(ctx context.Context, objectIDs []string) ([]io.Reader, error) {
-	readerCh := make(chan io.Reader, len(objectIDs))
-	errCh := make(chan operationError, len(objectIDs))
+func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*dto.GetDto {
+	type entry struct {
+		objectID string
+		dto      *dto.GetDto
+	}
 
+	dtoCh := make(chan *entry, len(objectIDs))
 	var wg sync.WaitGroup
-	_, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	for _, objectID := range objectIDs {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			reader, err := c.GetOne(ctx, objectID)
-			if err != nil {
-				errCh <- operationError{ObjectID: objectID, Error: err}
-				cancel()
-				return
-			}
-			readerCh <- reader
+			dtoCh <- &entry{objectID: objectID, dto: c.GetOne(ctx, objectID)}
 		}()
 	}
 
 	go func() {
 		wg.Wait()
-		close(readerCh)
-		close(errCh)
+		close(dtoCh)
 	}()
 
-	readers := make([]io.Reader, 0, len(objectIDs))
-	for reader := range readerCh {
-		readers = append(readers, reader)
+	dtoMap := make(map[string]*dto.GetDto)
+	for entry := range dtoCh {
+		dtoMap[entry.objectID] = entry.dto
 	}
 
-	errs := make([]operationError, 0, len(objectIDs))
-	for err := range errCh {
-		errs = append(errs, err)
-	}
-
-	return readers, mapOperationErrorsToError(errs)
+	return dtoMap
 }
 
 func (c *client) DeleteOne(ctx context.Context, objectID string) error {
 	return c.minio.RemoveObject(ctx, c.bucketName, objectID, minio.RemoveObjectOptions{})
 }
 
-func (c *client) DeleteMany(ctx context.Context, objectIDs []string) error {
+func (c *client) DeleteMany(ctx context.Context, objectIDs []string) map[string]error {
 	objectIdCh := make(chan minio.ObjectInfo, len(objectIDs))
-
 	for _, objectID := range objectIDs {
 		objectIdCh <- minio.ObjectInfo{Key: objectID}
 	}
 	close(objectIdCh)
 
-	errCh := c.minio.RemoveObjects(ctx, c.bucketName, objectIdCh, minio.RemoveObjectsOptions{})
+	objCh := c.minio.RemoveObjects(ctx, c.bucketName, objectIdCh, minio.RemoveObjectsOptions{})
 
-	errs := make([]operationError, 0, len(objectIDs))
-	for err := range errCh {
-		errs = append(errs, operationError{ObjectID: err.ObjectName, Error: err.Err})
+	errMap := make(map[string]error)
+	for obj := range objCh {
+		errMap[obj.ObjectName] = obj.Err
 	}
 
-	return mapOperationErrorsToError(errs)
-}
-
-func mapOperationErrorsToError(operationErrs []operationError) error {
-	errMsg := strings.Builder{}
-	for _, err := range operationErrs {
-		if errMsg.Len() == 0 {
-			errMsg.WriteString(err.ObjectID)
-			errMsg.WriteString(": ")
-			errMsg.WriteString(err.Error.Error())
-			continue
-		}
-		errMsg.WriteString("; ")
-		errMsg.WriteString(err.ObjectID)
-		errMsg.WriteString(": ")
-		errMsg.WriteString(err.Error.Error())
-	}
-
-	if errMsg.Len() == 0 {
-		return nil
-	}
-	return errors.New(errMsg.String())
+	return errMap
 }

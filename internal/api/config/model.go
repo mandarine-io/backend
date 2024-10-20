@@ -61,7 +61,7 @@ type SmtpConfig struct {
 	Username     string `yaml:"username" env-description:"SMTP username" env:"MANDARINE_SMTP__USERNAME" validate:"required,email"`
 	Password     string `yaml:"password" env-description:"SMTP password" env:"MANDARINE_SMTP__PASSWORD" validate:"required"`
 	PasswordFile string `yaml:"password_file" env-description:"SMTP password file" env:"MANDARINE_SMTP__PASSWORD_FILE" validate:"omitempty,filepath"`
-	SSL          bool   `yaml:"ssl" env-description:"SMTP SSL mode" env:"MANDARINE_SMTP__SSL" env-default:"true" validate:"required"`
+	SSL          bool   `yaml:"ssl" env-description:"SMTP SSL mode" env:"MANDARINE_SMTP__SSL"`
 	From         string `yaml:"from" env-description:"SMTP from" env:"MANDARINE_SMTP__FROM" validate:"omitempty"`
 }
 
@@ -125,7 +125,7 @@ type TemplateConfig struct {
 }
 
 type MigrationConfig struct {
-	Path string `yaml:"path" env-description:"Migrations path" env:"MANDARINE_TEMPLATE__PATH" env-default:"templates" validate:"required"`
+	Path string `yaml:"path" env-description:"Migrations path" env:"MANDARINE_MIGRATION__PATH" env-default:"migrations" validate:"required"`
 }
 
 type LoggerConfig struct {

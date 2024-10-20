@@ -1,6 +1,6 @@
 {
   "errors": {
-    "validation" : {
+    "validation": {
       "oneof": "Unsupported value",
       "email": "Invalid email address",
       "http_url": "Invalid URL",
@@ -34,7 +34,9 @@
     "internal_error": "Internal error",
     "route_not_found": "Route not found",
     "method_not_allowed": "Method not allowed",
-    "redirect_url_not_found": "Redirect URL not found"
+    "redirect_url_not_found": "Redirect URL not found",
+    "resource_not_uploaded": "Resource not uploaded",
+    "failed_to_send_email": "Failed to send email"
   },
   "email": {
     "register-confirm": {

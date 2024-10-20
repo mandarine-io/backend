@@ -22,7 +22,7 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: "#/components/schemas/dto.HealthResponse"
+                  $ref: "#/components/schemas/health.Response"
                 type: array
       summary: Health
       tags:
@@ -60,7 +60,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Delete account
       tags:
         - Account API
@@ -94,7 +94,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Get account
       tags:
         - Account API
@@ -155,7 +155,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Update email
       tags:
         - Account API
@@ -198,7 +198,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Verify email
       tags:
         - Account API
@@ -241,7 +241,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Update password
       tags:
         - Account API
@@ -289,7 +289,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Set password
       tags:
         - Account API
@@ -330,7 +330,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Restore account
       tags:
         - Account API
@@ -384,7 +384,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Update username
       tags:
         - Account API
@@ -459,7 +459,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Logout
       tags:
         - Authentication and Authorization API
@@ -704,8 +704,8 @@ paths:
               description: OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure
               schema:
                 type: string
-        "400":
-          description: Bad Request
+        "404":
+          description: Not Found
           content:
             application/json:
               schema:
@@ -779,11 +779,134 @@ paths:
       summary: Social login callback
       tags:
         - Authentication and Authorization API
+  "/v0/resources/{objectId}":
+    get:
+      description: Request for getting resource. Return the resource in S3 storage.
+      operationId: DownloadResource
+      parameters:
+        - description: Object id
+          in: path
+          name: objectId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Download resource
+      tags:
+        - Resource API
+  /v0/resources/many:
+    post:
+      description: Request for uploading resources. Return the array of object ids in
+        S3 storage for successful uploaded files.
+      operationId: UploadResources
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                resources:
+                  description: Files to upload
+                  type: array
+                  items:
+                    type: file
+              required:
+                - resources
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.UploadResourcesOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Upload resources
+      tags:
+        - Resource API
+  /v0/resources/one:
+    post:
+      description: Request for uploading resource. Return the object id in S3 storage.
+      operationId: UploadResource
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                resource:
+                  description: File to upload
+                  type: string
+                  format: binary
+              required:
+                - resource
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.UploadResourceOutput"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      summary: Upload resource
+      tags:
+        - Resource API
 tags:
   - description: API for account management
     name: Account API
   - description: API for authentication and authorization
     name: Authentication and Authorization API
+  - description: API for resource management
+    name: Resource API
   - description: API for getting metrics
     name: Metrics API
 servers:
@@ -839,13 +962,6 @@ components:
         - path
         - status
         - timestamp
-      type: object
-    dto.HealthResponse:
-      properties:
-        name:
-          type: string
-        pass:
-          type: boolean
       type: object
     dto.JwtTokensOutput:
       properties:
@@ -960,6 +1076,20 @@ components:
       required:
         - username
       type: object
+    dto.UploadResourceOutput:
+      properties:
+        object_id:
+          type: string
+      type: object
+    dto.UploadResourcesOutput:
+      properties:
+        count:
+          type: integer
+        data:
+          additionalProperties:
+            $ref: "#/components/schemas/dto.UploadResourceOutput"
+          type: object
+      type: object
     dto.VerifyEmailInput:
       properties:
         email:
@@ -981,4 +1111,11 @@ components:
       required:
         - email
         - otp
+      type: object
+    health.Response:
+      properties:
+        name:
+          type: string
+        pass:
+          type: boolean
       type: object
