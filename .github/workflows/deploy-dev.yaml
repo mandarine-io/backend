@@ -16,7 +16,7 @@ jobs:
         with:
           base64-encoded-secret: ${{ secrets.DEV_ENV_FILE_CONTENT }}
           filename: ".env"
-          working-directory: deploy
+          working-directory: deploy/docker
       - name: Copy env and docker compose file via scp
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -25,7 +25,7 @@ jobs:
           port: 22
           key: ${{ secrets.SSH_DEV_PRIVATE_KEY }}
           overwrite: true
-          source: "deploy/.env,deploy/docker-compose.dev.yml,deploy/nginx/nginx.conf"
+          source: "deploy/docker/.env,deploy/docker/docker-compose.dev.yml,deploy/config/nginx/nginx.conf"
           target: "."
       - name: Pull and restart services via ssh
         uses: appleboy/ssh-action@v1.1.0
@@ -41,7 +41,7 @@ jobs:
           envs: ACCESS_TOKEN,USERNAME,MANDARINE_SERVER__VERSION
           script: |
             echo $ACCESS_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
-            cd deploy
+            cd deploy/docker
             echo "Stopping and removing containers"
             docker compose -f docker-compose.dev.yml stop
             docker compose -f docker-compose.dev.yml rm -f
