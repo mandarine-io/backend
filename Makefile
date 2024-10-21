@@ -47,7 +47,7 @@ install:
 .PHONY: swagger.gen
 swagger.gen:
 	$(GO) install github.com/swaggo/swag/cmd/swag@latest
-	$(SWAG) init --generalInfo ./internal/api/rest/router.go --outputTypes go,yaml --output $(API_DOCS_DIR)
+	$(SWAG) init --generalInfo ./internal/api/rest/router.go --outputTypes go,yaml,json --output $(API_DOCS_DIR)
 
 .PHONY: openapi.gen
 openapi.gen:

@@ -48,7 +48,7 @@ YAML configuration file contains all base application settings.
 Use the `config/config.example.yaml` as reference to create your configuration file:
 
 ```bash
-cp config/config.example.yaml config/config.yaml
+cp config/config.local.example.yaml config/config.yaml
 nano config/config.yaml
 ```
 
