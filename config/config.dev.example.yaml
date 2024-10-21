@@ -1,25 +1,25 @@
 server:
   name: mandarine-server
   port: 8080
-  external_origin: http://localhost:8080
-  mode: local
+  external_origin: https://dev.mandarine-app.ru/api
+  mode: development
   version: 0.0.0
 postgres:
-  host: localhost
+  host: postgres
   port: 5432
   username:
   password:
   password_file:
   db_name:
 redis:
-  host: localhost
+  host: redis
   port: 6379
   username: default
   password:
   password_file:
   db_index: 0
 minio:
-  host: localhost
+  host: minio
   port: 9000
   access_key:
   secret_key:
@@ -32,7 +32,7 @@ smtp:
   password:
   password_file:
   ssl: true
-  from:
+  from: Mandarine <mandarine-app@yandex.ru>
 oauth_client:
   google:
     client_id:
@@ -68,11 +68,11 @@ migrations:
   path: migrations
 logger:
   console:
-    level: info
+    level: debug
     encoding: text
   file:
     enable: true
-    level: info
+    level: debug
     dir_path: logs
     max_size: 1
     max_age: 30

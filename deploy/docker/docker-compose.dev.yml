@@ -8,13 +8,13 @@ volumes:
   mandarine-dev-redis-data:
   mandarine-dev-minio-data:
 
-secrets:
-  postgres-password:
-    file: ${MANDARINE_POSTGRES__PASSWORD_FILE}
-  redis-password:
-    file: ${MANDARINE_REDIS__PASSWORD_FILE}
-  minio-secret-key:
-    file: ${MANDARINE_MINIO__SECRET_KEY_FILE}
+#secrets:
+#  postgres-password:
+#    file: ${MANDARINE_POSTGRES__PASSWORD_FILE}
+#  redis-password:
+#    file: ${MANDARINE_REDIS__PASSWORD_FILE}
+#  minio-secret-key:
+#    file: ${MANDARINE_MINIO__SECRET_KEY_FILE}
 
 services:
   ################################
@@ -29,8 +29,8 @@ services:
       POSTGRES_PASSWORD: ${MANDARINE_POSTGRES__PASSWORD}
       #      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
       POSTGRES_DB: ${MANDARINE_POSTGRES__DB_NAME}
-    secrets:
-      - postgres-password
+#    secrets:
+#      - postgres-password
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
       interval: 5s
@@ -55,8 +55,8 @@ services:
       REDIS_PASSWORD: ${MANDARINE_REDIS__PASSWORD}
       #      REDIS_PASSWORD_FILE: /run/secrets/redis-password
       REDIS_ARGS: '--requirepass ${MANDARINE_REDIS__PASSWORD} --user ${MANDARINE_REDIS__USERNAME} on >${MANDARINE_REDIS__PASSWORD} ~* allcommands'
-    secrets:
-      - redis-password
+#    secrets:
+#      - redis-password
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli ping" ]
       interval: 5s
@@ -82,8 +82,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MANDARINE_MINIO__SECRET_KEY}
       #      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio-secret-key
       MINIO_DEFAULT_BUCKETS: ${MANDARINE_MINIO__BUCKET_NAME}
-    secrets:
-      - minio-secret-key
+#    secrets:
+#      - minio-secret-key
     healthcheck:
       test: [ "CMD-SHELL", "mc ready local" ]
       interval: 5s
@@ -106,32 +106,8 @@ services:
     restart: unless-stopped
     environment:
       MANDARINE_SERVER__VERSION: ${MANDARINE_SERVER__VERSION}
-      MANDARINE_POSTGRES__HOST: postgres
-      MANDARINE_POSTGRES__PORT: 5432
-      MANDARINE_POSTGRES__USERNAME: ${MANDARINE_POSTGRES__USERNAME}
-      MANDARINE_POSTGRES__PASSWORD: ${MANDARINE_POSTGRES__PASSWORD}
-      MANDARINE_POSTGRES__DB_NAME: ${MANDARINE_POSTGRES__DB_NAME}
-      MANDARINE_REDIS__HOST: redis
-      MANDARINE_REDIS__PORT: 6379
-      MANDARINE_REDIS__USERNAME: ${MANDARINE_REDIS__USERNAME}
-      MANDARINE_REDIS__PASSWORD: ${MANDARINE_REDIS__PASSWORD}
-      MANDARINE_MINIO__HOST: minio
-      MANDARINE_MINIO__PORT: 9000
-      MANDARINE_MINIO__ACCESS_KEY: ${MANDARINE_MINIO__ACCESS_KEY}
-      MANDARINE_MINIO__SECRET_KEY: ${MANDARINE_MINIO__SECRET_KEY}
-      MANDARINE_MINIO__BUCKET_NAME: ${MANDARINE_MINIO__BUCKET_NAME}
-      MANDARINE_SMTP__HOST: ${MANDARINE_SMTP__HOST}
-      MANDARINE_SMTP__PORT: ${MANDARINE_SMTP__PORT}
-      MANDARINE_SMTP__USERNAME: ${MANDARINE_SMTP__USERNAME}
-      MANDARINE_SMTP__PASSWORD: ${MANDARINE_SMTP__PASSWORD}
-      MANDARINE_SMTP__SSL: ${MANDARINE_SMTP__SSL}
-      MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID: ${MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID}
-      MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET: ${MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET}
-      MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_ID: ${MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_ID}
-      MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_SECRET: ${MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_SECRET}
-      MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_ID: ${MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_ID}
-      MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_SECRET: ${MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_SECRET}
-      MANDARINE_JWT__SECRET: ${MANDARINE_JWT__SECRET}
+    env_file:
+      - .env
     networks:
       - mandarine-dev-net
     depends_on:

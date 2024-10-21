@@ -233,6 +233,48 @@ paths:
       summary: Health
       tags:
       - Metrics API
+  /swagger/api-docs.json:
+    get:
+      description: Request for getting swagger specification in JSON
+      operationId: Swagger API specification in JSON
+      produces:
+      - application/yaml
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger JSON
+      tags:
+      - Swagger API
+  /swagger/api-docs.yaml:
+    get:
+      description: Request for getting swagger specification in YAML
+      operationId: Swagger API specification in YAML
+      produces:
+      - application/yaml
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger YAML
+      tags:
+      - Swagger API
+  /swagger/index.html:
+    get:
+      description: Request for getting swagger UI
+      operationId: SwaggerUI
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger UI
+      tags:
+      - Swagger API
   /v0/account:
     delete:
       consumes:
@@ -1027,3 +1069,5 @@ tags:
   name: Resource API
 - description: API for getting metrics
   name: Metrics API
+- description: API for getting swagger documentation
+  name: Swagger API

@@ -36,6 +36,8 @@ type RequireRoleMiddlewareFactory func(...string) gin.HandlerFunc
 //	@tag.description			API for resource management
 //	@tag.name					Metrics API
 //	@tag.description			API for getting metrics
+//	@tag.name					Swagger API
+//	@tag.description			API for getting swagger documentation
 //	@contact.name				Mandarine Support
 //	@contact.email				mandarine.app@yandex.ru
 //	@license.name				Apache 2.0

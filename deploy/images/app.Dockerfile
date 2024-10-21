@@ -22,7 +22,7 @@ COPY ./locales ./locales
 COPY ./migrations ./migrations
 COPY ./templates ./templates
 
-RUN cp config/config.example.yaml config/config.yaml
+RUN cp config/config.local.example.yaml config/config.yaml
 
 ENV MANDARINE_CONFIG__FILE=config/config.yaml
 
