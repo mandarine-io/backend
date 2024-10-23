@@ -28,6 +28,7 @@ jobs:
           images: ghcr.io/${{ steps.image_name.outputs.lowercase }}
       - name: Delete old image if exists
         uses: chipkent/action-cleanup-package@v1.0.3
+        continue-on-error: true
         with:
           github-org: mandarine-io
           package-name: backend
