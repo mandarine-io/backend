@@ -4,11 +4,11 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"log/slog"
+	"mandarine/internal/api/rest/handler"
 	recourceSvc "mandarine/internal/api/service/resource"
 	dto2 "mandarine/internal/api/service/resource/dto"
 	"mandarine/pkg/logging"
 	"mandarine/pkg/rest/dto"
-	"mandarine/pkg/rest/middleware"
 	"mandarine/pkg/storage/s3"
 	"net/http"
 )
@@ -27,11 +27,23 @@ func NewHandler(svc *recourceSvc.Service) *Handler {
 	}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, requireAuth middleware.RequireAuth, _ middleware.RequireRoleFactory) {
+func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
 	router.GET("v0/resources/:objectId", h.DownloadResource)
 
-	router.POST("v0/resources/one", requireAuth, h.UploadResource)
-	router.POST("v0/resources/many", requireAuth, h.UploadResources)
+	router.POST(
+		"v0/resources/one",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.UploadResource,
+	)
+	router.POST(
+		"v0/resources/many",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.UploadResources,
+	)
 }
 
 // UploadResource godoc

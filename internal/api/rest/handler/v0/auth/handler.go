@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"mandarine/internal/api/config"
+	"mandarine/internal/api/rest/handler"
 	"mandarine/internal/api/service/auth"
 	"mandarine/internal/api/service/auth/dto"
 	dto2 "mandarine/pkg/rest/dto"
@@ -36,7 +37,7 @@ func NewHandler(svc *auth.Service, cfg *config.Config) *Handler {
 	}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, requireAuth gin.HandlerFunc, _ middleware.RequireRoleFactory) {
+func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
 	router.POST("v0/auth/login", h.Login)
 	router.GET("v0/auth/refresh", h.RefreshTokens)
 	router.GET("v0/auth/social/:provider", h.SocialLogin)
@@ -47,7 +48,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, requireAuth gin.HandlerFunc
 	router.POST("v0/auth/recovery-password/verify", h.VerifyRecoveryCode)
 	router.POST("v0/auth/reset-password", h.ResetPassword)
 
-	router.GET("v0/auth/logout", requireAuth, h.Logout)
+	router.GET("v0/auth/logout", middlewares.Auth, h.Logout)
 }
 
 // Login godoc

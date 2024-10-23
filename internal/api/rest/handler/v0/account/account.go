@@ -3,6 +3,7 @@ package account
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"mandarine/internal/api/rest/handler"
 	"mandarine/internal/api/service/account"
 	"mandarine/internal/api/service/account/dto"
 	"mandarine/pkg/rest/middleware"
@@ -17,15 +18,56 @@ func NewHandler(svc *account.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, requireAuth middleware.RequireAuth, _ middleware.RequireRoleFactory) {
-	router.GET("v0/account", requireAuth, h.GetAccount)
-	router.PATCH("v0/account/username", requireAuth, h.UpdateUsername)
-	router.PATCH("v0/account/email", requireAuth, h.UpdateEmail)
-	router.POST("v0/account/email/verify", requireAuth, h.VerifyEmail)
-	router.POST("v0/account/password", requireAuth, h.SetPassword)
-	router.PATCH("v0/account/password", requireAuth, h.UpdatePassword)
-	router.DELETE("v0/account/", requireAuth, h.DeleteAccount)
-	router.GET("v0/account/restore", requireAuth, h.RestoreAccount)
+func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+	router.GET(
+		"v0/account",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.GetAccount,
+	)
+	router.PATCH(
+		"v0/account/username",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.UpdateUsername)
+	router.PATCH(
+		"v0/account/email",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.UpdateEmail)
+	router.POST(
+		"v0/account/email/verify",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.VerifyEmail)
+	router.POST(
+		"v0/account/password",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.SetPassword)
+	router.PATCH(
+		"v0/account/password",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.UpdatePassword)
+	router.DELETE(
+		"v0/account",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		middlewares.DeletedUser,
+		h.DeleteAccount)
+	router.GET(
+		"v0/account/restore",
+		middlewares.Auth,
+		middlewares.BannedUser,
+		h.RestoreAccount,
+	)
 }
 
 // GetAccount godoc

@@ -9,8 +9,8 @@ import (
 	healthcheckconfig "github.com/tavsec/gin-healthcheck/config"
 	"gorm.io/gorm"
 	"log/slog"
+	"mandarine/internal/api/rest/handler"
 	"mandarine/pkg/logging"
-	"mandarine/pkg/rest/middleware"
 	"mandarine/pkg/smtp"
 	"net/http"
 )
@@ -41,7 +41,7 @@ func NewHandler(db *gorm.DB, rdb *redis.Client, minio *minio.Client, smtp smtp.S
 //	@Produce		json
 //	@Success		200	{object}	[]Response
 //	@Router			/health [get]
-func (h *Handler) RegisterRoutes(router *gin.Engine, _ middleware.RequireAuth, _ middleware.RequireRoleFactory) {
+func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares) {
 	cfg := healthcheckconfig.Config{
 		HealthPath:  "/health",
 		Method:      "GET",
