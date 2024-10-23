@@ -28,8 +28,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/swaggo/files v1.0.1
-	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.3
 	github.com/tavsec/gin-healthcheck v1.6.3
 	github.com/testcontainers/testcontainers-go v0.33.0

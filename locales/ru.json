@@ -36,7 +36,9 @@
     "method_not_allowed": "Метод не разрешен",
     "redirect_url_not_found": "URL-адрес перенаправления не найден",
     "resource_not_uploaded": "Ресурс не загружен",
-    "failed_to_send_email": "Не удалось отправить письмо"
+    "failed_to_send_email": "Не удалось отправить письмо",
+    "banned_user": "Пользователь заблокирован",
+    "deleted_user": "Пользователь удален"
   },
   "email": {
     "register-confirm": {

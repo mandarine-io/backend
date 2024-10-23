@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -155,11 +156,13 @@ func Test_AccountHandler_GetAccount(t *testing.T) {
 	e2e.MustLoadFixtures(fixtures)
 
 	userEntity := &model.UserEntity{
-		ID:       uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
-		Username: "user1",
-		Email:    "user1@example.com",
-		Password: "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
+		Username:  "user1",
+		Email:     "user1@example.com",
+		Password:  "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, userEntity)
 
@@ -175,8 +178,51 @@ func Test_AccountHandler_GetAccount(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
 	t.Run("User not found", func(t *testing.T) {
-		accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{ID: uuid.New()})
+		accessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			})
 		req, _ := http.NewRequest("GET", url, nil)
 		req.Header.Set("Authorization", "Bearer "+accessToken)
 
@@ -209,11 +255,13 @@ func Test_AccountHandler_UpdateUsername(t *testing.T) {
 	url := server.URL + "/v0/account/username"
 
 	userEntity := &model.UserEntity{
-		ID:       uuid.MustParse("c51013eb-d179-4f14-90da-0e9ac732ae86"),
-		Username: "user_for_update_username_1",
-		Email:    "user_for_update_username_1@example.com",
-		Password: "$2a$12$jVO1hn15BIlyXNvm5sgUoOnGpjLMsUR654fv5qibD7AeW1XmZ7XNq",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("c51013eb-d179-4f14-90da-0e9ac732ae86"),
+		Username:  "user_for_update_username_1",
+		Email:     "user_for_update_username_1@example.com",
+		Password:  "$2a$12$jVO1hn15BIlyXNvm5sgUoOnGpjLMsUR654fv5qibD7AeW1XmZ7XNq",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, userEntity)
 
@@ -278,8 +326,52 @@ func Test_AccountHandler_UpdateUsername(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("PATCH", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("PATCH", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
 	t.Run("User not found", func(t *testing.T) {
-		accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{ID: uuid.New()})
+		accessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 		reqBody := dto.UpdateUsernameInput{
 			Username: "new_user_for_update_username",
 		}
@@ -359,11 +451,13 @@ func Test_AccountHandler_UpdateEmail(t *testing.T) {
 
 	url := server.URL + "/v0/account/email"
 	userEntity := &model.UserEntity{
-		ID:       uuid.MustParse("d76d9da5-ff66-4397-99cb-8b0298e887bd"),
-		Username: "user_for_update_email_1",
-		Email:    "user_for_update_email_1@example.com",
-		Password: "$2a$12$cfjXzgolp1b2sdoP7RNX4ui/cLtoHrTUF.c7JIphuPNWCPVB1s3.2",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("d76d9da5-ff66-4397-99cb-8b0298e887bd"),
+		Username:  "user_for_update_email_1",
+		Email:     "user_for_update_email_1@example.com",
+		Password:  "$2a$12$cfjXzgolp1b2sdoP7RNX4ui/cLtoHrTUF.c7JIphuPNWCPVB1s3.2",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, userEntity)
 
@@ -418,8 +512,52 @@ func Test_AccountHandler_UpdateEmail(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("PATCH", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("PATCH", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
 	t.Run("User not found", func(t *testing.T) {
-		accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{ID: uuid.New()})
+		accessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 		reqBody := dto.UpdateEmailInput{
 			Email: "new_user_for_update_email_1@example.com",
 		}
@@ -524,6 +662,8 @@ func Test_AccountHandler_VerifyEmail(t *testing.T) {
 		Password:        "$2a$12$ALU3HAOtZpp22.WQVFZvnO.17WcwFrxCabnVuuz3FvPzh7TsXU8Ve",
 		Role:            model.RoleEntity{Name: model.RoleUser},
 		IsEmailVerified: false,
+		IsEnabled:       true,
+		DeletedAt:       nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, userEntity)
 
@@ -542,6 +682,43 @@ func Test_AccountHandler_VerifyEmail(t *testing.T) {
 		var body dto2.ErrorResponse
 		err = e2e.ReadResponseBody(resp, &body)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("Bad body", func(t *testing.T) {
@@ -648,8 +825,14 @@ func Test_AccountHandler_VerifyEmail(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Another access token
-		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{ID: uuid.New()})
-
+		anotherAccessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 		// Send request
 		reqBody := dto.VerifyEmailInput{
 			OTP:   "123456",
@@ -736,6 +919,8 @@ func Test_AccountHandler_SetPassword(t *testing.T) {
 		Email:          "user_for_set_password_1@example.com",
 		Role:           model.RoleEntity{Name: model.RoleUser},
 		IsPasswordTemp: true,
+		IsEnabled:      true,
+		DeletedAt:      nil,
 	}
 
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &userEntity)
@@ -756,6 +941,43 @@ func Test_AccountHandler_SetPassword(t *testing.T) {
 		var body dto2.ErrorResponse
 		err = e2e.ReadResponseBody(resp, &body)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("Bad body", func(t *testing.T) {
@@ -795,9 +1017,14 @@ func Test_AccountHandler_SetPassword(t *testing.T) {
 
 	t.Run("User not found", func(t *testing.T) {
 		// New access token for another user
-		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
-			ID: uuid.New(),
-		})
+		anotherAccessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 
 		// Send request
 		reqBody := dto.SetPasswordInput{
@@ -824,6 +1051,8 @@ func Test_AccountHandler_SetPassword(t *testing.T) {
 			Email:          "user_for_set_password_2@example.com",
 			Role:           model.RoleEntity{Name: model.RoleUser},
 			IsPasswordTemp: true,
+			IsEnabled:      true,
+			DeletedAt:      nil,
 		}
 		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &userEntity2)
 
@@ -866,11 +1095,13 @@ func Test_AccountHandler_UpdatePassword(t *testing.T) {
 
 	url := server.URL + "/v0/account/password"
 	userEntity := model.UserEntity{
-		ID:       uuid.MustParse("b03643e2-263d-406d-ac8f-02e51fe8927e"),
-		Username: "user_for_update_password_1",
-		Email:    "user_for_update_password_1@example.com",
-		Password: "$2a$12$.s1AcMGZNlbGfWCUebmcGeHpV0bMUWorZ4Zmx/YwY5RVfp.OZbpDG",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("b03643e2-263d-406d-ac8f-02e51fe8927e"),
+		Username:  "user_for_update_password_1",
+		Email:     "user_for_update_password_1@example.com",
+		Password:  "$2a$12$.s1AcMGZNlbGfWCUebmcGeHpV0bMUWorZ4Zmx/YwY5RVfp.OZbpDG",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &userEntity)
@@ -892,6 +1123,43 @@ func Test_AccountHandler_UpdatePassword(t *testing.T) {
 		var body dto2.ErrorResponse
 		err = e2e.ReadResponseBody(resp, &body)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("PATCH", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("PATCH", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("Bad body", func(t *testing.T) {
@@ -939,9 +1207,14 @@ func Test_AccountHandler_UpdatePassword(t *testing.T) {
 
 	t.Run("User not found", func(t *testing.T) {
 		// New access token for another user
-		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
-			ID: uuid.New(),
-		})
+		anotherAccessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 
 		// Send request
 		reqBody := dto.UpdatePasswordInput{
@@ -1005,10 +1278,12 @@ func Test_AccountHandler_RestoreAccount(t *testing.T) {
 	url := server.URL + "/v0/account/restore"
 
 	userEntity := model.UserEntity{
-		ID:       uuid.MustParse("fb22c374-e2c9-4f47-aa17-a9853bd29a58"),
-		Username: "user_for_restore_1",
-		Email:    "user_for_restore_1@example.com",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("fb22c374-e2c9-4f47-aa17-a9853bd29a58"),
+		Username:  "user_for_restore_1",
+		Email:     "user_for_restore_1@example.com",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &userEntity)
 
@@ -1021,11 +1296,34 @@ func Test_AccountHandler_RestoreAccount(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
 	t.Run("User not found", func(t *testing.T) {
 		// New access token for another user
-		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
-			ID: uuid.New(),
-		})
+		anotherAccessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 
 		// Send request
 		req, _ := http.NewRequest("GET", url, nil)
@@ -1039,10 +1337,12 @@ func Test_AccountHandler_RestoreAccount(t *testing.T) {
 	t.Run("User not deleted", func(t *testing.T) {
 		// New access token for another user
 		anotherUserEntity := model.UserEntity{
-			ID:       uuid.MustParse("8e2e4465-87d9-4156-84c8-49fa0afe2809"),
-			Username: "user_for_restore_2",
-			Email:    "user_for_restore_2@example.com",
-			Role:     model.RoleEntity{Name: model.RoleUser},
+			ID:        uuid.MustParse("8e2e4465-87d9-4156-84c8-49fa0afe2809"),
+			Username:  "user_for_restore_2",
+			Email:     "user_for_restore_2@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: nil,
 		}
 		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
 
@@ -1072,10 +1372,12 @@ func Test_AccountHandler_DeleteAccount(t *testing.T) {
 	url := server.URL + "/v0/account"
 
 	userEntity := model.UserEntity{
-		ID:       uuid.MustParse("aa693ac7-5f36-47d4-b7e0-582c5eab3d0f"),
-		Username: "user_for_delete_1",
-		Email:    "user_for_delete_1@example.com",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("aa693ac7-5f36-47d4-b7e0-582c5eab3d0f"),
+		Username:  "user_for_delete_1",
+		Email:     "user_for_delete_1@example.com",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &userEntity)
 
@@ -1088,11 +1390,53 @@ func Test_AccountHandler_DeleteAccount(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("DELETE", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("DELETE", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
 	t.Run("User not found", func(t *testing.T) {
 		// New access token for another user
-		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
-			ID: uuid.New(),
-		})
+		anotherAccessToken, _, _ := security.GenerateTokens(
+			testEnvironment.Container.Config.Security.JWT,
+			&model.UserEntity{
+				ID:        uuid.New(),
+				IsEnabled: true,
+				DeletedAt: nil,
+			},
+		)
 
 		// Send request
 		req, _ := http.NewRequest("DELETE", url, nil)
@@ -1106,10 +1450,12 @@ func Test_AccountHandler_DeleteAccount(t *testing.T) {
 	t.Run("User already deleted", func(t *testing.T) {
 		// New access token for another user
 		anotherUserEntity := model.UserEntity{
-			ID:       uuid.MustParse("585d8642-e4bf-40aa-9084-89890fc1639f"),
-			Username: "user_for_delete_2",
-			Email:    "user_for_delete_2@example.com",
-			Role:     model.RoleEntity{Name: model.RoleUser},
+			ID:        uuid.MustParse("585d8642-e4bf-40aa-9084-89890fc1639f"),
+			Username:  "user_for_delete_2",
+			Email:     "user_for_delete_2@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: nil,
 		}
 		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
 

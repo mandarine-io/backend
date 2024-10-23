@@ -27,14 +27,14 @@ var (
 )
 
 type AuthUser struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	Role     string    `json:"role"`
-	JTI      string    `json:"jti"`
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	IsEnabled bool      `json:"isEnabled"`
+	IsDeleted bool      `json:"isDeleted"`
+	JTI       string    `json:"jti"`
 }
-
-type RequireAuth = gin.HandlerFunc
 
 func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -93,6 +93,16 @@ func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenReposit
 			factoryErr(ErrInvalidJwtToken)
 			return
 		}
+		isEnabled, ok := claims["isEnabled"].(bool)
+		if !ok {
+			factoryErr(ErrInvalidJwtToken)
+			return
+		}
+		isDeleted, ok := claims["isDeleted"].(bool)
+		if !ok {
+			factoryErr(ErrInvalidJwtToken)
+			return
+		}
 
 		// Check if token has expired
 		if exp.Unix() < time.Now().Unix() {
@@ -118,7 +128,14 @@ func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenReposit
 			return
 		}
 
-		authUser := AuthUser{ID: userId, Username: username, Email: email, Role: role, JTI: jti}
+		authUser := AuthUser{
+			ID:        userId,
+			Username:  username,
+			Email:     email,
+			Role:      role,
+			IsEnabled: isEnabled,
+			IsDeleted: isDeleted,
+			JTI:       jti}
 		c.Set(AuthUserKey, authUser)
 	}
 }

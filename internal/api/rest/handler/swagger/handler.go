@@ -3,7 +3,7 @@ package swagger
 import (
 	"github.com/gin-gonic/gin"
 	"mandarine/docs/api"
-	"mandarine/pkg/rest/middleware"
+	"mandarine/internal/api/rest/handler"
 	"net/http"
 )
 
@@ -21,7 +21,7 @@ func NewHandler() *Handler {
 	}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, _ middleware.RequireAuth, _ middleware.RequireRoleFactory) {
+func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares) {
 	router.GET("/swagger/api-docs.json", h.GetApiDocJson)
 	router.GET("/swagger/api-docs.yaml", h.GetApiDocYaml)
 	router.GET("/swagger/index.html", h.GetUI)

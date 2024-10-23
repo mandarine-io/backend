@@ -10,8 +10,6 @@ var (
 	ErrAccessDenied = dto.NewI18nError("access denied", "errors.access_denied")
 )
 
-type RequireRoleFactory func(...string) gin.HandlerFunc
-
 func RoleMiddleware(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authUser, err := GetAuthUser(c)

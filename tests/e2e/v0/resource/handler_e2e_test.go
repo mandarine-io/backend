@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -138,11 +139,13 @@ func TestMain(m *testing.M) {
 func Test_ResourceHandler_UploadResource(t *testing.T) {
 	// Create access token
 	userEntity := &model.UserEntity{
-		ID:       uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
-		Username: "user1",
-		Email:    "user1@example.com",
-		Password: "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
+		Username:  "user1",
+		Email:     "user1@example.com",
+		Password:  "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, userEntity)
 
@@ -170,6 +173,43 @@ func Test_ResourceHandler_UploadResource(t *testing.T) {
 		var resBody dto2.ErrorResponse
 		err = e2e.ReadResponseBody(resp, &resBody)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("Body is empty", func(t *testing.T) {
@@ -288,11 +328,13 @@ func Test_ResourceHandler_UploadResource(t *testing.T) {
 func Test_ResourceHandler_UploadResources(t *testing.T) {
 	// Create access token
 	userEntity := &model.UserEntity{
-		ID:       uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
-		Username: "user1",
-		Email:    "user1@example.com",
-		Password: "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
-		Role:     model.RoleEntity{Name: model.RoleUser},
+		ID:        uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
+		Username:  "user1",
+		Email:     "user1@example.com",
+		Password:  "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
+		Role:      model.RoleEntity{Name: model.RoleUser},
+		IsEnabled: true,
+		DeletedAt: nil,
 	}
 	accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, userEntity)
 
@@ -330,6 +372,43 @@ func Test_ResourceHandler_UploadResources(t *testing.T) {
 		var resBody dto2.ErrorResponse
 		err = e2e.ReadResponseBody(resp, &resBody)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Banned user", func(t *testing.T) {
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: false,
+			DeletedAt: nil,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Deleted user", func(t *testing.T) {
+		deletedTime := time.Now().UTC()
+		anotherUserEntity := model.UserEntity{
+			ID:        uuid.New(),
+			Username:  "user",
+			Email:     "user@example.com",
+			Role:      model.RoleEntity{Name: model.RoleUser},
+			IsEnabled: true,
+			DeletedAt: &deletedTime,
+		}
+		anotherAccessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &anotherUserEntity)
+		req, _ := http.NewRequest("POST", url, nil)
+		req.Header.Set("Authorization", "Bearer "+anotherAccessToken)
+
+		resp, err := server.Client().Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 	t.Run("Body is empty", func(t *testing.T) {

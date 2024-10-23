@@ -36,7 +36,9 @@
     "method_not_allowed": "Method not allowed",
     "redirect_url_not_found": "Redirect URL not found",
     "resource_not_uploaded": "Resource not uploaded",
-    "failed_to_send_email": "Failed to send email"
+    "failed_to_send_email": "Failed to send email",
+    "banned_user": "User is banned",
+    "deleted_user": "User has been deleted"
   },
   "email": {
     "register-confirm": {

@@ -7,6 +7,7 @@ import (
 	docs "mandarine/docs/api"
 	httphelper "mandarine/internal/api/helper/http"
 	"mandarine/internal/api/registry"
+	"mandarine/internal/api/rest/handler"
 	"mandarine/pkg/rest/dto"
 	"mandarine/pkg/rest/middleware"
 	"net/http"
@@ -74,11 +75,15 @@ func SetupRouter(container *registry.Container) *gin.Engine {
 		router.Use(middleware.SecurityHeadersMiddleware())
 	}
 
-	requireAuth := middleware.JWTMiddleware(container.Config.Security.JWT, container.Repositories.BannedToken)
-
 	// Register routes
-	for _, handler := range container.Handlers {
-		handler.RegisterRoutes(router, requireAuth, middleware.RoleMiddleware)
+	middlewares := handler.RouteMiddlewares{
+		Auth:        middleware.JWTMiddleware(container.Config.Security.JWT, container.Repositories.BannedToken),
+		RoleFactory: middleware.RoleMiddleware,
+		BannedUser:  middleware.BannedUserMiddleware(),
+		DeletedUser: middleware.DeletedUserMiddleware(),
+	}
+	for _, apiHandler := range container.Handlers {
+		apiHandler.RegisterRoutes(router, middlewares)
 	}
 
 	// Log routes
