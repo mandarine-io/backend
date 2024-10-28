@@ -62,7 +62,14 @@ func main() {
 
 	// Setup scheduler
 	jobs := job.SetupJobs(container)
-	cronScheduler := scheduler.MustSetupJobScheduler(jobs)
+	cronScheduler := scheduler.MustSetupJobScheduler()
+	for _, j := range jobs {
+		_, err := cronScheduler.AddJob(j)
+		if err != nil {
+			log.Warn().Stack().Err(err).Msgf("job %s setup error", j.Name)
+		}
+	}
+	cronScheduler.Start()
 	defer func() {
 		err := cronScheduler.Shutdown()
 		if err != nil {

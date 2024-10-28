@@ -1,35 +1,51 @@
 package scheduler
 
 import (
+	"context"
 	"github.com/go-co-op/gocron/v2"
-	"log/slog"
-	"mandarine/pkg/logging"
-	"os"
+	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 type Job struct {
-	Name       string
-	Definition gocron.JobDefinition
-	Task       gocron.Task
+	Ctx            context.Context
+	Name           string
+	CronExpression string
+	Action         func(context.Context) error
 }
 
-func MustSetupJobScheduler(jobs []Job) gocron.Scheduler {
-	// Create scheduler
-	scheduler, err := gocron.NewScheduler(gocron.WithLogger(schedulerLogger{}))
+type Scheduler struct {
+	scheduler gocron.Scheduler
+}
+
+func MustSetupJobScheduler() *Scheduler {
+	scheduler, err := gocron.NewScheduler(
+		gocron.WithLogger(schedulerLogger{}),
+		gocron.WithLimitConcurrentJobs(10, gocron.LimitModeWait),
+	)
 	if err != nil {
-		slog.Error("Job scheduler setup error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to setup job scheduler")
 	}
 
-	// Add jobs
-	for _, j := range jobs {
-		_, err1 := scheduler.NewJob(j.Definition, j.Task)
-		if err1 == nil {
-			slog.Info("gocron: job added: " + j.Name)
-		} else {
-			slog.Error("gocron: job error: "+j.Name, logging.ErrorAttr(err1))
-		}
-	}
+	return &Scheduler{scheduler}
+}
 
-	return scheduler
+func (s *Scheduler) Start() {
+	s.scheduler.Start()
+}
+
+func (s *Scheduler) AddJob(job Job) (uuid.UUID, error) {
+	j, err := s.scheduler.NewJob(
+		gocron.CronJob(job.CronExpression, false),
+		gocron.NewTask(job.Action, job.Ctx),
+		gocron.WithName(job.Name),
+	)
+	if j == nil {
+		return uuid.Nil, err
+	}
+	return j.ID(), err
+}
+
+func (s *Scheduler) Shutdown() error {
+	return s.scheduler.Shutdown()
 }
