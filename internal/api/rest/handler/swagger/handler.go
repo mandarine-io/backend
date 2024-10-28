@@ -2,8 +2,9 @@ package swagger
 
 import (
 	"github.com/gin-gonic/gin"
-	"mandarine/docs/api"
-	"mandarine/internal/api/rest/handler"
+	"github.com/mandarine-io/Backend/docs/api"
+	"github.com/mandarine-io/Backend/internal/api/rest/handler"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -22,6 +23,8 @@ func NewHandler() *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares) {
+	log.Debug().Msg("register swagger routes")
+
 	router.GET("/swagger/api-docs.json", h.GetApiDocJson)
 	router.GET("/swagger/api-docs.yaml", h.GetApiDocYaml)
 	router.GET("/swagger/index.html", h.GetUI)
@@ -37,6 +40,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares)
 //	@Success		200	{object}	string
 //	@Router			/swagger/index.html [get]
 func (h *Handler) GetUI(ctx *gin.Context) {
+	log.Debug().Msg("get swagger ui")
 	ctx.Data(http.StatusOK, "text/html", h.uiStatic)
 }
 
@@ -50,6 +54,7 @@ func (h *Handler) GetUI(ctx *gin.Context) {
 //	@Success		200	{object}	string
 //	@Router			/swagger/api-docs.yaml [get]
 func (h *Handler) GetApiDocYaml(ctx *gin.Context) {
+	log.Debug().Msg("get swagger yaml")
 	ctx.Data(http.StatusOK, "application/yaml", h.swaggerYaml)
 }
 
@@ -63,6 +68,7 @@ func (h *Handler) GetApiDocYaml(ctx *gin.Context) {
 //	@Success		200	{object}	string
 //	@Router			/swagger/api-docs.json [get]
 func (h *Handler) GetApiDocJson(ctx *gin.Context) {
+	log.Debug().Msg("get swagger json")
 	ctx.Data(http.StatusOK, "application/json", h.swaggerJson)
 }
 

@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"log/slog"
-	"mandarine/pkg/logging"
-	"net/http"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -14,7 +14,18 @@ const (
 	requestIDHeaderKey = "X-Request-Id"
 )
 
+type bodyLogWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyLogWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
 func LoggerMiddleware() gin.HandlerFunc {
+	log.Debug().Msg("setup logger middleware")
 	return func(c *gin.Context) {
 		// Request
 		start := time.Now()
@@ -37,23 +48,23 @@ func LoggerMiddleware() gin.HandlerFunc {
 		}
 		c.Set(requestIDCtx, requestID)
 
-		requestAttributes := []slog.Attr{
-			slog.String("id", requestID),
-			slog.String("method", method),
-			slog.String("host", host),
-			slog.String("path", path),
-			slog.String("query", query),
-			slog.Any("params", params),
-			slog.String("ip", ip),
-			slog.String("user-agent", userAgent),
+		reqEvent := log.Info().
+			Str("id", requestID).
+			Str("method", method).
+			Str("host", host).
+			Str("path", path).
+			Str("query", query).
+			Interface("params", params).
+			Str("ip", ip).
+			Str("user-agent", userAgent)
+		if log.Logger.GetLevel() <= zerolog.DebugLevel {
+			reqEvent.Interface("headers", c.Request.Header)
+			reqEvent.Interface("body", c.Request.Body)
+
+			c.Writer = &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		}
-		attributes := []slog.Attr{
-			{
-				Key:   "request",
-				Value: slog.GroupValue(requestAttributes...),
-			},
-		}
-		slog.LogAttrs(c.Request.Context(), slog.LevelInfo, "Incoming request", attributes...)
+
+		reqEvent.Msg("Incoming request")
 
 		// Process
 		c.Next()
@@ -62,26 +73,21 @@ func LoggerMiddleware() gin.HandlerFunc {
 		latency := time.Since(start)
 		status := c.Writer.Status()
 
-		responseAttributes := []slog.Attr{
-			slog.String("request-id", requestID),
-			slog.Duration("latency", latency),
-			slog.Int("status", status),
+		respEvent := log.Info().
+			Str("request-id", requestID).
+			Str("method", method).
+			Str("host", host).
+			Str("path", path).
+			Str("query", query).
+			Interface("params", params).
+			Str("ip", ip).
+			Str("user-agent", userAgent).
+			Dur("latency", latency).
+			Int("status", status)
+		if log.Logger.GetLevel() <= zerolog.DebugLevel {
+			respEvent.Interface("body", c.Writer.(*bodyLogWriter).body.String())
 		}
 
-		attributes = []slog.Attr{
-			{
-				Key:   "response",
-				Value: slog.GroupValue(responseAttributes...),
-			},
-		}
-
-		level := slog.LevelInfo
-		msg := "Outcoming response"
-		if status >= http.StatusBadRequest {
-			level = slog.LevelError
-			attributes = append(attributes, logging.ErrorStringAttr(c.Errors.String()))
-		}
-
-		slog.LogAttrs(c.Request.Context(), level, msg, attributes...)
+		respEvent.Msg("Outcoming response")
 	}
 }

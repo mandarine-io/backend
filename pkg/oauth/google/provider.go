@@ -2,9 +2,9 @@ package google
 
 import (
 	"encoding/json"
+	"github.com/mandarine-io/Backend/pkg/oauth"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"mandarine/pkg/oauth"
 )
 
 const (

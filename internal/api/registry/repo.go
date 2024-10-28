@@ -1,9 +1,10 @@
 package registry
 
 import (
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	gormRepo "github.com/mandarine-io/Backend/internal/api/persistence/repo/gorm"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"mandarine/internal/api/persistence/repo"
-	gormRepo "mandarine/internal/api/persistence/repo/gorm"
 )
 
 type Repositories struct {
@@ -12,6 +13,7 @@ type Repositories struct {
 }
 
 func newGormRepositories(db *gorm.DB) *Repositories {
+	log.Debug().Msg("setup gorm repositories")
 	return &Repositories{
 		User:        gormRepo.NewUserRepository(db),
 		BannedToken: gormRepo.NewBannedTokenRepository(db),

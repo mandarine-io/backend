@@ -1,8 +1,9 @@
-package manager_test
+package memory_test
 
 import (
 	"context"
-	"mandarine/pkg/storage/cache/manager"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager/memory"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 
 func Test_CacheManager_Memory(t *testing.T) {
 	ttl := time.Minute
-	cacheManager := manager.NewMemoryCacheManager(ttl)
+	cacheManager := memory.NewCacheManager(ttl)
 	ctx := context.Background()
 
 	t.Run(

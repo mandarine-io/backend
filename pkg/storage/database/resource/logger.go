@@ -2,51 +2,35 @@ package resource
 
 import (
 	"context"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm/logger"
-	"log/slog"
-	"mandarine/pkg/logging"
 	"time"
 )
 
 type dbLogger struct {
-	level logger.LogLevel
 }
 
-func (l dbLogger) LogMode(level logger.LogLevel) logger.Interface {
-	l.level = level
+func (l dbLogger) LogMode(_ logger.LogLevel) logger.Interface {
 	return l
 }
 
 func (l dbLogger) Error(ctx context.Context, msg string, opts ...interface{}) {
-	if l.level >= logger.Error {
-		slog.ErrorContext(ctx, "Database error", logging.ErrorStringAttr(msg), slog.Any("opts", opts))
-	}
+	log.Ctx(ctx).Error().Stack().Msgf(msg, opts...)
 }
 
 func (l dbLogger) Warn(ctx context.Context, msg string, opts ...interface{}) {
-	if l.level >= logger.Warn {
-		slog.WarnContext(ctx, msg, slog.Any("opts", opts))
-	}
+	log.Ctx(ctx).Warn().Msgf(msg, opts...)
 }
 
 func (l dbLogger) Info(ctx context.Context, msg string, opts ...interface{}) {
-	if l.level >= logger.Info {
-		slog.InfoContext(ctx, msg, slog.Any("opts", opts))
-	}
+	log.Ctx(ctx).Info().Msgf(msg, opts...)
 }
 
 func (l dbLogger) Trace(ctx context.Context, begin time.Time, f func() (string, int64), err error) {
-	var args []any
+	sql, _ := f()
+	log.Ctx(ctx).Debug().Dur("elapsed", time.Since(begin)).Msg(sql)
 
-	args = append(args, slog.Duration("elapsed", time.Since(begin)))
-
-	sql, rows := f()
-	if sql != "" {
-		args = append(args, slog.String("sql", sql))
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("sql error")
 	}
-	if rows > -1 {
-		args = append(args, slog.Int64("rows", rows))
-	}
-
-	slog.DebugContext(ctx, "", args...)
 }

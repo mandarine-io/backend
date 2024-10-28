@@ -3,13 +3,12 @@ package resource
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"log/slog"
-	"mandarine/internal/api/rest/handler"
-	recourceSvc "mandarine/internal/api/service/resource"
-	dto2 "mandarine/internal/api/service/resource/dto"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/rest/dto"
-	"mandarine/pkg/storage/s3"
+	"github.com/mandarine-io/Backend/internal/api/rest/handler"
+	recourceSvc "github.com/mandarine-io/Backend/internal/api/service/resource"
+	dto2 "github.com/mandarine-io/Backend/internal/api/service/resource/dto"
+	"github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/storage/s3"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -28,6 +27,8 @@ func NewHandler(svc *recourceSvc.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+	log.Debug().Msg("register resource routes")
+
 	router.GET("v0/resources/:objectId", h.DownloadResource)
 
 	router.POST(
@@ -62,6 +63,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/resources/one [post]
 func (h *Handler) UploadResource(ctx *gin.Context) {
+	log.Debug().Msg("handle upload resource")
+
 	var req dto2.UploadResourceInput
 	if err := ctx.ShouldBind(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, ErrResourceNotUploaded)
@@ -98,6 +101,8 @@ func (h *Handler) UploadResource(ctx *gin.Context) {
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/resources/many [post]
 func (h *Handler) UploadResources(ctx *gin.Context) {
+	log.Debug().Msg("handle upload resources")
+
 	var req dto2.UploadResourcesInput
 	if err := ctx.ShouldBind(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, ErrResourceNotUploaded)
@@ -126,6 +131,8 @@ func (h *Handler) UploadResources(ctx *gin.Context) {
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/resources/{objectId} [get]
 func (h *Handler) DownloadResource(ctx *gin.Context) {
+	log.Debug().Msg("handle download resource")
+
 	objectId := ctx.Param("objectId")
 
 	data, err := h.svc.DownloadResource(ctx, objectId)
@@ -135,7 +142,7 @@ func (h *Handler) DownloadResource(ctx *gin.Context) {
 		}
 		err := data.Reader.Close()
 		if err != nil {
-			slog.Warn("Get resource error: File close error", logging.ErrorAttr(err))
+			log.Warn().Stack().Err(err).Msg("failed to close file")
 		}
 	}()
 	if err != nil {

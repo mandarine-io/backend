@@ -4,21 +4,19 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	cache2 "github.com/mandarine-io/Backend/internal/api/helper/cache"
+	"github.com/mandarine-io/Backend/internal/api/helper/random"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/mandarine-io/Backend/internal/api/service/account/dto"
+	"github.com/mandarine-io/Backend/internal/api/service/account/mapper"
+	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/smtp"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	"github.com/mandarine-io/Backend/pkg/template"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"log/slog"
-	"mandarine/internal/api/config"
-	cache2 "mandarine/internal/api/helper/cache"
-	"mandarine/internal/api/helper/random"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/repo"
-	"mandarine/internal/api/service/account/dto"
-	"mandarine/internal/api/service/account/mapper"
-	"mandarine/pkg/logging"
-	dto2 "mandarine/pkg/rest/dto"
-	"mandarine/pkg/rest/middleware"
-	"mandarine/pkg/smtp"
-	"mandarine/pkg/storage/cache/manager"
-	"mandarine/pkg/template"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -66,9 +64,9 @@ func NewService(
 //////////////////// Get account ////////////////////
 
 func (s *Service) GetAccount(ctx context.Context, id uuid.UUID) (dto.AccountOutput, error) {
-	slog.Info("Get account: id=" + id.String())
+	log.Info().Msgf("get account: %s", id.String())
 	factoryErr := func(err error) (dto.AccountOutput, error) {
-		slog.Error("Get account error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to get account")
 		return dto.AccountOutput{}, err
 	}
 
@@ -89,9 +87,9 @@ func (s *Service) GetAccount(ctx context.Context, id uuid.UUID) (dto.AccountOutp
 func (s *Service) UpdateUsername(
 	ctx context.Context, id uuid.UUID, input dto.UpdateUsernameInput,
 ) (dto.AccountOutput, error) {
-	slog.Info("Update username: id=" + id.String())
+	log.Info().Msgf("update username: %s", id.String())
 	factoryErr := func(err error) (dto.AccountOutput, error) {
-		slog.Error("Update username error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to update account")
 		return dto.AccountOutput{}, err
 	}
 
@@ -131,15 +129,15 @@ func (s *Service) UpdateUsername(
 //////////////////// Update email ////////////////////
 
 func (s *Service) UpdateEmail(
-	ctx context.Context, id uuid.UUID, input dto.UpdateEmailInput,
+	ctx context.Context, id uuid.UUID, input dto.UpdateEmailInput, localizer *i18n.Localizer,
 ) (dto.AccountOutput, error) {
-	slog.Info("Update email: id=" + id.String())
+	log.Info().Msgf("update email: %s", id.String())
 	factoryErr := func(err error) (dto.AccountOutput, error) {
-		slog.Error("Update email error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to update account")
 		return dto.AccountOutput{}, err
 	}
 	factoryChildErr := func(err error, childErr error) (dto.AccountOutput, error) {
-		slog.Error("Update email error", logging.ErrorAttr(childErr))
+		log.Error().Stack().Err(childErr).Msg("failed to update account")
 		return dto.AccountOutput{}, err
 	}
 
@@ -186,14 +184,10 @@ func (s *Service) UpdateEmail(
 		return factoryErr(err)
 	}
 
-	// Get localizer
-	localizer := ctx.Value(middleware.LocalizerKey)
+	// Localize email title
 	emailTitle := emailDefaultTitle
 	if localizer != nil {
-		switch localizer := localizer.(type) {
-		case *i18n.Localizer:
-			emailTitle = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "email.email-verify.title"})
-		}
+		emailTitle = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "email.email-verify.title"})
 	}
 
 	// Send mail
@@ -226,9 +220,9 @@ func (s *Service) UpdateEmail(
 //////////////////// Verify email ////////////////////
 
 func (s *Service) VerifyEmail(ctx context.Context, id uuid.UUID, req dto.VerifyEmailInput) error {
-	slog.Info("Verify email")
+	log.Info().Msgf("verify email: %s", id.String())
 	factoryErr := func(err error) error {
-		slog.Error("Verify email error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to verify email")
 		return err
 	}
 
@@ -247,7 +241,7 @@ func (s *Service) VerifyEmail(ctx context.Context, id uuid.UUID, req dto.VerifyE
 		return factoryErr(ErrInvalidOrExpiredOtp)
 	}
 
-	// Get user entity by ID
+	// Get user entity by id
 	userEntity, err := s.userRepo.FindUserById(ctx, id, false)
 	if err != nil {
 		return factoryErr(err)
@@ -271,7 +265,7 @@ func (s *Service) VerifyEmail(ctx context.Context, id uuid.UUID, req dto.VerifyE
 	// Delete cache entry
 	err = s.cacheManager.Delete(ctx, cache2.CreateCacheKey(emailVerifyCachePrefix, req.Email))
 	if err != nil {
-		slog.Warn("Verify email error", logging.ErrorAttr(err))
+		log.Warn().Stack().Err(err).Msg("failed to delete cache entry")
 	}
 
 	return nil
@@ -280,9 +274,9 @@ func (s *Service) VerifyEmail(ctx context.Context, id uuid.UUID, req dto.VerifyE
 //////////////////// Set password ////////////////////
 
 func (s *Service) SetPassword(ctx context.Context, id uuid.UUID, input dto.SetPasswordInput) error {
-	slog.Info("Set password: id=" + id.String())
+	log.Info().Msgf("set password: %s", id.String())
 	factoryErr := func(err error) error {
-		slog.Error("Set password error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to set password")
 		return err
 	}
 
@@ -319,9 +313,9 @@ func (s *Service) SetPassword(ctx context.Context, id uuid.UUID, input dto.SetPa
 //////////////////// Update password ////////////////////
 
 func (s *Service) UpdatePassword(ctx context.Context, id uuid.UUID, input dto.UpdatePasswordInput) error {
-	slog.Info("Update password: id=" + id.String())
+	log.Info().Msgf("update password: %s", id.String())
 	factoryErr := func(err error) error {
-		slog.Error("Update password error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to update password")
 		return err
 	}
 
@@ -358,9 +352,9 @@ func (s *Service) UpdatePassword(ctx context.Context, id uuid.UUID, input dto.Up
 //////////////////// Restore account ////////////////////
 
 func (s *Service) RestoreAccount(ctx context.Context, id uuid.UUID) (dto.AccountOutput, error) {
-	slog.Info("Restore account: id=" + id.String())
+	log.Info().Msgf("restore account: %s", id.String())
 	factoryErr := func(err error) (dto.AccountOutput, error) {
-		slog.Error("Restore account error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to restore account")
 		return dto.AccountOutput{}, err
 	}
 
@@ -382,8 +376,7 @@ func (s *Service) RestoreAccount(ctx context.Context, id uuid.UUID) (dto.Account
 	userEntity.DeletedAt = nil
 	userEntity, err = s.userRepo.UpdateUser(ctx, userEntity)
 	if err != nil {
-		slog.Error("Restore account error", logging.ErrorAttr(err))
-		return dto.AccountOutput{}, err
+		return factoryErr(err)
 	}
 
 	return mapper.MapUserEntityToAccountResponse(userEntity), nil
@@ -392,9 +385,9 @@ func (s *Service) RestoreAccount(ctx context.Context, id uuid.UUID) (dto.Account
 //////////////////// Delete account ////////////////////
 
 func (s *Service) DeleteAccount(ctx context.Context, id uuid.UUID) error {
-	slog.Info("Delete account: id=" + id.String())
+	log.Info().Msgf("delete account: %s", id.String())
 	factoryErr := func(err error) error {
-		slog.Error("Delete account error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to delete account")
 		return err
 	}
 

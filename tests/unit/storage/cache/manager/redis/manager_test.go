@@ -1,10 +1,11 @@
-package manager_test
+package redis_test
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/go-redis/redismock/v9"
-	"mandarine/pkg/storage/cache/manager"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager/redis"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ func Test_CacheManager_Redis(t *testing.T) {
 	ctx := context.Background()
 	client, mock := redismock.NewClientMock()
 	ttl := time.Minute
-	cacheManager := manager.NewRedisCacheManager(client, ttl)
+	cacheManager := redis.NewCacheManager(client, ttl)
 
 	t.Run(
 		"set and get value", func(t *testing.T) {

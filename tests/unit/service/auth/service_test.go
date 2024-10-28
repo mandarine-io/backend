@@ -5,25 +5,25 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/cache"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	mock2 "github.com/mandarine-io/Backend/internal/api/persistence/repo/mock"
+	"github.com/mandarine-io/Backend/internal/api/service/auth"
+	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
+	"github.com/mandarine-io/Backend/pkg/oauth"
+	mock3 "github.com/mandarine-io/Backend/pkg/oauth/mock"
+	mock5 "github.com/mandarine-io/Backend/pkg/smtp/mock"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	mock4 "github.com/mandarine-io/Backend/pkg/storage/cache/manager/mock"
+	mock6 "github.com/mandarine-io/Backend/pkg/template/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"log/slog"
-	"mandarine/internal/api/config"
-	"mandarine/internal/api/helper/cache"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/persistence/repo"
-	mock2 "mandarine/internal/api/persistence/repo/mock"
-	"mandarine/internal/api/service/auth"
-	"mandarine/internal/api/service/auth/dto"
-	"mandarine/pkg/oauth"
-	mock3 "mandarine/pkg/oauth/mock"
-	mock5 "mandarine/pkg/smtp/mock"
-	"mandarine/pkg/storage/cache/manager"
-	mock4 "mandarine/pkg/storage/cache/manager/mock"
-	mock6 "mandarine/pkg/template/mock"
 	"os"
 	"strings"
 	"testing"
@@ -288,7 +288,7 @@ func Test_AuthService_Register(t *testing.T) {
 		templateEngine.On("Render", mock.Anything, mock.Anything).Once().Return("email content", nil)
 		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email, []string(nil)).Once().Return(nil)
 
-		err := svc.Register(ctx, req)
+		err := svc.Register(ctx, req, nil)
 
 		assert.NoError(t, err)
 	})
@@ -302,7 +302,7 @@ func Test_AuthService_Register(t *testing.T) {
 
 		userRepo.On("ExistsUserByUsernameOrEmail", mock.Anything, req.Username, req.Email).Once().Return(true, nil)
 
-		err := svc.Register(ctx, req)
+		err := svc.Register(ctx, req, nil)
 
 		assert.Error(t, err)
 		assert.Equal(t, auth.ErrDuplicateUser, err)
@@ -317,7 +317,7 @@ func Test_AuthService_Register(t *testing.T) {
 
 		userRepo.On("ExistsUserByUsernameOrEmail", mock.Anything, req.Username, req.Email).Once().Return(false, nil)
 
-		err := svc.Register(ctx, req)
+		err := svc.Register(ctx, req, nil)
 
 		assert.Error(t, err)
 		assert.Equal(t, bcrypt.ErrPasswordTooLong, err)
@@ -333,7 +333,7 @@ func Test_AuthService_Register(t *testing.T) {
 		userRepo.On("ExistsUserByUsernameOrEmail", mock.Anything, req.Username, req.Email).Once().Return(false, nil)
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once().Return(errors.New("cache error"))
 
-		err := svc.Register(ctx, req)
+		err := svc.Register(ctx, req, nil)
 
 		assert.Error(t, err)
 		assert.Equal(t, "cache error", err.Error())
@@ -351,7 +351,7 @@ func Test_AuthService_Register(t *testing.T) {
 		templateEngine.On("Render", mock.Anything, mock.Anything).Once().Return("email content", nil)
 		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email, []string(nil)).Once().Return(errors.New("smtp error"))
 
-		err := svc.Register(ctx, req)
+		err := svc.Register(ctx, req, nil)
 
 		assert.Error(t, err)
 		assert.Equal(t, auth.ErrSendEmail, err)
@@ -561,7 +561,7 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 		templateEngine.On("Render", "recovery-password", mock.Anything).Return("email content", nil).Once()
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-		err := svc.RecoveryPassword(context.Background(), input)
+		err := svc.RecoveryPassword(context.Background(), input, nil)
 
 		assert.NoError(t, err)
 	})
@@ -569,7 +569,7 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 	t.Run("UserNotFound", func(t *testing.T) {
 		userRepo.On("FindUserByEmail", mock.Anything, input.Email, false).Return(nil, nil).Once()
 
-		err := svc.RecoveryPassword(context.Background(), input)
+		err := svc.RecoveryPassword(context.Background(), input, nil)
 
 		assert.Equal(t, auth.ErrUserNotFound, err)
 	})
@@ -580,7 +580,7 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 		userRepo.On("FindUserByEmail", mock.Anything, input.Email, false).Return(userEntity, nil).Once()
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("cache error")).Once()
 
-		err := svc.RecoveryPassword(context.Background(), input)
+		err := svc.RecoveryPassword(context.Background(), input, nil)
 
 		assert.Error(t, err)
 	})
@@ -593,7 +593,7 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 		templateEngine.On("Render", "recovery-password", mock.Anything).Return("email content", nil).Once()
 		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, input.Email, []string(nil)).Return(errors.New("smtp error")).Once()
 
-		err := svc.RecoveryPassword(context.Background(), input)
+		err := svc.RecoveryPassword(context.Background(), input, nil)
 
 		assert.Error(t, err)
 	})

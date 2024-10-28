@@ -2,9 +2,9 @@ package yandex
 
 import (
 	"encoding/json"
+	"github.com/mandarine-io/Backend/pkg/oauth"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/yandex"
-	"mandarine/pkg/oauth"
 )
 
 const (

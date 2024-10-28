@@ -5,13 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	dto2 "github.com/mandarine-io/Backend/internal/api/service/resource/dto"
+	dto3 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/storage/s3"
+	"github.com/mandarine-io/Backend/pkg/storage/s3/dto"
+	"github.com/rs/zerolog/log"
 	"io"
-	"log/slog"
-	dto2 "mandarine/internal/api/service/resource/dto"
-	"mandarine/pkg/logging"
-	dto3 "mandarine/pkg/rest/dto"
-	"mandarine/pkg/storage/s3"
-	"mandarine/pkg/storage/s3/dto"
 	"mime/multipart"
 	"os"
 )
@@ -33,9 +32,9 @@ func NewService(minioClient s3.Client) *Service {
 ////////// Upload resource //////////
 
 func (s *Service) UploadResource(ctx context.Context, input *dto2.UploadResourceInput) (dto2.UploadResourceOutput, error) {
-	slog.Info("Upload resource")
+	log.Info().Msg("upload resource")
 	factoryErr := func(err error) (dto2.UploadResourceOutput, error) {
-		slog.Error("Upload resource error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to upload resource")
 		return dto2.UploadResourceOutput{}, err
 	}
 
@@ -54,7 +53,7 @@ func (s *Service) UploadResource(ctx context.Context, input *dto2.UploadResource
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			slog.Warn("Upload resource error: File close error", logging.ErrorAttr(err))
+			log.Warn().Stack().Err(err).Msg("failed to close file")
 		}
 	}()
 
@@ -84,9 +83,9 @@ func (s *Service) UploadResource(ctx context.Context, input *dto2.UploadResource
 }
 
 func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourcesInput) (dto2.UploadResourcesOutput, error) {
-	slog.Info("Upload resource")
+	log.Info().Msg("upload resources")
 	factoryErr := func(err error) (dto2.UploadResourcesOutput, error) {
-		slog.Error("Upload resource error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to upload resources")
 		return dto2.UploadResourcesOutput{}, err
 	}
 
@@ -98,7 +97,7 @@ func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourc
 		for _, fileData := range fileDatas {
 			err := fileData.Reader.(multipart.File).Close()
 			if err != nil {
-				slog.Warn("Upload resource error: File close error", logging.ErrorAttr(err))
+				log.Warn().Stack().Err(err).Msg("failed to close file")
 			}
 		}
 	}()
@@ -143,7 +142,7 @@ func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourc
 	data := make(map[string]dto2.UploadResourceOutput)
 	for fileName, createDto := range createDtoMap {
 		if createDto.Error != nil {
-			slog.Error("Upload resource error", logging.ErrorAttr(createDto.Error))
+			log.Error().Stack().Err(createDto.Error).Msg("failed to upload resource")
 			continue
 		}
 		data[fileName] = dto2.UploadResourceOutput{
@@ -157,7 +156,7 @@ func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourc
 ////////// Download resource //////////
 
 func (s *Service) DownloadResource(ctx context.Context, objectID string) (*dto.FileData, error) {
-	slog.Info("Download resource")
+	log.Info().Msg("download resource")
 	getDto := s.minioClient.GetOne(ctx, objectID)
 	return getDto.Data, getDto.Error
 }
@@ -165,6 +164,9 @@ func (s *Service) DownloadResource(ctx context.Context, objectID string) (*dto.F
 ////////// Helpers //////////
 
 func calculateHash(f multipart.File) (string, error) {
+
+	// Create temp file
+	log.Debug().Msg("create temp file")
 	tmpFile, err := os.CreateTemp("", "tmp_")
 	if err != nil {
 		return "", err
@@ -172,10 +174,12 @@ func calculateHash(f multipart.File) (string, error) {
 	defer func() {
 		err := os.Remove(tmpFile.Name())
 		if err != nil {
-			slog.Warn("Upload resource error: File remove error", logging.ErrorAttr(err))
+			log.Warn().Stack().Err(err).Msg("failed to remove temp file")
 		}
 	}()
 
+	// Calculate hash
+	log.Debug().Msg("calculate hash during write to temp file")
 	h := sha256.New()
 	_, err = io.Copy(h, f)
 	if err != nil {

@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func SecurityHeadersMiddleware() gin.HandlerFunc {
+	log.Debug().Msg("setup security headers middleware")
 	return func(c *gin.Context) {
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("X-XSS-Protection", "1; mode=block")

@@ -6,10 +6,10 @@ import (
 	"crypto/rand"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
 	"github.com/stretchr/testify/assert"
-	"mandarine/internal/api/config"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/model"
 	"testing"
 	"time"
 )

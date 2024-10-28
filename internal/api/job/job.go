@@ -1,8 +1,8 @@
 package job
 
 import (
-	"mandarine/internal/api/registry"
-	"mandarine/pkg/scheduler"
+	"github.com/mandarine-io/Backend/internal/api/registry"
+	"github.com/mandarine-io/Backend/pkg/scheduler"
 )
 
 func SetupJobs(container *registry.Container) []scheduler.Job {

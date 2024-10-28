@@ -2,7 +2,7 @@ package mock
 
 import (
 	"context"
-	"mandarine/pkg/storage/s3/dto"
+	"github.com/mandarine-io/Backend/pkg/storage/s3/dto"
 
 	"github.com/stretchr/testify/mock"
 )

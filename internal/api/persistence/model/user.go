@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"time"
 )
@@ -11,7 +12,7 @@ type UserEntity struct {
 	Username        string     `gorm:"column:username;type:varchar(255);not null;unique"`
 	Email           string     `gorm:"column:email;type:text;not null;unique"`
 	Password        string     `gorm:"column:password;type:text;not null"`
-	Role            RoleEntity `gorm:"foreignkey:RoleID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Role            RoleEntity `gorm:"foreignkey:RoleID;references:id;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	RoleID          int        `gorm:"column:role_id;not null"`
 	IsEnabled       bool       `gorm:"column:is_enabled;not null;default:true;index:is_enabled_users_index"`
 	IsEmailVerified bool       `gorm:"column:is_email_verified;not null;default:false;index:is_email_verified_users_index"`
@@ -37,7 +38,10 @@ func (u *UserEntity) BeforeCreate(tx *gorm.DB) error {
 	}
 
 	if userCount == 0 {
+		log.Debug().Msgf("set role %s for user", RoleAdmin)
 		return tx.Model(&RoleEntity{}).Where("name = ?", RoleAdmin).First(&u.Role).Error
 	}
+
+	log.Debug().Msgf("set role %s for user", RoleUser)
 	return tx.Model(&RoleEntity{}).Where("name = ?", RoleUser).First(&u.Role).Error
 }

@@ -10,17 +10,19 @@ import (
 
 func MustLoadConfig(filePath string, envFilePath string, cfg IConfig) {
 	if envFilePath != "" {
+		log.Debug().Msg("loading env vars from dotenv file")
 		_ = godotenv.Load(envFilePath)
 	}
 	if filePath != "" {
+		log.Debug().Msg("loading config from file and env vars")
 		mustParseYamlAndEnv(filePath, cfg)
 	}
 	mustParseSecrets(cfg)
 
+	log.Debug().Msg("validating config")
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	if err := validate.Struct(cfg); err != nil {
-		slog.Error("Config validation error:", "error", err)
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to validate config")
 	}
 }
 
@@ -48,7 +50,6 @@ func mustParseSpecificSecret(item SecretConfigInfo) {
 
 func mustParseYamlAndEnv(filePath string, cfg IConfig) {
 	if err := cleanenv.ReadConfig(filePath, cfg); err != nil {
-		slog.Error("Configuration and environment variables reading error", "error", err)
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to read config file and env vars")
 	}
 }

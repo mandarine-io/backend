@@ -2,8 +2,8 @@ package mock
 
 import (
 	"context"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
 	"github.com/stretchr/testify/mock"
-	"mandarine/internal/api/persistence/model"
 )
 
 type BannedTokenRepositoryMock struct {

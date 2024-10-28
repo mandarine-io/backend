@@ -2,10 +2,11 @@ package gorm
 
 import (
 	"context"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/persistence/repo"
 	"time"
 )
 
@@ -18,6 +19,7 @@ func NewBannedTokenRepository(db *gorm.DB) repo.BannedTokenRepository {
 }
 
 func (b *bannedTokenRepository) CreateOrUpdateBannedToken(ctx context.Context, bannedToken *model.BannedTokenEntity) (*model.BannedTokenEntity, error) {
+	log.Debug().Msg("create or update banned token")
 	b.db.WithContext(ctx).Clauses(clause.OnConflict{
 		UpdateAll: true,
 	}).Create(bannedToken)
@@ -26,6 +28,7 @@ func (b *bannedTokenRepository) CreateOrUpdateBannedToken(ctx context.Context, b
 }
 
 func (b *bannedTokenRepository) ExistsBannedTokenByJTI(ctx context.Context, jti string) (bool, error) {
+	log.Debug().Msg("exists banned token by jti")
 	var exists bool
 	err := b.db.WithContext(ctx).
 		Model(&model.BannedTokenEntity{}).
@@ -38,6 +41,7 @@ func (b *bannedTokenRepository) ExistsBannedTokenByJTI(ctx context.Context, jti 
 }
 
 func (b *bannedTokenRepository) DeleteExpiredBannedToken(ctx context.Context) error {
+	log.Debug().Msg("delete expired banned token")
 	return b.db.WithContext(ctx).Scopes(expiredTokens).Delete(&model.BannedTokenEntity{}).Error
 }
 

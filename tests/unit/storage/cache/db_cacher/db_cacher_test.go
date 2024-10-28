@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-gorm/caches/v4"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/db_cacher"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	mock2 "github.com/mandarine-io/Backend/pkg/storage/cache/manager/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"mandarine/pkg/storage/cache/db_cacher"
-	"mandarine/pkg/storage/cache/manager"
-	mock2 "mandarine/pkg/storage/cache/manager/mock"
 	"testing"
 )
 

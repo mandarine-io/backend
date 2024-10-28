@@ -1,15 +1,14 @@
 package rest
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"log/slog"
-	docs "mandarine/docs/api"
-	httphelper "mandarine/internal/api/helper/http"
-	"mandarine/internal/api/registry"
-	"mandarine/internal/api/rest/handler"
-	"mandarine/pkg/rest/dto"
-	"mandarine/pkg/rest/middleware"
+	docs "github.com/mandarine-io/Backend/docs/api"
+	httphelper "github.com/mandarine-io/Backend/internal/api/helper/http"
+	"github.com/mandarine-io/Backend/internal/api/registry"
+	"github.com/mandarine-io/Backend/internal/api/rest/handler"
+	"github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/rest/middleware"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"sort"
 )
@@ -35,6 +34,8 @@ type RequireRoleMiddlewareFactory func(...string) gin.HandlerFunc
 //	@tag.description			API for authentication and authorization
 //	@tag.name					Resource API
 //	@tag.description			API for resource management
+//	@tag.name					Websocket API
+//	@tag.description			API for websocket connection
 //	@tag.name					Metrics API
 //	@tag.description			API for getting metrics
 //	@tag.name					Swagger API
@@ -52,19 +53,24 @@ func SetupRouter(container *registry.Container) *gin.Engine {
 	docs.SwaggerInfo.Version = container.Config.Server.Version
 
 	// Create router
+	log.Debug().Msg("create router")
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
 	// Setup method not allowed and route not found
+	log.Debug().Msg("setup method not allowed and route not found")
 	router.HandleMethodNotAllowed = true
 	router.NoMethod(func(ctx *gin.Context) {
+		log.Debug().Msg("handle method not allowed")
 		_ = ctx.AbortWithError(http.StatusMethodNotAllowed, ErrMethodNotAllowed)
 	})
 	router.NoRoute(func(ctx *gin.Context) {
+		log.Debug().Msg("handle route not found")
 		_ = ctx.AbortWithError(http.StatusNotFound, ErrRouteNotFound)
 	})
 
 	// Setup middlewares
+	log.Debug().Msg("setup middlewares")
 	router.Use(middleware.LoggerMiddleware())
 	router.Use(middleware.LocaleMiddleware(container.Bundle))
 	router.Use(middleware.ErrorMiddleware())
@@ -76,6 +82,7 @@ func SetupRouter(container *registry.Container) *gin.Engine {
 	}
 
 	// Register routes
+	log.Debug().Msg("register routes")
 	middlewares := handler.RouteMiddlewares{
 		Auth:        middleware.JWTMiddleware(container.Config.Security.JWT, container.Repositories.BannedToken),
 		RoleFactory: middleware.RoleMiddleware,
@@ -94,7 +101,7 @@ func SetupRouter(container *registry.Container) *gin.Engine {
 		},
 	)
 	for _, routeInfo := range routes {
-		slog.Info(fmt.Sprintf("Register route: %6s %s", routeInfo.Method, routeInfo.Path))
+		log.Info().Msgf("registered route: %6s %s", routeInfo.Method, routeInfo.Path)
 	}
 
 	return router

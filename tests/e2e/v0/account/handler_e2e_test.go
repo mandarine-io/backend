@@ -7,16 +7,16 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-testfixtures/testfixtures/v3"
 	"github.com/google/uuid"
+	appconfig "github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/rest"
+	"github.com/mandarine-io/Backend/internal/api/service/account/dto"
+	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	validator3 "github.com/mandarine-io/Backend/pkg/rest/validator"
+	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"
 	"io"
-	appconfig "mandarine/internal/api/config"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/rest"
-	"mandarine/internal/api/service/account/dto"
-	dto2 "mandarine/pkg/rest/dto"
-	validator3 "mandarine/pkg/rest/validator"
-	"mandarine/tests/e2e"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -91,8 +91,9 @@ func TestMain(m *testing.M) {
 			Path: pwd + "/../../../../migrations",
 		},
 		Logger: appconfig.LoggerConfig{
+			Level: "debug",
 			Console: appconfig.ConsoleLoggerConfig{
-				Level:    "debug",
+				Enable:   true,
 				Encoding: "text",
 			},
 			File: appconfig.FileLoggerConfig{

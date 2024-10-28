@@ -129,18 +129,18 @@ type MigrationConfig struct {
 }
 
 type LoggerConfig struct {
+	Level   string              `yaml:"level" env-description:"Logger level" env:"MANDARINE_LOGGER__LEVEL" env-default:"info" validate:"required"`
 	Console ConsoleLoggerConfig `yaml:"console"`
 	File    FileLoggerConfig    `yaml:"file"`
 }
 
 type ConsoleLoggerConfig struct {
-	Level    string `yaml:"level" env-description:"Console logger level" env:"MANDARINE_LOGGER__CONSOLE_LEVEL" env-default:"info" validate:"required"`
-	Encoding string `yaml:"encoding" env-description:"Console logger encoding" env:"MANDARINE_LOGGER__CONSOLE_ENCODING" env-default:"text" validate:"required"`
+	Enable   bool   `yaml:"enable" env-description:"Console logger is enabled" env:"MANDARINE_LOGGER__CONSOLE_ENABLE" env-default:"false"`
+	Encoding string `yaml:"encoding" env-description:"Console logger encoding" env:"MANDARINE_LOGGER__CONSOLE_ENCODING" env-default:"text" validate:"required_with=Enable"`
 }
 
 type FileLoggerConfig struct {
 	Enable  bool   `yaml:"enable" env-description:"File logger is enabled" env:"MANDARINE_LOGGER__FILE_ENABLE" env-default:"false"`
-	Level   string `yaml:"level" env-description:"File logger level" env:"MANDARINE_LOGGER__FILE_LEVEL" env-default:"info" validate:"required_with=Enable"`
 	DirPath string `yaml:"dir_path" env-description:"Log directory path" env:"MANDARINE_LOGGER__FILE_DIR_PATH" env-default:"logs" validate:"required_with=Enable"`
 	MaxSize int    `yaml:"max_size" env-description:"Log file max size (MB)" env:"MANDARINE_LOGGER__FILE_MAX_SIZE" env-default:"100" validate:"required_with=Enable,min=0"`
 	MaxAge  int    `yaml:"max_age" env-description:"Log file max age (days)" env:"MANDARINE_LOGGER__FILE_MAX_AGE" env-default:"30" validate:"required_with=Enable,min=0"`

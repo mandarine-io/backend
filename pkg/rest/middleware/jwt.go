@@ -3,12 +3,11 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"log/slog"
-	"mandarine/internal/api/config"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/repo"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
 	"time"
@@ -39,7 +38,11 @@ type AuthUser struct {
 func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		factoryErr := func(err error) {
-			slog.Error("JWT authentication error", logging.ErrorAttr(err))
+			log.Error().Stack().Err(err).Msg("failed to authenticate user")
+			_ = c.AbortWithError(http.StatusUnauthorized, err)
+		}
+		factoryChildErr := func(err error, childErr error) {
+			log.Error().Stack().Err(childErr).Msg("failed to authenticate user")
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 		}
 
@@ -53,14 +56,14 @@ func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenReposit
 		accessToken, _ := strings.CutPrefix(bearerHeader, "Bearer ")
 		token, err := security.DecodeAndValidateJwtToken(accessToken, cfg.Secret)
 		if err != nil {
-			factoryErr(err)
+			factoryChildErr(ErrInvalidJwtToken, err)
 			return
 		}
 
 		// Check claims
 		claims, err := security.GetClaimsFromJwtToken(token)
 		if err != nil {
-			factoryErr(err)
+			factoryChildErr(ErrInvalidJwtToken, err)
 			return
 		}
 		sub, err := claims.GetSubject()
@@ -141,15 +144,15 @@ func JWTMiddleware(cfg config.JWTConfig, bannedTokenRepo repo.BannedTokenReposit
 }
 
 func GetAuthUser(ctx *gin.Context) (AuthUser, error) {
+	log.Debug().Msg("get authenticated user from gin context")
 	authUserAny, ok := ctx.Get(AuthUserKey)
 	if !ok {
-		slog.Error("Authenticated user getting error", logging.ErrorAttr(ErrUserNotFound))
 		return AuthUser{}, ErrUserNotFound
 	}
 
+	log.Debug().Msgf("check authenticated user type: %T", authUserAny)
 	authUser, ok := authUserAny.(AuthUser)
 	if !ok {
-		slog.Error("Authenticated user getting error", logging.ErrorAttr(ErrUserNotFound))
 		return AuthUser{}, ErrUserNotFound
 	}
 

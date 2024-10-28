@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	appconfig "github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/rest"
+	"github.com/mandarine-io/Backend/internal/api/service/resource/dto"
+	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	dto3 "github.com/mandarine-io/Backend/pkg/storage/s3/dto"
+	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
-	appconfig "mandarine/internal/api/config"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/rest"
-	"mandarine/internal/api/service/resource/dto"
-	dto2 "mandarine/pkg/rest/dto"
-	dto3 "mandarine/pkg/storage/s3/dto"
-	"mandarine/tests/e2e"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -87,8 +87,9 @@ func TestMain(m *testing.M) {
 			Path: pwd + "/../../../../migrations",
 		},
 		Logger: appconfig.LoggerConfig{
+			Level: "debug",
 			Console: appconfig.ConsoleLoggerConfig{
-				Level:    "debug",
+				Enable:   true,
 				Encoding: "text",
 			},
 			File: appconfig.FileLoggerConfig{

@@ -3,12 +3,14 @@ package auth
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"mandarine/internal/api/config"
-	"mandarine/internal/api/rest/handler"
-	"mandarine/internal/api/service/auth"
-	"mandarine/internal/api/service/auth/dto"
-	dto2 "mandarine/pkg/rest/dto"
-	"mandarine/pkg/rest/middleware"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/rest/handler"
+	"github.com/mandarine-io/Backend/internal/api/service/auth"
+	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
+	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/rest/middleware"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -38,6 +40,8 @@ func NewHandler(svc *auth.Service, cfg *config.Config) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+	log.Debug().Msg("register auth routes")
+
 	router.POST("v0/auth/login", h.Login)
 	router.GET("v0/auth/refresh", h.RefreshTokens)
 	router.GET("v0/auth/social/:provider", h.SocialLogin)
@@ -68,6 +72,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/auth/login [post]
 func (h *Handler) Login(ctx *gin.Context) {
+	log.Debug().Msg("handle login")
+
 	req := dto.LoginInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -109,6 +115,8 @@ func (h *Handler) Login(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/refresh [get]
 func (h *Handler) RefreshTokens(ctx *gin.Context) {
+	log.Debug().Msg("handle refresh tokens")
+
 	refreshToken, err := ctx.Cookie(refreshTokenCookieName)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, ErrSessionExpired)
@@ -148,6 +156,8 @@ func (h *Handler) RefreshTokens(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/logout [get]
 func (h *Handler) Logout(c *gin.Context) {
+	log.Debug().Msg("handle logout")
+
 	principal, err := middleware.GetAuthUser(c)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusUnauthorized, err)
@@ -178,13 +188,18 @@ func (h *Handler) Logout(c *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/register [post]
 func (h *Handler) Register(ctx *gin.Context) {
+	log.Debug().Msg("handle register")
+
 	req := dto.RegisterInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if err := h.svc.Register(ctx, req); err != nil {
+	log.Debug().Msg("get localizer")
+	localizer := ctx.Value(middleware.LocalizerKey).(*i18n.Localizer)
+
+	if err := h.svc.Register(ctx, req, localizer); err != nil {
 		switch {
 		case errors.Is(err, auth.ErrDuplicateUser):
 			_ = ctx.AbortWithError(http.StatusConflict, err)
@@ -214,6 +229,8 @@ func (h *Handler) Register(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/register/confirm [post]
 func (h *Handler) RegisterConfirm(ctx *gin.Context) {
+	log.Debug().Msg("handle register confirm")
+
 	req := dto.RegisterConfirmInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -250,13 +267,18 @@ func (h *Handler) RegisterConfirm(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/recovery-password [post]
 func (h *Handler) RecoveryPassword(ctx *gin.Context) {
+	log.Debug().Msg("handle recovery password")
+
 	req := dto.RecoveryPasswordInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if err := h.svc.RecoveryPassword(ctx, req); err != nil {
+	log.Debug().Msg("get localizer")
+	localizer := ctx.Value(middleware.LocalizerKey).(*i18n.Localizer)
+
+	if err := h.svc.RecoveryPassword(ctx, req, localizer); err != nil {
 		switch {
 		case errors.Is(err, auth.ErrUserNotFound):
 			_ = ctx.AbortWithError(http.StatusNotFound, err)
@@ -285,6 +307,8 @@ func (h *Handler) RecoveryPassword(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/recovery-password/verify [post]
 func (h *Handler) VerifyRecoveryCode(ctx *gin.Context) {
+	log.Debug().Msg("handle verify recovery code")
+
 	req := dto.VerifyRecoveryCodeInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -319,6 +343,8 @@ func (h *Handler) VerifyRecoveryCode(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/reset-password [post]
 func (h *Handler) ResetPassword(ctx *gin.Context) {
+	log.Debug().Msg("handle reset password")
+
 	req := dto.ResetPasswordInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -356,6 +382,8 @@ func (h *Handler) ResetPassword(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/auth/social/{provider} [get]
 func (h *Handler) SocialLogin(ctx *gin.Context) {
+	log.Debug().Msg("handle social login")
+
 	// Get provider
 	provider := ctx.Param("provider")
 
@@ -401,6 +429,8 @@ func (h *Handler) SocialLogin(ctx *gin.Context) {
 //	@Failure		500			{object}	dto.ErrorResponse
 //	@Router			/v0/auth/social/{provider}/callback [post]
 func (h *Handler) SocialLoginCallback(ctx *gin.Context) {
+	log.Debug().Msg("handle social login callback")
+
 	// Get provider
 	provider := ctx.Param("provider")
 

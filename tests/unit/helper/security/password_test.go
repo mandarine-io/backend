@@ -1,7 +1,7 @@
 package security_test
 
 import (
-	"mandarine/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

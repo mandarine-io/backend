@@ -3,7 +3,7 @@ package resource
 import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"log/slog"
+	"github.com/rs/zerolog/log"
 )
 
 type RedisConfig struct {
@@ -26,7 +26,7 @@ func MustConnectRedis(cfg *RedisConfig) *redis.Client {
 		},
 	)
 
-	slog.Info("Connected to Redis host " + addr)
+	log.Info().Msgf("connected to redis host %s", addr)
 
 	return redisClient
 }

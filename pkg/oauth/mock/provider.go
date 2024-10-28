@@ -2,9 +2,9 @@ package mock
 
 import (
 	"context"
+	"github.com/mandarine-io/Backend/pkg/oauth"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
-	"mandarine/pkg/oauth"
 )
 
 type OAuthProviderMock struct {

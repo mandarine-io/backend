@@ -2,8 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"github.com/mandarine-io/Backend/internal/api/config"
 	"github.com/spf13/pflag"
-	"mandarine/internal/api/config"
 	"os"
 
 	"github.com/spf13/viper"

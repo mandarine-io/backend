@@ -3,10 +3,12 @@ package account
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"mandarine/internal/api/rest/handler"
-	"mandarine/internal/api/service/account"
-	"mandarine/internal/api/service/account/dto"
-	"mandarine/pkg/rest/middleware"
+	"github.com/mandarine-io/Backend/internal/api/rest/handler"
+	"github.com/mandarine-io/Backend/internal/api/service/account"
+	"github.com/mandarine-io/Backend/internal/api/service/account/dto"
+	"github.com/mandarine-io/Backend/pkg/rest/middleware"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -19,6 +21,8 @@ func NewHandler(svc *account.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+	log.Debug().Msg("register account routes")
+
 	router.GET(
 		"v0/account",
 		middlewares.Auth,
@@ -85,6 +89,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account [get]
 func (h *Handler) GetAccount(ctx *gin.Context) {
+	log.Debug().Msg("handle get account")
 	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
@@ -123,6 +128,8 @@ func (h *Handler) GetAccount(ctx *gin.Context) {
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/account/username [patch]
 func (h *Handler) UpdateUsername(ctx *gin.Context) {
+	log.Debug().Msg("handle update username")
+
 	req := dto.UpdateUsernameInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -170,6 +177,8 @@ func (h *Handler) UpdateUsername(ctx *gin.Context) {
 //	@Failure		500		{object}	dto.ErrorResponse
 //	@Router			/v0/account/email [patch]
 func (h *Handler) UpdateEmail(ctx *gin.Context) {
+	log.Debug().Msg("handle update email")
+
 	req := dto.UpdateEmailInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -182,7 +191,10 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.svc.UpdateEmail(ctx, principal.ID, req)
+	log.Debug().Msg("get localizer")
+	localizer := ctx.Value(middleware.LocalizerKey).(*i18n.Localizer)
+
+	res, err := h.svc.UpdateEmail(ctx, principal.ID, req, localizer)
 	if err != nil {
 		switch {
 		case errors.Is(err, account.ErrUserNotFound):
@@ -221,6 +233,8 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/email/verify [post]
 func (h *Handler) VerifyEmail(ctx *gin.Context) {
+	log.Debug().Msg("handle verify email")
+
 	req := dto.VerifyEmailInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -266,6 +280,8 @@ func (h *Handler) VerifyEmail(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/password [post]
 func (h *Handler) SetPassword(ctx *gin.Context) {
+	log.Debug().Msg("handle set password")
+
 	req := dto.SetPasswordInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -310,6 +326,8 @@ func (h *Handler) SetPassword(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/password [patch]
 func (h *Handler) UpdatePassword(ctx *gin.Context) {
+	log.Debug().Msg("handle update password")
+
 	req := dto.UpdatePasswordInput{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		_ = ctx.AbortWithError(http.StatusBadRequest, err)
@@ -353,6 +371,8 @@ func (h *Handler) UpdatePassword(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account/restore [get]
 func (h *Handler) RestoreAccount(ctx *gin.Context) {
+	log.Debug().Msg("handle restore account")
+
 	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
@@ -391,6 +411,8 @@ func (h *Handler) RestoreAccount(ctx *gin.Context) {
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/v0/account [delete]
 func (h *Handler) DeleteAccount(ctx *gin.Context) {
+	log.Debug().Msg("handle delete account")
+
 	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
 		_ = ctx.AbortWithError(http.StatusUnauthorized, err)

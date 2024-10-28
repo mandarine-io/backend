@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/service/account/dto"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/service/account/dto"
 )
 
 func MapUserEntityToAccountResponse(userEntity *model.UserEntity) dto.AccountOutput {

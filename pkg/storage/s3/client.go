@@ -3,9 +3,10 @@ package s3
 import (
 	"context"
 	"errors"
+	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/storage/s3/dto"
 	"github.com/minio/minio-go/v7"
-	dto2 "mandarine/pkg/rest/dto"
-	"mandarine/pkg/storage/s3/dto"
+	"github.com/rs/zerolog/log"
 	"sync"
 )
 
@@ -36,6 +37,7 @@ func NewClient(minio *minio.Client, bucketName string) Client {
 }
 
 func (c *client) CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateDto {
+	log.Debug().Msg("create one object")
 	if file == nil {
 		return &dto.CreateDto{Error: errors.New("file is nil")}
 	}
@@ -57,6 +59,8 @@ func (c *client) CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateD
 }
 
 func (c *client) CreateMany(ctx context.Context, files []*dto.FileData) map[string]*dto.CreateDto {
+	log.Debug().Msg("create many object")
+
 	type entry struct {
 		filename string
 		dto      *dto.CreateDto
@@ -87,6 +91,8 @@ func (c *client) CreateMany(ctx context.Context, files []*dto.FileData) map[stri
 }
 
 func (c *client) GetOne(ctx context.Context, objectID string) *dto.GetDto {
+	log.Debug().Msg("get one object")
+
 	object, err := c.minio.GetObject(ctx, c.bucketName, objectID, minio.GetObjectOptions{})
 	if err != nil {
 		if errors.As(err, &minio.ErrorResponse{}) && err.(minio.ErrorResponse).Code == "NoSuchKey" {
@@ -117,6 +123,8 @@ func (c *client) GetOne(ctx context.Context, objectID string) *dto.GetDto {
 }
 
 func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*dto.GetDto {
+	log.Debug().Msg("get many object")
+
 	type entry struct {
 		objectID string
 		dto      *dto.GetDto
@@ -147,10 +155,12 @@ func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*dt
 }
 
 func (c *client) DeleteOne(ctx context.Context, objectID string) error {
+	log.Debug().Msg("delete one object")
 	return c.minio.RemoveObject(ctx, c.bucketName, objectID, minio.RemoveObjectOptions{})
 }
 
 func (c *client) DeleteMany(ctx context.Context, objectIDs []string) map[string]error {
+	log.Debug().Msg("delete many object")
 	objectIdCh := make(chan minio.ObjectInfo, len(objectIDs))
 	for _, objectID := range objectIDs {
 		objectIdCh <- minio.ObjectInfo{Key: objectID}

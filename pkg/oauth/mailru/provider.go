@@ -2,9 +2,9 @@ package mailru
 
 import (
 	"encoding/json"
+	"github.com/mandarine-io/Backend/pkg/oauth"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/mailru"
-	"mandarine/pkg/oauth"
 )
 
 const (

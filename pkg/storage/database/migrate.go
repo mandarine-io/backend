@@ -3,22 +3,21 @@ package database
 import (
 	"errors"
 	"fmt"
-	"log/slog"
-	"mandarine/pkg/logging"
-
 	goMigrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type migrateLogger struct{}
 
 func (l *migrateLogger) Printf(format string, v ...interface{}) {
-	slog.Info(fmt.Sprintf(format, v...))
+	log.Info().Msgf(format, v...)
 }
 
 func (l *migrateLogger) Verbose() bool {
-	return false
+	return log.Logger.GetLevel() == zerolog.DebugLevel
 }
 
 func Migrate(dsn string, migrationDir string) error {
@@ -26,15 +25,15 @@ func Migrate(dsn string, migrationDir string) error {
 	if err != nil {
 		return err
 	}
-	defer func(migrate *goMigrate.Migrate) {
+	defer func() {
 		sourceErr, dbErr := migrate.Close()
 		if sourceErr != nil {
-			slog.Error("Migrate close error", logging.ErrorAttr(sourceErr))
+			log.Warn().Stack().Err(sourceErr).Msg("failed to close source")
 		}
 		if dbErr != nil {
-			slog.Error("Migrate close error", logging.ErrorAttr(dbErr))
+			log.Warn().Stack().Err(dbErr).Msg("failed to close database")
 		}
-	}(migrate)
+	}()
 
 	migrate.Log = &migrateLogger{}
 
@@ -43,9 +42,9 @@ func Migrate(dsn string, migrationDir string) error {
 	}
 
 	if errors.Is(err, goMigrate.ErrNoChange) {
-		slog.Info("Migrations are already installed")
+		log.Info().Msg("migrations are already installed")
 	} else {
-		slog.Info("Migrations installed successfully")
+		log.Info().Msg("migrations installed successfully")
 	}
 
 	return nil

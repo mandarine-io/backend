@@ -2,10 +2,8 @@ package smtp
 
 import (
 	"crypto/tls"
-	"fmt"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/gomail.v2"
-	"log/slog"
-	"mandarine/pkg/logging"
 	"strings"
 )
 
@@ -42,16 +40,15 @@ func MustNewSender(cfg *Config) Sender {
 }
 
 func (s *sender) HealthCheck() bool {
-	addr := fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port)
-	slog.Info("Check connection to SMTP server " + addr)
+	log.Debug().Msgf("check connection to smtp server %s:%d", s.cfg.Host, s.cfg.Port)
 
 	closer, err := s.dialer.Dial()
 	if err != nil {
-		slog.Error("SMTP client checking error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to connect to smtp server")
 		return false
 	}
 	if err := closer.Close(); err != nil {
-		slog.Error("SMTP client checking error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to close connection to smtp server")
 		return false
 	}
 
@@ -69,7 +66,7 @@ func (s *sender) SendPlainMessage(subject string, content string, to string, att
 		m.Attach(attachment)
 	}
 
-	slog.Debug("Sending plain email to " + to)
+	log.Debug().Msgf("sending plain email to %s", to)
 	return s.dialer.DialAndSend(m)
 }
 
@@ -84,7 +81,7 @@ func (s *sender) SendPlainMessages(subject string, content string, to []string, 
 		m.Attach(attachment)
 	}
 
-	slog.Debug("Sending plain email to " + strings.Join(to, ","))
+	log.Debug().Msgf("sending plain email to %s", strings.Join(to, ","))
 	return s.dialer.DialAndSend(m)
 }
 
@@ -99,7 +96,7 @@ func (s *sender) SendHtmlMessage(subject string, content string, to string, atta
 		m.Attach(attachment)
 	}
 
-	slog.Debug("Sending html email to " + to)
+	log.Debug().Msgf("sending html email to %s", to)
 	return s.dialer.DialAndSend(m)
 }
 
@@ -114,6 +111,6 @@ func (s *sender) SendHtmlMessages(subject string, content string, to []string, a
 		m.Attach(attachment)
 	}
 
-	slog.Debug("Sending html email to " + strings.Join(to, ","))
+	log.Debug().Msgf("sending html email to %s", strings.Join(to, ","))
 	return s.dialer.DialAndSend(m)
 }

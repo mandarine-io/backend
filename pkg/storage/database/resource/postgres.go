@@ -2,11 +2,9 @@ package resource
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log/slog"
-	"mandarine/pkg/logging"
-	"os"
 )
 
 type PostgresConfig struct {
@@ -24,12 +22,10 @@ func MustConnectPostgres(cfg *PostgresConfig) *gorm.DB {
 		},
 	)
 	if err != nil {
-		slog.Error("Postgres client creation error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to connect to postgres")
 	}
 
-	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	slog.Info("Connected to Postgres host " + addr)
+	log.Info().Msgf("connected to postgres host %s:%d", cfg.Host, cfg.Port)
 
 	return db
 }

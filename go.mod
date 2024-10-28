@@ -12,18 +12,18 @@ require (
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/go-resty/resty/v2 v2.15.3
 	github.com/go-testfixtures/testfixtures/v3 v3.12.0
+	github.com/goccy/go-json v0.10.3
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1
-	github.com/mdobak/go-xerrors v0.3.1
 	github.com/minio/minio-go/v7 v7.0.78
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
+	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/rs/zerolog v1.33.0
-	github.com/samber/slog-multi v1.2.3
 	github.com/samber/slog-zerolog/v2 v2.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -85,7 +85,6 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -130,7 +129,6 @@ require (
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
@@ -157,7 +155,7 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.mongodb.org/mongo-driver v1.16.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect

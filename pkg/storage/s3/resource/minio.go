@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rs/zerolog/log"
 	"log/slog"
-	"mandarine/pkg/logging"
-	"os"
 )
 
 type MinioConfig struct {
@@ -27,27 +26,23 @@ func MustConnectMinio(cfg *MinioConfig) *minio.Client {
 		Secure: false,
 	})
 	if err != nil {
-		slog.Error("MinIO connection error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to connect to minio")
 	}
+	log.Info().Msgf("connected to minio host %s", endpoint)
 
 	// Check if bucket exists
-	slog.Info(fmt.Sprintf("Check bucket \"%s\"", cfg.BucketName))
+	log.Info().Msgf("check bucket \"%s\"", cfg.BucketName)
 	exists, err := client.BucketExists(ctx, cfg.BucketName)
 	if err != nil {
-		slog.Error("MinIO bucket checking error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to check minio bucket")
 	}
 	if !exists {
 		slog.Info(fmt.Sprintf("Create bucket \"%s\"", cfg.BucketName))
-		err := client.MakeBucket(ctx, cfg.BucketName, minio.MakeBucketOptions{})
+		err = client.MakeBucket(ctx, cfg.BucketName, minio.MakeBucketOptions{})
 		if err != nil {
-			slog.Error("MinIO bucket creation error", logging.ErrorAttr(err))
-			os.Exit(1)
+			log.Fatal().Stack().Err(err).Msg("failed to create minio bucket")
 		}
 	}
-
-	slog.Info("Connected to Minio host " + endpoint)
 
 	return client
 }

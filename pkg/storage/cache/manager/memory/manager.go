@@ -1,10 +1,13 @@
-package manager
+package memory
 
 import (
 	"context"
 	"errors"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	"github.com/rs/zerolog/log"
 	"reflect"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -14,27 +17,29 @@ type cacheEntry struct {
 	expiration int64
 }
 
-type MemoryCacheManager struct {
+type cacheManager struct {
 	lock    sync.RWMutex
 	storage map[string]cacheEntry
 	ttl     time.Duration
 }
 
-func NewMemoryCacheManager(ttl time.Duration) CacheManager {
-	return &MemoryCacheManager{
+func NewCacheManager(ttl time.Duration) manager.CacheManager {
+	return &cacheManager{
 		storage: make(map[string]cacheEntry),
 		ttl:     ttl,
 	}
 }
 
-func (m *MemoryCacheManager) Get(_ context.Context, key string, value interface{}) error {
+func (m *cacheManager) Get(_ context.Context, key string, value interface{}) error {
 	m.cleanExpiredEntry()
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
+	log.Debug().Msgf("get from cache: %s", key)
+
 	entry, ok := m.storage[key]
 	if !ok {
-		return ErrCacheEntryNotFound
+		return manager.ErrCacheEntryNotFound
 	}
 
 	val := reflect.ValueOf(value)
@@ -46,24 +51,18 @@ func (m *MemoryCacheManager) Get(_ context.Context, key string, value interface{
 	return nil
 }
 
-func (m *MemoryCacheManager) Set(_ context.Context, key string, value interface{}) error {
-	m.cleanExpiredEntry()
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	m.storage[key] = cacheEntry{
-		value:      value,
-		expiration: time.Now().Add(m.ttl).Unix(),
-	}
-	return nil
+func (m *cacheManager) Set(_ context.Context, key string, value interface{}) error {
+	return m.SetWithExpiration(context.Background(), key, value, m.ttl)
 }
 
-func (m *MemoryCacheManager) SetWithExpiration(
+func (m *cacheManager) SetWithExpiration(
 	_ context.Context, key string, value interface{}, expiration time.Duration,
 ) error {
 	m.cleanExpiredEntry()
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
+	log.Debug().Msgf("set to cache: %s", key)
 
 	m.storage[key] = cacheEntry{
 		value:      value,
@@ -72,10 +71,12 @@ func (m *MemoryCacheManager) SetWithExpiration(
 	return nil
 }
 
-func (m *MemoryCacheManager) Delete(_ context.Context, keys ...string) error {
+func (m *cacheManager) Delete(_ context.Context, keys ...string) error {
 	m.cleanExpiredEntry()
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
+	log.Debug().Msgf("delete from cache: %s", strings.Join(keys, ","))
 
 	for _, key := range keys {
 		delete(m.storage, key)
@@ -83,10 +84,12 @@ func (m *MemoryCacheManager) Delete(_ context.Context, keys ...string) error {
 	return nil
 }
 
-func (m *MemoryCacheManager) Invalidate(ctx context.Context, keyRegex string) error {
+func (m *cacheManager) Invalidate(ctx context.Context, keyRegex string) error {
 	m.cleanExpiredEntry()
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
+	log.Debug().Msgf("invalidate cache by regex %s", keyRegex)
 
 	for key := range m.storage {
 		matched, err := regexp.MatchString(keyRegex, key)
@@ -98,9 +101,11 @@ func (m *MemoryCacheManager) Invalidate(ctx context.Context, keyRegex string) er
 	return nil
 }
 
-func (m *MemoryCacheManager) cleanExpiredEntry() {
+func (m *cacheManager) cleanExpiredEntry() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
+	log.Debug().Msg("clean expired entry")
 
 	now := time.Now().Unix()
 	for key, entry := range m.storage {

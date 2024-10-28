@@ -1,21 +1,23 @@
 package scheduler
 
-import "log/slog"
+import (
+	"github.com/rs/zerolog/log"
+)
 
 type schedulerLogger struct{}
 
 func (s schedulerLogger) Debug(msg string, args ...any) {
-	slog.Debug(msg, slog.Any("args", args))
+	log.Debug().Interface("args", args).Msg(msg)
 }
 
 func (s schedulerLogger) Info(msg string, args ...any) {
-	slog.Info(msg, slog.Any("args", args))
+	log.Info().Interface("args", args).Msg(msg)
 }
 
 func (s schedulerLogger) Warn(msg string, args ...any) {
-	slog.Warn(msg, slog.Any("args", args))
+	log.Warn().Interface("args", args).Msg(msg)
 }
 
 func (s schedulerLogger) Error(msg string, args ...any) {
-	slog.Error(msg, slog.Any("args", args))
+	log.Error().Interface("args", args).Msg(msg)
 }

@@ -3,13 +3,15 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"github.com/mandarine-io/Backend/internal/api/helper/file"
+	"github.com/rs/zerolog/log"
 	"html/template"
-	"log/slog"
-	"mandarine/internal/api/helper/file"
-	"mandarine/pkg/logging"
-	"os"
 	"path"
 	"path/filepath"
+)
+
+var (
+	ErrTemplateNotFound = fmt.Errorf("template not found")
 )
 
 type Engine interface {
@@ -27,8 +29,7 @@ type Config struct {
 func MustLoadTemplates(cfg *Config) Engine {
 	files, err := file.GetFilesFromDir(cfg.Path)
 	if err != nil {
-		slog.Error("Templates set up error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to get templates from directory")
 	}
 
 	tmplEngine := &engine{
@@ -38,12 +39,11 @@ func MustLoadTemplates(cfg *Config) Engine {
 		filePath := path.Join(cfg.Path, f)
 		absFilePath, err := filepath.Abs(filePath)
 		if err != nil {
-			slog.Error("Templates set up error", logging.ErrorAttr(err))
-			os.Exit(1)
+			log.Fatal().Stack().Err(err).Msgf("failed to get absolute path for file %s", filePath)
 		}
 
 		tmplName := file.GetFileNameWithoutExt(f)
-		slog.Info("Read template file: " + absFilePath)
+		log.Info().Msgf("read template file: %s", absFilePath)
 		tmplEngine.templates[tmplName] = absFilePath
 	}
 
@@ -51,13 +51,13 @@ func MustLoadTemplates(cfg *Config) Engine {
 }
 
 func (t *engine) Render(tmplName string, args any) (string, error) {
-	slog.Debug("Search template: " + tmplName)
+	log.Debug().Msgf("search template: %s", tmplName)
 	tmplPath, ok := t.templates[tmplName]
 	if !ok {
-		return "", fmt.Errorf("template \"%s\"not found", tmplName)
+		return "", ErrTemplateNotFound
 	}
 
-	slog.Debug("Execute template: " + tmplName)
+	log.Debug().Msgf("render template: %s", tmplName)
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
 		return "", err

@@ -1,27 +1,32 @@
-package manager
+package redis
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
+	"strings"
 	"time"
 )
 
-type RedisCacheManager struct {
+type cacheManager struct {
 	client *redis.Client
 	ttl    time.Duration
 }
 
-func NewRedisCacheManager(client *redis.Client, ttl time.Duration) CacheManager {
-	return &RedisCacheManager{client: client, ttl: ttl}
+func NewCacheManager(client *redis.Client, ttl time.Duration) manager.CacheManager {
+	return &cacheManager{client: client, ttl: ttl}
 }
 
-func (r *RedisCacheManager) Get(ctx context.Context, key string, value interface{}) error {
+func (r *cacheManager) Get(ctx context.Context, key string, value interface{}) error {
+	log.Debug().Msgf("get from cache %s", key)
+
 	res := r.client.Get(ctx, key)
 	if res.Err() != nil {
 		if errors.Is(res.Err(), redis.Nil) {
-			return ErrCacheEntryNotFound
+			return manager.ErrCacheEntryNotFound
 		}
 		return res.Err()
 	}
@@ -34,18 +39,15 @@ func (r *RedisCacheManager) Get(ctx context.Context, key string, value interface
 	return json.Unmarshal(bytes, value)
 }
 
-func (r *RedisCacheManager) Set(ctx context.Context, key string, value interface{}) error {
-	jsonValue, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-
-	return r.client.Set(ctx, key, jsonValue, r.ttl).Err()
+func (r *cacheManager) Set(ctx context.Context, key string, value interface{}) error {
+	return r.SetWithExpiration(ctx, key, value, r.ttl)
 }
 
-func (r *RedisCacheManager) SetWithExpiration(
+func (r *cacheManager) SetWithExpiration(
 	ctx context.Context, key string, value interface{}, expiration time.Duration,
 ) error {
+	log.Debug().Msgf("set to cache %s with expiration %s", key, expiration)
+
 	jsonValue, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -54,7 +56,9 @@ func (r *RedisCacheManager) SetWithExpiration(
 	return r.client.Set(ctx, key, jsonValue, expiration).Err()
 }
 
-func (r *RedisCacheManager) Delete(ctx context.Context, keys ...string) error {
+func (r *cacheManager) Delete(ctx context.Context, keys ...string) error {
+	log.Debug().Msgf("delete from cache %s", strings.Join(keys, ","))
+
 	for _, key := range keys {
 		if err := r.client.Del(ctx, key).Err(); err != nil {
 			return err
@@ -63,7 +67,9 @@ func (r *RedisCacheManager) Delete(ctx context.Context, keys ...string) error {
 	return nil
 }
 
-func (r *RedisCacheManager) Invalidate(ctx context.Context, keyRegex string) error {
+func (r *cacheManager) Invalidate(ctx context.Context, keyRegex string) error {
+	log.Debug().Msgf("invalidate cache by regex %s", keyRegex)
+
 	var (
 		cursor uint64
 		keys   []string

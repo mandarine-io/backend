@@ -5,40 +5,49 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/mandarine-io/Backend/pkg/locale"
+	"github.com/mandarine-io/Backend/pkg/rest/dto"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"mandarine/pkg/locale"
-	"mandarine/pkg/rest/dto"
+	"github.com/rs/zerolog/log"
 	"strings"
 )
 
 func ErrorMiddleware() gin.HandlerFunc {
+	log.Debug().Msg("setup register error middleware")
 	return func(c *gin.Context) {
 		c.Next()
 
+		// get the last error
+		log.Debug().Msg("get the last error")
 		lastErr := c.Errors.Last()
 		if lastErr == nil {
+			log.Debug().Msg("no error found")
 			return
 		}
+
+		log.Debug().Msg("found the last error")
 		err := lastErr.Err
 
+		// get localizer
+		log.Debug().Msg("get localizer")
 		localizerAny, _ := c.Get("localizer")
 		localizer := localizerAny.(*i18n.Localizer)
 
+		// build error response
+		log.Debug().Msg("build error response")
 		status := c.Writer.Status()
 		var errorResponse dto.ErrorResponse
 
-		var validationErrors validator.ValidationErrors
-		var i18nError dto.I18nError
+		var (
+			validErrs validator.ValidationErrors
+			i18nErr   dto.I18nError
+		)
 		switch {
-		case errors.As(err, &validationErrors):
-			var validErr validator.ValidationErrors
-			errors.As(err, &validErr)
+		case errors.As(err, &validErrs):
 			errorResponse = dto.NewErrorResponse(
-				convertValidationErrorsToString(validErr, localizer), status, c.Request.URL.Path,
+				convertValidationErrorsToString(validErrs, localizer), status, c.Request.URL.Path,
 			)
-		case errors.As(err, &i18nError):
-			var i18nErr dto.I18nError
-			errors.As(err, &i18nErr)
+		case errors.As(err, &i18nErr):
 			errorResponse = dto.NewErrorResponse(
 				locale.LocalizeWithArgs(localizer, i18nErr.Tag(), i18nErr.Args()), status, c.Request.URL.Path,
 			)

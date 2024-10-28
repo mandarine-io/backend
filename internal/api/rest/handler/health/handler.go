@@ -2,16 +2,15 @@ package health
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/mandarine-io/Backend/internal/api/rest/handler"
+	"github.com/mandarine-io/Backend/pkg/smtp"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	checks2 "github.com/tavsec/gin-healthcheck/checks"
 	healthcheckconfig "github.com/tavsec/gin-healthcheck/config"
 	"gorm.io/gorm"
-	"log/slog"
-	"mandarine/internal/api/rest/handler"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/smtp"
 	"net/http"
 )
 
@@ -42,6 +41,8 @@ func NewHandler(db *gorm.DB, rdb *redis.Client, minio *minio.Client, smtp smtp.S
 //	@Success		200	{object}	[]Response
 //	@Router			/health [get]
 func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares) {
+	log.Debug().Msg("register healthcheck routes")
+
 	cfg := healthcheckconfig.Config{
 		HealthPath:  "/health",
 		Method:      "GET",
@@ -63,7 +64,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares)
 
 	err := healthcheck.New(router, cfg, checks)
 	if err != nil {
-		slog.Warn("Healthcheck setup error", logging.ErrorAttr(err))
+		log.Warn().Stack().Err(err).Msg("failed to setup healthcheck")
 	}
 }
 
@@ -78,6 +79,7 @@ func NewMinioCheck(client *minio.Client) *MinioCheck {
 }
 
 func (r *MinioCheck) Pass() bool {
+	log.Debug().Msg("check minio connection")
 	return r.client.IsOnline()
 }
 
@@ -96,6 +98,8 @@ func NewGormCheck(db *gorm.DB) *GormCheck {
 }
 
 func (r *GormCheck) Pass() bool {
+	log.Debug().Msg("check gorm connection")
+
 	sqlDB, err := r.db.DB()
 	if err != nil {
 		return false
@@ -120,6 +124,7 @@ func NewSmtpCheck(smtp smtp.Sender) *SmtpCheck {
 }
 
 func (r *SmtpCheck) Pass() bool {
+	log.Debug().Msg("check smtp connection")
 	return r.smtp.HealthCheck()
 }
 

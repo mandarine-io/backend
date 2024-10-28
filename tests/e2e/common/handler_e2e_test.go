@@ -1,11 +1,11 @@
 package common_e2e_test
 
 import (
+	appconfig "github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/rest"
+	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"
-	appconfig "mandarine/internal/api/config"
-	"mandarine/internal/api/rest"
-	dto2 "mandarine/pkg/rest/dto"
-	"mandarine/tests/e2e"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -70,8 +70,9 @@ func TestMain(m *testing.M) {
 			Path: pwd + "/../../../migrations",
 		},
 		Logger: appconfig.LoggerConfig{
+			Level: "debug",
 			Console: appconfig.ConsoleLoggerConfig{
-				Level:    "debug",
+				Enable:   true,
 				Encoding: "text",
 			},
 			File: appconfig.FileLoggerConfig{
