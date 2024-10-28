@@ -125,19 +125,6 @@ postgres:
 MANDARINE_POSTGRES__PASSWORD=password
 ```
 
-### Password file
-
-Set database password file
-
-```yaml
-postgres:
-    password_file: /run/secrets/postgres-password
-```
-
-```dotenv
-MANDARINE_POSTGRES__PASSWORD_FILE=/run/secrets/postgres-password
-```
-
 ### Database name
 
 Set database name
@@ -205,19 +192,6 @@ redis:
 
 ```dotenv
 MANDARINE_REDIS__PASSWORD=password
-```
-
-### Password file
-
-Set cache password file
-
-```yaml
-redis:
-    password_file: /run/secrets/redis-password
-```
-
-```dotenv
-MANDARINE_REDIS__PASSWORD_FILE=/run/secrets/redis-password
 ```
 
 ### Database index
@@ -289,19 +263,6 @@ minio:
 MANDARINE_MINIO__SECRET_KEY=secret_key
 ```
 
-### Secret key file
-
-Set S3 secret key file
-
-```yaml
-minio:
-    secret_key_file: /run/secrets/minio-secret-key
-```
-
-```dotenv
-MANDARINE_MINIO__SECRET_KEY_FILE=/run/secrets/minio-secret-key
-```
-
 ### Bucket name
 
 Set S3 bucket name
@@ -371,19 +332,6 @@ smtp:
 MANDARINE_SMTP__PASSWORD=password
 ```
 
-### Password file
-
-Set SMTP password file
-
-```yaml
-smtp:
-    password_file: /run/secrets/smtp-password
-```
-
-```dotenv
-MANDARINE_SMTP__PASSWORD_FILE=/run/secrets/smtp-password
-```
-
 ### SSL
 
 Set SMTP SSL mode (default: true)
@@ -408,6 +356,23 @@ smtp:
 
 ```dotenv
 MANDARINE_SMTP__FROM='Mandarine <example@yandex.ru>'
+```
+
+<a id="websocket"></a>
+
+## Websocket settings
+
+### Pool size
+
+Set websocket pool size (default: 1024)
+
+```yaml
+websocket:
+    pool_size: 1024
+```
+
+```dotenv
+MANDARINE_WEBSOCKET__POOL_SIZE=1024
 ```
 
 <a id="oauth-provider"></a>
@@ -440,20 +405,6 @@ oauth:
 
 ```dotenv
 MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET=client_secret
-```
-
-### Client secret file
-
-Set OAuth client secret file
-
-```yaml
-oauth:
-    google:
-        client_secret_file: /run/secrets/google_client_secret
-```
-
-```dotenv
-MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET_FILE=/run/secrets/google_client_secret
 ```
 
 <a id="cache"></a>
@@ -493,20 +444,6 @@ security:
 
 ```dotenv
 MANDARINE_JWT__SECRET=secret
-```
-
-#### Secret file
-
-Set JWT secret file
-
-```yaml
-security:
-    jwt:
-        secret_file: /run/secrets/jwt-secret
-```
-
-```dotenv
-MANDARINE_JWT__SECRET_FILE=/run/secrets/jwt-secret
 ```
 
 #### Access token TTL
@@ -657,20 +594,33 @@ MANDARINE_MIGRATIONS__PATH=migrations
 
 <a id="logger-console"></a>
 
+### Level
+
+Set logger level (default: info)
+
+```yaml
+logger:
+    level: info
+```
+
+```dotenv
+MANDARINE_LOGGER__LEVEL=info
+```
+
 ### Console
 
-#### Level
+#### Enable
 
-Set console logger level (default: info)
+Set file logger enable (default: false)
 
 ```yaml
 logger:
     console:
-        level: info
+        enable: false
 ```
 
 ```dotenv
-MANDARINE_LOGGER__CONSOLE_LEVEL=info
+MANDARINE_LOGGER__CONSOLE_ENABLE=false
 ```
 
 #### Encoding
@@ -703,20 +653,6 @@ logger:
 
 ```dotenv
 MANDARINE_LOGGER__FILE_ENABLE=false
-```
-
-#### Level
-
-Set file logger level (default: info)
-
-```yaml
-logger:
-    file:
-        level: info
-```
-
-```dotenv
-MANDARINE_LOGGER__FILE_LEVEL=info
 ```
 
 #### Dir path

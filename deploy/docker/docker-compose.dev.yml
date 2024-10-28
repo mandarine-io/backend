@@ -8,14 +8,6 @@ volumes:
   mandarine-dev-redis-data:
   mandarine-dev-minio-data:
 
-#secrets:
-#  postgres-password:
-#    file: ${MANDARINE_POSTGRES__PASSWORD_FILE}
-#  redis-password:
-#    file: ${MANDARINE_REDIS__PASSWORD_FILE}
-#  minio-secret-key:
-#    file: ${MANDARINE_MINIO__SECRET_KEY_FILE}
-
 services:
   ################################
   ########## PostgreSQL ##########
@@ -27,10 +19,7 @@ services:
     environment:
       POSTGRES_USER: ${MANDARINE_POSTGRES__USERNAME}
       POSTGRES_PASSWORD: ${MANDARINE_POSTGRES__PASSWORD}
-      #      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
       POSTGRES_DB: ${MANDARINE_POSTGRES__DB_NAME}
-#    secrets:
-#      - postgres-password
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
       interval: 5s
@@ -53,10 +42,7 @@ services:
     environment:
       REDIS_USER: ${MANDARINE_REDIS__USERNAME}
       REDIS_PASSWORD: ${MANDARINE_REDIS__PASSWORD}
-      #      REDIS_PASSWORD_FILE: /run/secrets/redis-password
       REDIS_ARGS: '--requirepass ${MANDARINE_REDIS__PASSWORD} --user ${MANDARINE_REDIS__USERNAME} on >${MANDARINE_REDIS__PASSWORD} ~* allcommands'
-#    secrets:
-#      - redis-password
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli ping" ]
       interval: 5s
@@ -80,10 +66,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MANDARINE_MINIO__ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MANDARINE_MINIO__SECRET_KEY}
-      #      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio-secret-key
       MINIO_DEFAULT_BUCKETS: ${MANDARINE_MINIO__BUCKET_NAME}
-#    secrets:
-#      - minio-secret-key
     healthcheck:
       test: [ "CMD-SHELL", "mc ready local" ]
       interval: 5s

@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/ilyakaznacheev/cleanenv"
-	"mandarine/pkg/config"
 )
 
 const (
@@ -29,58 +28,51 @@ type ServerConfig struct {
 }
 
 type PostgresConfig struct {
-	Host         string `yaml:"host" env-description:"PostgreSQL host" env:"MANDARINE_POSTGRES__HOST" env-default:"localhost" validate:"required,hostname"`
-	Port         int    `yaml:"port" env-description:"PostgreSQL port" env:"MANDARINE_POSTGRES__PORT" env-default:"5432" validate:"min=-1,max=65535"`
-	Username     string `yaml:"username" env-description:"PostgreSQL username" env:"MANDARINE_POSTGRES__USERNAME" validate:"required"`
-	Password     string `yaml:"password" env-description:"PostgreSQL password (not recommended)" env:"MANDARINE_POSTGRES__PASSWORD" validate:"required"`
-	PasswordFile string `yaml:"password_file" env-description:"PostgreSQL password file" env:"MANDARINE_POSTGRES__PASSWORD_FILE" validate:"omitempty,filepath"`
-	DBName       string `yaml:"db_name" env-description:"PostgreSQL database name" env:"MANDARINE_POSTGRES__DB_NAME" validate:"required"`
+	Host     string `yaml:"host" env-description:"PostgreSQL host" env:"MANDARINE_POSTGRES__HOST" env-default:"localhost" validate:"required,hostname"`
+	Port     int    `yaml:"port" env-description:"PostgreSQL port" env:"MANDARINE_POSTGRES__PORT" env-default:"5432" validate:"min=-1,max=65535"`
+	Username string `yaml:"username" env-description:"PostgreSQL username" env:"MANDARINE_POSTGRES__USERNAME" validate:"required"`
+	Password string `yaml:"password" env-description:"PostgreSQL password (not recommended)" env:"MANDARINE_POSTGRES__PASSWORD" validate:"required"`
+	DBName   string `yaml:"db_name" env-description:"PostgreSQL database name" env:"MANDARINE_POSTGRES__DB_NAME" validate:"required"`
 }
 
 type RedisConfig struct {
-	Host         string `yaml:"host" env-description:"Redis host" env:"MANDARINE_REDIS__HOST" env-default:"localhost" validate:"required,hostname"`
-	Port         int    `yaml:"port" env-description:"Redis port" env:"MANDARINE_REDIS__PORT" env-default:"6379" validate:"min=-1,max=65535"`
-	Username     string `yaml:"username" env-description:"Redis username" env:"MANDARINE_REDIS__USERNAME" env-default:"default" validate:"required"`
-	Password     string `yaml:"password" env-description:"Redis password (not recommended)" env:"MANDARINE_REDIS__PASSWORD" validate:"required"`
-	PasswordFile string `yaml:"password_file" env-description:"Redis password file" env:"MANDARINE_REDIS__PASSWORD_FILE" validate:"omitempty,filepath"`
-	DBIndex      int    `yaml:"db_index" env-description:"Redis database index" env:"MANDARINE_REDIS__DB_INDEX" env-default:"0"`
+	Host     string `yaml:"host" env-description:"Redis host" env:"MANDARINE_REDIS__HOST" env-default:"localhost" validate:"required,hostname"`
+	Port     int    `yaml:"port" env-description:"Redis port" env:"MANDARINE_REDIS__PORT" env-default:"6379" validate:"min=-1,max=65535"`
+	Username string `yaml:"username" env-description:"Redis username" env:"MANDARINE_REDIS__USERNAME" env-default:"default" validate:"required"`
+	Password string `yaml:"password" env-description:"Redis password (not recommended)" env:"MANDARINE_REDIS__PASSWORD" validate:"required"`
+	DBIndex  int    `yaml:"db_index" env-description:"Redis database index" env:"MANDARINE_REDIS__DB_INDEX" env-default:"0"`
 }
 
 type MinioConfig struct {
-	Host          string `yaml:"host" env-description:"MinIO host" env:"MANDARINE_MINIO__HOST" env-default:"localhost" validate:"required,hostname"`
-	Port          int    `yaml:"port" env-description:"MinIO port" env:"MANDARINE_MINIO__PORT" env-default:"9000" validate:"min=-1,max=65535"`
-	AccessKey     string `yaml:"access_key" env-description:"MinIO access key" env:"MANDARINE_MINIO__ACCESS_KEY" validate:"required"`
-	SecretKey     string `yaml:"secret_key" env-description:"MinIO secret key" env:"MANDARINE_MINIO__SECRET_KEY" validate:"required"`
-	SecretKeyFile string `yaml:"secret_key_file" env-description:"MinIO secret key file" env:"MANDARINE_MINIO__SECRET_KEY_FILE" validate:"omitempty,filepath"`
-	BucketName    string `yaml:"bucket_name" env-description:"MinIO bucket name" env:"MANDARINE_MINIO__BUCKET_NAME" validate:"required"`
+	Host       string `yaml:"host" env-description:"MinIO host" env:"MANDARINE_MINIO__HOST" env-default:"localhost" validate:"required,hostname"`
+	Port       int    `yaml:"port" env-description:"MinIO port" env:"MANDARINE_MINIO__PORT" env-default:"9000" validate:"min=-1,max=65535"`
+	AccessKey  string `yaml:"access_key" env-description:"MinIO access key" env:"MANDARINE_MINIO__ACCESS_KEY" validate:"required"`
+	SecretKey  string `yaml:"secret_key" env-description:"MinIO secret key" env:"MANDARINE_MINIO__SECRET_KEY" validate:"required"`
+	BucketName string `yaml:"bucket_name" env-description:"MinIO bucket name" env:"MANDARINE_MINIO__BUCKET_NAME" validate:"required"`
 }
 
 type SmtpConfig struct {
-	Host         string `yaml:"host" env-description:"SMTP host" env:"MANDARINE_SMTP__HOST" validate:"required,hostname"`
-	Port         int    `yaml:"port" env-description:"SMTP port" env:"MANDARINE_SMTP__PORT" validate:"min=-1,max=65535"`
-	Username     string `yaml:"username" env-description:"SMTP username" env:"MANDARINE_SMTP__USERNAME" validate:"required,email"`
-	Password     string `yaml:"password" env-description:"SMTP password" env:"MANDARINE_SMTP__PASSWORD" validate:"required"`
-	PasswordFile string `yaml:"password_file" env-description:"SMTP password file" env:"MANDARINE_SMTP__PASSWORD_FILE" validate:"omitempty,filepath"`
-	SSL          bool   `yaml:"ssl" env-description:"SMTP SSL mode" env:"MANDARINE_SMTP__SSL"`
-	From         string `yaml:"from" env-description:"SMTP from" env:"MANDARINE_SMTP__FROM" validate:"omitempty"`
+	Host     string `yaml:"host" env-description:"SMTP host" env:"MANDARINE_SMTP__HOST" validate:"required,hostname"`
+	Port     int    `yaml:"port" env-description:"SMTP port" env:"MANDARINE_SMTP__PORT" validate:"min=-1,max=65535"`
+	Username string `yaml:"username" env-description:"SMTP username" env:"MANDARINE_SMTP__USERNAME"`
+	Password string `yaml:"password" env-description:"SMTP password" env:"MANDARINE_SMTP__PASSWORD"`
+	SSL      bool   `yaml:"ssl" env-description:"SMTP SSL mode" env:"MANDARINE_SMTP__SSL"`
+	From     string `yaml:"from" env-description:"SMTP from" env:"MANDARINE_SMTP__FROM" validate:"omitempty"`
 }
 
 type GoogleOAuthClientConfig struct {
-	ClientID         string `yaml:"client_id" env-description:"Google OAuth client ID" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
-	ClientSecret     string `yaml:"client_secret" env-description:"Google OAuth client secret" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
-	ClientSecretFile string `yaml:"client_secret_file" env-description:"Google OAuth client secret" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET_FILE" validate:"omitempty,filepath"`
+	ClientID     string `yaml:"client_id" env-description:"Google OAuth client id" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
+	ClientSecret string `yaml:"client_secret" env-description:"Google OAuth client secret" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
 }
 
 type YandexOAuthClientConfig struct {
-	ClientID         string `yaml:"client_id" env-description:"Yandex OAuth client ID" env:"MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
-	ClientSecret     string `yaml:"client_secret" env-description:"Yandex OAuth client secret" env:"MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
-	ClientSecretFile string `yaml:"client_secret_file" env-description:"Yandex OAuth client secret" env:"MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_SECRET_FILE" validate:"omitempty,filepath"`
+	ClientID     string `yaml:"client_id" env-description:"Yandex OAuth client id" env:"MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
+	ClientSecret string `yaml:"client_secret" env-description:"Yandex OAuth client secret" env:"MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
 }
 
 type MailRuOAuthClientConfig struct {
-	ClientID         string `yaml:"client_id" env-description:"Mail RU OAuth client ID" env:"MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
-	ClientSecret     string `yaml:"client_secret" env-description:"Mail RU OAuth client secret" env:"MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
-	ClientSecretFile string `yaml:"client_secret_file" env-description:"Mail RU OAuth client secret" env:"MANDARINE_MAIL_RU_OAUTH_CLIENT_CLIENT__SECRET_FILE" validate:"omitempty,filepath"`
+	ClientID     string `yaml:"client_id" env-description:"Mail RU OAuth client id" env:"MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
+	ClientSecret string `yaml:"client_secret" env-description:"Mail RU OAuth client secret" env:"MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
 }
 
 type OAuthClientConfig struct {
@@ -95,7 +87,6 @@ type CacheConfig struct {
 
 type JWTConfig struct {
 	Secret          string `yaml:"secret" env-description:"JWT secret" env:"MANDARINE_JWT__SECRET" validate:"required"`
-	SecretFile      string `yaml:"secret_file" env-description:"JWT secret file" env:"MANDARINE_JWT__SECRET_FILE" validate:"omitempty,filepath"`
 	AccessTokenTTL  int    `yaml:"access_token_ttl" env-description:"JWT access token TTL (seconds)" env:"MANDARINE_JWT__ACCESS_TOKEN_TTL" env-default:"3600"  validate:"required,min=0"`
 	RefreshTokenTTL int    `yaml:"refresh_token_ttl" env-description:"JWT refresh token TTL (seconds)" env:"MANDARINE_JWT__REFRESH_TOKEN_TTL" env-default:"86400"  validate:"required,min=0"`
 }
@@ -163,55 +154,6 @@ type Config struct {
 
 type OnlyLoggerConfig struct {
 	Logger LoggerConfig `yaml:"logger"`
-}
-
-func (c *OnlyLoggerConfig) GetSecretInfos() []config.SecretConfigInfo {
-	return make([]config.SecretConfigInfo, 0)
-}
-
-func (c *Config) GetSecretInfos() []config.SecretConfigInfo {
-	return []config.SecretConfigInfo{
-		{
-			SecretFileEnvName: "MANDARINE_POSTGRES__PASSWORD_FILE",
-			SecretFileName:    c.Postgres.PasswordFile,
-			SecretValuePtr:    &c.Postgres.Password,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_REDIS__PASSWORD_FILE",
-			SecretFileName:    c.Redis.PasswordFile,
-			SecretValuePtr:    &c.Redis.Password,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_MINIO__SECRET_KEY_FILE",
-			SecretFileName:    c.Minio.SecretKeyFile,
-			SecretValuePtr:    &c.Minio.SecretKey,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_SMTP__PASSWORD_FILE",
-			SecretFileName:    c.SMTP.PasswordFile,
-			SecretValuePtr:    &c.SMTP.Password,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET_FILE",
-			SecretFileName:    c.OAuthClient.Google.ClientSecretFile,
-			SecretValuePtr:    &c.OAuthClient.Google.ClientSecret,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_YANDEX_OAUTH_CLIENT__CLIENT_SECRET_FILE",
-			SecretFileName:    c.OAuthClient.Yandex.ClientSecretFile,
-			SecretValuePtr:    &c.OAuthClient.Yandex.ClientSecret,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_MAIL_RU_OAUTH_CLIENT__CLIENT_SECRET_FILE",
-			SecretFileName:    c.OAuthClient.MailRu.ClientSecretFile,
-			SecretValuePtr:    &c.OAuthClient.MailRu.ClientSecret,
-		},
-		{
-			SecretFileEnvName: "MANDARINE_JWT__SECRET_FILE",
-			SecretFileName:    c.Security.JWT.SecretFile,
-			SecretValuePtr:    &c.Security.JWT.Secret,
-		},
-	}
 }
 
 func GetDescription() string {

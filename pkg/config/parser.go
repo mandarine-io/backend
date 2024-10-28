@@ -4,20 +4,19 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
-	"log/slog"
-	"os"
+	"github.com/rs/zerolog/log"
 )
 
-func MustLoadConfig(filePath string, envFilePath string, cfg IConfig) {
+func MustLoadConfig(filePath string, envFilePath string, cfg interface{}) {
 	if envFilePath != "" {
 		log.Debug().Msg("loading env vars from dotenv file")
 		_ = godotenv.Load(envFilePath)
 	}
+
 	if filePath != "" {
 		log.Debug().Msg("loading config from file and env vars")
 		mustParseYamlAndEnv(filePath, cfg)
 	}
-	mustParseSecrets(cfg)
 
 	log.Debug().Msg("validating config")
 	validate := validator.New(validator.WithRequiredStructEnabled())
@@ -26,29 +25,7 @@ func MustLoadConfig(filePath string, envFilePath string, cfg IConfig) {
 	}
 }
 
-func mustParseSecrets(cfg IConfig) {
-	secretConfigInfos := cfg.GetSecretInfos()
-	for _, item := range secretConfigInfos {
-		mustParseSpecificSecret(item)
-	}
-}
-
-func mustParseSpecificSecret(item SecretConfigInfo) {
-	if item.SecretFileName == "" {
-		slog.Warn("It is recommended to use files with secrets: " + item.SecretFileEnvName)
-		return
-	}
-
-	bytes, err := os.ReadFile(item.SecretFileName)
-	if err != nil {
-		slog.Warn("Secret file reading error", "error", err)
-		return
-	}
-
-	*item.SecretValuePtr = string(bytes)
-}
-
-func mustParseYamlAndEnv(filePath string, cfg IConfig) {
+func mustParseYamlAndEnv(filePath string, cfg interface{}) {
 	if err := cleanenv.ReadConfig(filePath, cfg); err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to read config file and env vars")
 	}
