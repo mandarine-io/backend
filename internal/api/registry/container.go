@@ -9,6 +9,7 @@ import (
 	"github.com/mandarine-io/Backend/pkg/oauth/google"
 	"github.com/mandarine-io/Backend/pkg/oauth/mailru"
 	"github.com/mandarine-io/Backend/pkg/oauth/yandex"
+	"github.com/mandarine-io/Backend/pkg/pubsub"
 	redis3 "github.com/mandarine-io/Backend/pkg/pubsub/redis"
 	"github.com/mandarine-io/Backend/pkg/smtp"
 	"github.com/mandarine-io/Backend/pkg/storage/cache/db_cacher"
@@ -107,6 +108,10 @@ func (c *Container) MustInitialize(cfg *config.Config) {
 	log.Debug().Msg("setup smtp sender")
 	smtpConfig := mapAppSmtpConfigToSmtpConfig(&cfg.SMTP)
 	c.SmtpSender = smtp.MustNewSender(smtpConfig)
+
+	// Setup pub/sub
+	log.Debug().Msg("setup pub/sub")
+	c.PubSub = redis3.NewAgent(c.RedisClient)
 
 	// Setup HTTP client
 	log.Debug().Msg("setup http client")
