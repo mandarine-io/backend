@@ -60,6 +60,10 @@ type SmtpConfig struct {
 	From     string `yaml:"from" env-description:"SMTP from" env:"MANDARINE_SMTP__FROM" validate:"omitempty"`
 }
 
+type WebsocketConfig struct {
+	PoolSize int `yaml:"pool_size" env-description:"Websocket pool size" env:"MANDARINE_WEBSOCKET__POOL_SIZE" env-default:"1024" validate:"min=0"`
+}
+
 type GoogleOAuthClientConfig struct {
 	ClientID     string `yaml:"client_id" env-description:"Google OAuth client id" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID" validate:"required"`
 	ClientSecret string `yaml:"client_secret" env-description:"Google OAuth client secret" env:"MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET" validate:"required"`
@@ -143,6 +147,7 @@ type Config struct {
 	Redis       RedisConfig       `yaml:"redis"`
 	Minio       MinioConfig       `yaml:"minio"`
 	SMTP        SmtpConfig        `yaml:"smtp"`
+	Websocket   WebsocketConfig   `yaml:"websocket"`
 	Cache       CacheConfig       `yaml:"cache"`
 	Locale      LocaleConfig      `yaml:"locale"`
 	Template    TemplateConfig    `yaml:"template"`

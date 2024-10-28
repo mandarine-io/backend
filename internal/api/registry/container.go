@@ -21,6 +21,7 @@ import (
 	"github.com/mandarine-io/Backend/pkg/storage/s3"
 	s3Resource "github.com/mandarine-io/Backend/pkg/storage/s3/resource"
 	"github.com/mandarine-io/Backend/pkg/template"
+	"github.com/mandarine-io/Backend/pkg/websocket"
 	"github.com/minio/minio-go/v7"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/redis/go-redis/v9"
@@ -113,6 +114,10 @@ func (c *Container) MustInitialize(cfg *config.Config) {
 	log.Debug().Msg("setup pub/sub")
 	c.PubSub = redis3.NewAgent(c.RedisClient)
 
+	// Setup websocket pool
+	log.Debug().Msg("setup websocket pool")
+	c.WebsocketPool = websocket.NewPool(cfg.Websocket.PoolSize)
+
 	// Setup HTTP client
 	log.Debug().Msg("setup http client")
 	c.HttpClient = resty.New()
@@ -143,10 +148,24 @@ func (c *Container) Close() error {
 	}
 
 	if err := c.RedisClient.Close(); err != nil {
-		slog.Error("Redis connection closing error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to close redis connection")
 		errs = append(errs, err)
 	} else {
-		slog.Info("Redis connection is closed")
+		log.Info().Msg("redis connection is closed")
+	}
+
+	if err := c.PubSub.Close(); err != nil {
+		log.Error().Stack().Err(err).Msg("failed to close pub/sub")
+		errs = append(errs, err)
+	} else {
+		log.Info().Msg("pub/sub is closed")
+	}
+
+	if err := c.WebsocketPool.Close(); err != nil {
+		log.Error().Stack().Err(err).Msg("failed to close websocket pool")
+		errs = append(errs, err)
+	} else {
+		log.Info().Msg("websocket pool is closed")
 	}
 
 	return errors.Join(errs...)

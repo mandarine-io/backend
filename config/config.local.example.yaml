@@ -30,6 +30,8 @@ smtp:
   password:
   ssl: true
   from: Mandarine <mandarine-app@yandex.ru>
+websocket:
+  pool_size: 1024
 oauth_client:
   google:
     client_id:
