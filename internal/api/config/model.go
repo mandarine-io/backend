@@ -25,6 +25,7 @@ type ServerConfig struct {
 	ExternalOrigin string `yaml:"external_origin" env-description:"Server external origin" env:"MANDARINE_SERVER__EXTERNAL_ORIGIN" env-default:"rest://localhost:8000" validate:"omitempty,http_url"`
 	Mode           string `yaml:"mode" env-description:"Server mode" env:"MANDARINE_SERVER__MODE" env-default:"local" validate:"required,oneof=local development production test"`
 	Version        string `yaml:"version" env-description:"Server version" env:"MANDARINE_SERVER__VERSION" env-default:"0.0.0"`
+	MaxRequestSize int    `yaml:"max_request_size" env-description:"Max request size in bytes" env:"MANDARINE_SERVER__MAX_REQUEST_SIZE" env-default:"500" validate:"min=0"`
 }
 
 type PostgresConfig struct {

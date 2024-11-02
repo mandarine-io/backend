@@ -1,6 +1,7 @@
 package rest
 
 import (
+	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
 	docs "github.com/mandarine-io/Backend/docs/api"
 	httphelper "github.com/mandarine-io/Backend/internal/api/helper/http"
@@ -73,9 +74,10 @@ func SetupRouter(container *registry.Container) *gin.Engine {
 	log.Debug().Msg("setup middlewares")
 	router.Use(middleware.LoggerMiddleware())
 	router.Use(middleware.LocaleMiddleware(container.Bundle))
-	router.Use(middleware.ErrorMiddleware())
 	router.Use(middleware.RateLimitMiddleware(container.RedisClient, container.Config.Security.RateLimit.RPS))
 	router.Use(middleware.CorsMiddleware())
+	router.Use(limits.RequestSizeLimiter(int64(container.Config.Server.MaxRequestSize)))
+	router.Use(middleware.ErrorMiddleware())
 
 	if container.Config.Server.ExternalOrigin != "" && httphelper.IsPublicOrigin(container.Config.Server.ExternalOrigin) {
 		router.Use(middleware.SecurityHeadersMiddleware())
