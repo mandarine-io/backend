@@ -2,7 +2,6 @@ package ws
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	wsSvc "github.com/mandarine-io/Backend/internal/api/service/ws"
 	"github.com/mandarine-io/Backend/internal/api/transport/http/handler"
 	"github.com/mandarine-io/Backend/pkg/transport/http/middleware"
@@ -11,8 +10,7 @@ import (
 )
 
 type Handler struct {
-	svc      *wsSvc.Service
-	upgrader websocket.Upgrader
+	svc *wsSvc.Service
 }
 
 func NewHandler(svc *wsSvc.Service) *Handler {
