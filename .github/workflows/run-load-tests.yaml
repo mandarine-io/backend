@@ -38,10 +38,9 @@ jobs:
         env:
           K6_WEB_DASHBOARD: true
           K6_WEB_DASHBOARD_EXPORT: logs/load-tests/${{ matrix.test }}/report.html
-          BACKEND_HOSTNAME: localhost:8080
+          BACKEND_HOSTNAME: localhost:28080
         with:
           path: tests/load/${{ matrix.test }}
-          fail-fast: false
           flags: --profiling-enabled
       - name: Cleanup test environment
         working-directory: deploy/docker
