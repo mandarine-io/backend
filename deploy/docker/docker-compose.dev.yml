@@ -121,7 +121,7 @@ services:
       timeout: 5s
       retries: 50
     ports:
-      - 1080:80
+      - 8000:80
     networks:
       - mandarine-dev-net
     depends_on:
