@@ -84,10 +84,7 @@ services:
   ######### Backend #########
   ###########################
   backend:
-    build:
-      context: ../../
-      dockerfile: deploy/images/app.Dockerfile
-#    image: ghcr.io/mandarine-io/backend:${MANDARINE_SERVER_VERSION}
+    image: ghcr.io/mandarine-io/backend:${MANDARINE_SERVER_VERSION}
     container_name: mandarine-dev-backend
     restart: unless-stopped
     environment:
