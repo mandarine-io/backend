@@ -12,7 +12,7 @@ export const options = {
             iterations: 1500,
         },
     },
-    rps: 40,
+    rps: 30,
 }
 
 const poolIsNotFullCounter = new Counter('pool_is_not_full');

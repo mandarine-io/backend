@@ -21,7 +21,7 @@ const unexpectedResponseCounter = new Counter('unexpected_response');
 
 export function websocket_intermittent_connection() {
     // Login
-    const loginUrl = `${__ENV.BACKEND_HOSTNAME}/v0/auth/login`;
+    const loginUrl = `http://${__ENV.BACKEND_HOSTNAME}/v0/auth/login`;
     const loginHeaders = {
         'Content-Type': 'application/json',
     }
