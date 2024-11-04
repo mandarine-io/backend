@@ -32,13 +32,13 @@ jobs:
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
-          MANDARINE_SERVER__VERSION: ${{ github.event.inputs.image_tag }}
+          MANDARINE_SERVER_VERSION: ${{ github.event.inputs.image_tag }}
         with:
           host: ${{ secrets.SSH_DEV_HOST }}
           username: ${{ secrets.SSH_DEV_USER }}
           port: 22
           key: ${{ secrets.SSH_DEV_PRIVATE_KEY }}
-          envs: ACCESS_TOKEN,USERNAME,MANDARINE_SERVER__VERSION
+          envs: ACCESS_TOKEN,USERNAME,MANDARINE_SERVER_VERSION
           script: |
             echo $ACCESS_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
             cd deploy/docker
