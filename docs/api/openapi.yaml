@@ -13,7 +13,7 @@ paths:
   /health:
     get:
       description: Request for getting health status. In response will be status of
-        all checks (database, minio, smtp, redis).
+        all check (database, minio, smtp, redis).
       operationId: Health
       responses:
         "200":
@@ -22,7 +22,7 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: "#/components/schemas/health.Response"
+                  $ref: "#/components/schemas/dto.HealthOutput"
                 type: array
       summary: Health
       tags:
@@ -946,6 +946,37 @@ paths:
       summary: Upload resource
       tags:
         - Resource API
+  /ws:
+    get:
+      description: Request for connect to websocket server. If pool is not full, a new
+        websocket connection is created.
+      operationId: WsConnect
+      responses:
+        "101":
+          description: Switching Protocols
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Connect to websocket server
+      tags:
+        - Websocket API
 tags:
   - description: API for account management
     name: Account API
@@ -953,6 +984,8 @@ tags:
     name: Authentication and Authorization API
   - description: API for resource management
     name: Resource API
+  - description: API for websocket connection
+    name: Websocket API
   - description: API for getting metrics
     name: Metrics API
   - description: API for getting swagger documentation
@@ -1010,6 +1043,13 @@ components:
         - path
         - status
         - timestamp
+      type: object
+    dto.HealthOutput:
+      properties:
+        name:
+          type: string
+        pass:
+          type: boolean
       type: object
     dto.JwtTokensOutput:
       properties:
@@ -1159,11 +1199,4 @@ components:
       required:
         - email
         - otp
-      type: object
-    health.Response:
-      properties:
-        name:
-          type: string
-        pass:
-          type: boolean
       type: object

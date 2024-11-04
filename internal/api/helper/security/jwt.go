@@ -4,8 +4,8 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"mandarine/internal/api/config"
-	"mandarine/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
 	"time"
 )
 

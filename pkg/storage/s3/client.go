@@ -3,9 +3,10 @@ package s3
 import (
 	"context"
 	"errors"
+	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/minio/minio-go/v7"
-	dto2 "mandarine/pkg/rest/dto"
-	"mandarine/pkg/storage/s3/dto"
+	"github.com/rs/zerolog/log"
+	"io"
 	"sync"
 )
 
@@ -17,27 +18,48 @@ var (
 	ErrObjectNotFound = dto2.NewI18nError("object not found", "errors.object_not_found")
 )
 
-type Client interface {
-	CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateDto
-	CreateMany(ctx context.Context, files []*dto.FileData) map[string]*dto.CreateDto
-	GetOne(ctx context.Context, objectID string) *dto.GetDto
-	GetMany(ctx context.Context, objectIDs []string) map[string]*dto.GetDto
-	DeleteOne(ctx context.Context, objectID string) error
-	DeleteMany(ctx context.Context, objectIDs []string) map[string]error
-}
+type (
+	FileData struct {
+		ID           string
+		Size         int64
+		ContentType  string
+		Reader       io.ReadCloser
+		UserMetadata map[string]string
+	}
 
-type client struct {
-	minio      *minio.Client
-	bucketName string
-}
+	CreateDto struct {
+		ObjectID string
+		Error    error
+	}
+
+	GetDto struct {
+		Data  *FileData
+		Error error
+	}
+
+	Client interface {
+		CreateOne(ctx context.Context, file *FileData) *CreateDto
+		CreateMany(ctx context.Context, files []*FileData) map[string]*CreateDto
+		GetOne(ctx context.Context, objectID string) *GetDto
+		GetMany(ctx context.Context, objectIDs []string) map[string]*GetDto
+		DeleteOne(ctx context.Context, objectID string) error
+		DeleteMany(ctx context.Context, objectIDs []string) map[string]error
+	}
+
+	client struct {
+		minio      *minio.Client
+		bucketName string
+	}
+)
 
 func NewClient(minio *minio.Client, bucketName string) Client {
 	return &client{minio: minio, bucketName: bucketName}
 }
 
-func (c *client) CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateDto {
+func (c *client) CreateOne(ctx context.Context, file *FileData) *CreateDto {
+	log.Debug().Msg("create one object")
 	if file == nil {
-		return &dto.CreateDto{Error: errors.New("file is nil")}
+		return &CreateDto{Error: errors.New("file is nil")}
 	}
 
 	// Upload
@@ -51,15 +73,17 @@ func (c *client) CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateD
 			UserMetadata:          file.UserMetadata,
 		})
 	if err != nil {
-		return &dto.CreateDto{Error: err}
+		return &CreateDto{Error: err}
 	}
-	return &dto.CreateDto{ObjectID: info.Key}
+	return &CreateDto{ObjectID: info.Key}
 }
 
-func (c *client) CreateMany(ctx context.Context, files []*dto.FileData) map[string]*dto.CreateDto {
+func (c *client) CreateMany(ctx context.Context, files []*FileData) map[string]*CreateDto {
+	log.Debug().Msg("create many object")
+
 	type entry struct {
 		filename string
-		dto      *dto.CreateDto
+		dto      *CreateDto
 	}
 
 	dtoCh := make(chan *entry, len(files))
@@ -78,7 +102,7 @@ func (c *client) CreateMany(ctx context.Context, files []*dto.FileData) map[stri
 		close(dtoCh)
 	}()
 
-	dtoMap := make(map[string]*dto.CreateDto)
+	dtoMap := make(map[string]*CreateDto)
 	for entry := range dtoCh {
 		dtoMap[entry.filename] = entry.dto
 	}
@@ -86,28 +110,30 @@ func (c *client) CreateMany(ctx context.Context, files []*dto.FileData) map[stri
 	return dtoMap
 }
 
-func (c *client) GetOne(ctx context.Context, objectID string) *dto.GetDto {
+func (c *client) GetOne(ctx context.Context, objectID string) *GetDto {
+	log.Debug().Msg("get one object")
+
 	object, err := c.minio.GetObject(ctx, c.bucketName, objectID, minio.GetObjectOptions{})
 	if err != nil {
 		if errors.As(err, &minio.ErrorResponse{}) && err.(minio.ErrorResponse).Code == "NoSuchKey" {
-			return &dto.GetDto{Error: ErrObjectNotFound}
+			return &GetDto{Error: ErrObjectNotFound}
 		}
-		return &dto.GetDto{Error: err}
+		return &GetDto{Error: err}
 	}
 	if object == nil {
-		return &dto.GetDto{Error: ErrObjectNotFound}
+		return &GetDto{Error: ErrObjectNotFound}
 	}
 
 	stat, err := object.Stat()
 	if err != nil {
 		if errors.As(err, &minio.ErrorResponse{}) && err.(minio.ErrorResponse).Code == "NoSuchKey" {
-			return &dto.GetDto{Error: ErrObjectNotFound}
+			return &GetDto{Error: ErrObjectNotFound}
 		}
-		return &dto.GetDto{Error: err}
+		return &GetDto{Error: err}
 	}
 
-	return &dto.GetDto{
-		Data: &dto.FileData{
+	return &GetDto{
+		Data: &FileData{
 			Reader:      object,
 			ID:          stat.Key,
 			Size:        stat.Size,
@@ -116,10 +142,12 @@ func (c *client) GetOne(ctx context.Context, objectID string) *dto.GetDto {
 	}
 }
 
-func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*dto.GetDto {
+func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*GetDto {
+	log.Debug().Msg("get many object")
+
 	type entry struct {
 		objectID string
-		dto      *dto.GetDto
+		dto      *GetDto
 	}
 
 	dtoCh := make(chan *entry, len(objectIDs))
@@ -138,7 +166,7 @@ func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*dt
 		close(dtoCh)
 	}()
 
-	dtoMap := make(map[string]*dto.GetDto)
+	dtoMap := make(map[string]*GetDto)
 	for entry := range dtoCh {
 		dtoMap[entry.objectID] = entry.dto
 	}
@@ -147,10 +175,12 @@ func (c *client) GetMany(ctx context.Context, objectIDs []string) map[string]*dt
 }
 
 func (c *client) DeleteOne(ctx context.Context, objectID string) error {
+	log.Debug().Msg("delete one object")
 	return c.minio.RemoveObject(ctx, c.bucketName, objectID, minio.RemoveObjectOptions{})
 }
 
 func (c *client) DeleteMany(ctx context.Context, objectIDs []string) map[string]error {
+	log.Debug().Msg("delete many object")
 	objectIdCh := make(chan minio.ObjectInfo, len(objectIDs))
 	for _, objectID := range objectIDs {
 		objectIdCh <- minio.ObjectInfo{Key: objectID}

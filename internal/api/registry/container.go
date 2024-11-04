@@ -3,49 +3,46 @@ package registry
 import (
 	"errors"
 	"github.com/go-resty/resty/v2"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/pkg/locale"
+	"github.com/mandarine-io/Backend/pkg/oauth"
+	"github.com/mandarine-io/Backend/pkg/pubsub"
+	"github.com/mandarine-io/Backend/pkg/smtp"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/mandarine-io/Backend/pkg/storage/database/postgres"
+	"github.com/mandarine-io/Backend/pkg/storage/s3"
+	"github.com/mandarine-io/Backend/pkg/template"
+	"github.com/mandarine-io/Backend/pkg/websocket"
 	"github.com/minio/minio-go/v7"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"log/slog"
-	"mandarine/internal/api/config"
-	"mandarine/pkg/locale"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/oauth"
-	"mandarine/pkg/oauth/google"
-	"mandarine/pkg/oauth/mailru"
-	"mandarine/pkg/oauth/yandex"
-	"mandarine/pkg/smtp"
-	"mandarine/pkg/storage/cache/db_cacher"
-	"mandarine/pkg/storage/cache/manager"
-	cacheResource "mandarine/pkg/storage/cache/resource"
-	"mandarine/pkg/storage/database"
-	dbResource "mandarine/pkg/storage/database/resource"
-	"mandarine/pkg/storage/s3"
-	s3Resource "mandarine/pkg/storage/s3/resource"
-	"mandarine/pkg/template"
-	"time"
 )
 
 type Container struct {
 	Config *config.Config
 
-	Logger         *slog.Logger
-	Bundle         *i18n.Bundle
-	RedisClient    *redis.Client
-	DB             *gorm.DB
-	S3             *minio.Client
-	HttpClient     *resty.Client
-	OauthProviders map[string]oauth.Provider
+	Logger        *zerolog.Logger
+	Bundle        *i18n.Bundle
+	CacheRDB      *redis.Client
+	PubSubRDB     *redis.Client
+	DB            *gorm.DB
+	S3            *minio.Client
+	WebsocketPool *websocket.Pool
+	HttpClient    *resty.Client
 
+	OauthProviders map[string]oauth.Provider
 	TemplateEngine template.Engine
-	CacheManager   manager.CacheManager
+	CacheManager   cache.Manager
 	S3Client       s3.Client
 	SmtpSender     smtp.Sender
+	PubSub         pubsub.Agent
 
-	Repositories *Repositories
-	Services     *Services
-	Handlers     Handlers
+	Repos    *Repositories
+	SVCs     *Services
+	Handlers Handlers
 }
 
 func NewContainer() *Container {
@@ -54,78 +51,86 @@ func NewContainer() *Container {
 
 func (c *Container) MustInitialize(cfg *config.Config) {
 	// Setup config
+	log.Debug().Msg("setup config")
 	c.Config = cfg
 
 	// Setup logger
-	c.Logger = slog.Default()
+	log.Debug().Msg("setup logger")
+	c.Logger = &log.Logger
 
 	// Setup locale
+	log.Debug().Msg("setup locale")
 	localeConfig := mapAppLocaleConfigToLocaleConfig(&cfg.Locale)
 	c.Bundle = locale.MustLoadLocales(localeConfig)
 
 	// Setup template engine
+	log.Debug().Msg("setup template engine")
 	templateConfig := mapAppTemplateConfigToTemplateConfig(&cfg.Template)
 	c.TemplateEngine = template.MustLoadTemplates(templateConfig)
 
-	// Setup cache manager
-	redisConfig := mapAppRedisConfigToRedisConfig(&cfg.Redis)
-	c.RedisClient = cacheResource.MustConnectRedis(redisConfig)
-	c.CacheManager = manager.NewRedisCacheManager(c.RedisClient, time.Duration(cfg.Cache.TTL)*time.Second)
-
-	// Setup database
-	postgresConfig := mapAppPostgresConfigToPostgresConfig(&cfg.Postgres)
-	c.DB = dbResource.MustConnectPostgres(postgresConfig)
-	err := database.UseCachePlugin(c.DB, db_cacher.NewDbCacher(c.CacheManager))
-	if err != nil {
-		slog.Warn("Database cache setup error", logging.ErrorAttr(err))
-	}
-
-	// Migrate database
-	err = database.Migrate(dbResource.GetDSN(postgresConfig), cfg.Migrations.Path)
-	if err != nil {
-		slog.Warn("Database migration error", logging.ErrorAttr(err))
-	}
-
-	// Setup S3
-	minioConfig := mapAppMinioConfigToMinioConfig(&cfg.Minio)
-	c.S3 = s3Resource.MustConnectMinio(minioConfig)
-	c.S3Client = s3.NewClient(c.S3, cfg.Minio.BucketName)
+	// Setup websocket pool
+	log.Debug().Msg("setup websocket pool")
+	c.WebsocketPool = websocket.NewPool(cfg.Websocket.PoolSize)
 
 	// Setup SMTP sender
+	log.Debug().Msg("setup smtp sender")
 	smtpConfig := mapAppSmtpConfigToSmtpConfig(&cfg.SMTP)
 	c.SmtpSender = smtp.MustNewSender(smtpConfig)
 
 	// Setup HTTP client
+	log.Debug().Msg("setup http client")
 	c.HttpClient = resty.New()
 
-	// Setup OAuth clients
-	c.OauthProviders = map[string]oauth.Provider{
-		google.ProviderKey: google.NewOAuthGoogleProvider(cfg.OAuthClient.Google.ClientID, cfg.OAuthClient.Google.ClientSecret),
-		yandex.ProviderKey: yandex.NewOAuthYandexProvider(cfg.OAuthClient.Yandex.ClientID, cfg.OAuthClient.Yandex.ClientSecret),
-		mailru.ProviderKey: mailru.NewOAuthMailRuProvider(cfg.OAuthClient.MailRu.ClientID, cfg.OAuthClient.MailRu.ClientSecret),
-	}
-
-	// Setup CSR components
-	c.Repositories = newGormRepositories(c.DB)
-	c.Services = newServices(c)
-	c.Handlers = newHandlers(c)
+	setupCacheManager(c)
+	setupDatabase(c)
+	setupS3(c)
+	setupPubSub(c)
+	setupOAuthClients(c)
+	setupGormRepositories(c)
+	setupServices(c)
+	setupHandlers(c)
 }
 
 func (c *Container) Close() error {
 	var errs []error
 
-	if err := dbResource.Close(c.DB); err != nil {
-		slog.Error("Postgres connection closing error", logging.ErrorAttr(err))
+	if err := postgres.CloseGormDb(c.DB); err != nil {
+		log.Error().Stack().Err(err).Msg("failed to close postgres connection")
 		errs = append(errs, err)
 	} else {
-		slog.Info("Postgres connection is closed")
+		log.Info().Msg("postgres connection is closed")
 	}
 
-	if err := c.RedisClient.Close(); err != nil {
-		slog.Error("Redis connection closing error", logging.ErrorAttr(err))
+	if c.CacheRDB != nil {
+		if err := c.CacheRDB.Close(); err != nil {
+			log.Error().Stack().Err(err).Msg("failed to close redis cache connection")
+			errs = append(errs, err)
+		} else {
+			log.Info().Msg("redis cache connection is closed")
+		}
+	}
+
+	if c.PubSubRDB != nil {
+		if err := c.PubSubRDB.Close(); err != nil {
+			log.Error().Stack().Err(err).Msg("failed to close redis pub/sub connection")
+			errs = append(errs, err)
+		} else {
+			log.Info().Msg("redis pub/sub connection is closed")
+		}
+	}
+
+	if err := c.PubSub.Close(); err != nil {
+		log.Error().Stack().Err(err).Msg("failed to close pub/sub")
 		errs = append(errs, err)
 	} else {
-		slog.Info("Redis connection is closed")
+		log.Info().Msg("pub/sub is closed")
+	}
+
+	if err := c.WebsocketPool.Close(); err != nil {
+		log.Error().Stack().Err(err).Msg("failed to close websocket pool")
+		errs = append(errs, err)
+	} else {
+		log.Info().Msg("websocket pool is closed")
 	}
 
 	return errors.Join(errs...)
@@ -141,35 +146,6 @@ func mapAppLocaleConfigToLocaleConfig(cfg *config.LocaleConfig) *locale.Config {
 func mapAppTemplateConfigToTemplateConfig(cfg *config.TemplateConfig) *template.Config {
 	return &template.Config{
 		Path: cfg.Path,
-	}
-}
-
-func mapAppRedisConfigToRedisConfig(cfg *config.RedisConfig) *cacheResource.RedisConfig {
-	return &cacheResource.RedisConfig{
-		Host:     cfg.Host,
-		Port:     cfg.Port,
-		Username: cfg.Username,
-		Password: cfg.Password,
-	}
-}
-
-func mapAppPostgresConfigToPostgresConfig(cfg *config.PostgresConfig) *dbResource.PostgresConfig {
-	return &dbResource.PostgresConfig{
-		Host:     cfg.Host,
-		Port:     cfg.Port,
-		Username: cfg.Username,
-		Password: cfg.Password,
-		DBName:   cfg.DBName,
-	}
-}
-
-func mapAppMinioConfigToMinioConfig(cfg *config.MinioConfig) *s3Resource.MinioConfig {
-	return &s3Resource.MinioConfig{
-		Host:       cfg.Host,
-		Port:       cfg.Port,
-		AccessKey:  cfg.AccessKey,
-		SecretKey:  cfg.SecretKey,
-		BucketName: cfg.BucketName,
 	}
 }
 

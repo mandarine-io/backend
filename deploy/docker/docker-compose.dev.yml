@@ -8,14 +8,6 @@ volumes:
   mandarine-dev-redis-data:
   mandarine-dev-minio-data:
 
-#secrets:
-#  postgres-password:
-#    file: ${MANDARINE_POSTGRES__PASSWORD_FILE}
-#  redis-password:
-#    file: ${MANDARINE_REDIS__PASSWORD_FILE}
-#  minio-secret-key:
-#    file: ${MANDARINE_MINIO__SECRET_KEY_FILE}
-
 services:
   ################################
   ########## PostgreSQL ##########
@@ -25,19 +17,16 @@ services:
     container_name: mandarine-dev-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${MANDARINE_POSTGRES__USERNAME}
-      POSTGRES_PASSWORD: ${MANDARINE_POSTGRES__PASSWORD}
-      #      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
-      POSTGRES_DB: ${MANDARINE_POSTGRES__DB_NAME}
-#    secrets:
-#      - postgres-password
+      POSTGRES_USER: ${MANDARINE_DATABASE_POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${MANDARINE_DATABASE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MANDARINE_DATABASE_POSTGRES_DBNAME}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
       interval: 5s
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_POSTGRES__PORT}:5432
+      - 15432:5432
     volumes:
       - mandarine-dev-postgres-data:/var/lib/postgresql/data
     networks:
@@ -47,24 +36,21 @@ services:
   ########## Redis ##########
   ###########################
   redis:
-    image: redis:7.4.1-alpine3.20
+    image: redis/redis-stack:7.4.0-v0
     container_name: mandarine-dev-redis
     restart: unless-stopped
     environment:
-      REDIS_USER: ${MANDARINE_REDIS__USERNAME}
-      REDIS_PASSWORD: ${MANDARINE_REDIS__PASSWORD}
-      #      REDIS_PASSWORD_FILE: /run/secrets/redis-password
-      REDIS_ARGS: '--requirepass ${MANDARINE_REDIS__PASSWORD} --user ${MANDARINE_REDIS__USERNAME} on >${MANDARINE_REDIS__PASSWORD} ~* allcommands'
-#    secrets:
-#      - redis-password
+      REDIS_USER: ${MANDARINE_CACHE_REDIS_USERNAME}
+      REDIS_PASSWORD: ${MANDARINE_CACHE_REDIS_PASSWORD}
+      REDIS_ARGS: '--requirepass ${MANDARINE_CACHE_REDIS_PASSWORD} --user ${MANDARINE_CACHE_REDIS_USERNAME} on >${MANDARINE_CACHE_REDIS_PASSWORD} ~* allcommands'
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli ping" ]
       interval: 5s
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_REDIS__PORT}:6379
-      - ${MANDARINE_REDIS__UI_PORT}:8001
+      - 16379:6379
+      - 18001:8001
     volumes:
       - mandarine-dev-redis-data:/data
     networks:
@@ -78,20 +64,17 @@ services:
     container_name: mandarine-dev-minio
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: ${MANDARINE_MINIO__ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MANDARINE_MINIO__SECRET_KEY}
-      #      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio-secret-key
-      MINIO_DEFAULT_BUCKETS: ${MANDARINE_MINIO__BUCKET_NAME}
-#    secrets:
-#      - minio-secret-key
+      MINIO_ROOT_USER: ${MANDARINE_S3_MINIO_ACCESSKEY}
+      MINIO_ROOT_PASSWORD: ${MANDARINE_S3_MINIO_SECRETKEY}
+      MINIO_DEFAULT_BUCKETS: ${MANDARINE_S3_MINIO_BUCKET}
     healthcheck:
       test: [ "CMD-SHELL", "mc ready local" ]
       interval: 5s
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_MINIO__PORT}:9000
-      - ${MANDARINE_MINIO__UI_PORT}:9001
+      - 19000:9000
+      - 19001:9001
     volumes:
       - mandarine-dev-minio-data:/bitnami/minio/data
     networks:
@@ -101,13 +84,21 @@ services:
   ######### Backend #########
   ###########################
   backend:
-    image: ghcr.io/mandarine-io/backend:${MANDARINE_SERVER__VERSION}
+    build:
+      context: ../../
+      dockerfile: deploy/images/app.Dockerfile
+#    image: ghcr.io/mandarine-io/backend:${MANDARINE_SERVER_VERSION}
     container_name: mandarine-dev-backend
     restart: unless-stopped
     environment:
-      MANDARINE_SERVER__VERSION: ${MANDARINE_SERVER__VERSION}
+      MANDARINE_SERVER_VERSION: ${MANDARINE_SERVER_VERSION}
     env_file:
-      - .env
+      - .env.dev
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
     networks:
       - mandarine-dev-net
     depends_on:
@@ -133,7 +124,7 @@ services:
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_REVERSE_PROXY__PORT}:80
+      - 1080:80
     networks:
       - mandarine-dev-net
     depends_on:

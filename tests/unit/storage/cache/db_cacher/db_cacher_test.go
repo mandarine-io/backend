@@ -5,17 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-gorm/caches/v4"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/db_cacher"
+	mock2 "github.com/mandarine-io/Backend/pkg/storage/cache/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"mandarine/pkg/storage/cache/db_cacher"
-	"mandarine/pkg/storage/cache/manager"
-	mock2 "mandarine/pkg/storage/cache/manager/mock"
 	"testing"
 )
 
 func Test_DbCacher_Get(t *testing.T) {
 	ctx := context.TODO()
-	cacheManagerMock := new(mock2.CacheManagerMock)
+	cacheManagerMock := new(mock2.ManagerMock)
 	cacher := db_cacher.NewDbCacher(cacheManagerMock)
 
 	t.Run(
@@ -41,7 +41,7 @@ func Test_DbCacher_Get(t *testing.T) {
 	t.Run(
 		"Cache miss", func(t *testing.T) {
 			key := "missing-key"
-			cacheManagerMock.On("Get", ctx, key, mock.Anything).Once().Return(manager.ErrCacheEntryNotFound)
+			cacheManagerMock.On("Get", ctx, key, mock.Anything).Once().Return(cache.ErrCacheEntryNotFound)
 
 			query := &caches.Query[any]{}
 			result, err := cacher.Get(ctx, key, query)
@@ -67,7 +67,7 @@ func Test_DbCacher_Get(t *testing.T) {
 
 func Test_DbCacher_Store(t *testing.T) {
 	ctx := context.TODO()
-	cacheManagerMock := new(mock2.CacheManagerMock)
+	cacheManagerMock := new(mock2.ManagerMock)
 	cacher := db_cacher.NewDbCacher(cacheManagerMock)
 
 	t.Run(
@@ -99,7 +99,7 @@ func Test_DbCacher_Store(t *testing.T) {
 
 func Test_DbCacher_Invalidate(t *testing.T) {
 	ctx := context.TODO()
-	cacheManagerMock := new(mock2.CacheManagerMock)
+	cacheManagerMock := new(mock2.ManagerMock)
 	cacher := db_cacher.NewDbCacher(cacheManagerMock)
 
 	t.Run(

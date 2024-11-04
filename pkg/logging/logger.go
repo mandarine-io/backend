@@ -1,15 +1,17 @@
 package logging
 
 import (
-	slogmulti "github.com/samber/slog-multi"
-	slogzerolog "github.com/samber/slog-zerolog/v2"
-	"gopkg.in/natefinch/lumberjack.v2"
+	"github.com/rs/zerolog/pkgerrors"
+	"github.com/timandy/routine"
+	"io"
+	"os"
+	"path"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/timandy/routine"
-	"log/slog"
-	"os"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -18,106 +20,99 @@ const (
 )
 
 type Config struct {
+	Level   string
 	Console ConsoleLoggerConfig
 	File    FileLoggerConfig
 }
 
 type ConsoleLoggerConfig struct {
-	Level    string
+	Enable   bool
 	Encoding string
 }
 
 type FileLoggerConfig struct {
 	Enable  bool
-	Level   string
 	DirPath string
 	MaxSize int
 	MaxAge  int
 }
 
 func SetupLogger(cfg *Config) {
-	var handlers []slog.Handler
-	handlers = append(handlers, setupConsoleHandler(cfg.Console))
+	var writers []io.Writer
+
+	if cfg.Console.Enable {
+		if cfg.Console.Encoding == logEncodingText {
+			consoleWriter := zerolog.ConsoleWriter{
+				Out:        os.Stdout,
+				TimeFormat: time.RFC3339,
+			}
+			writers = append(writers, consoleWriter)
+		} else {
+			writers = append(writers, os.Stdout)
+		}
+	}
+
 	if cfg.File.Enable {
-		handlers = append(handlers, setupFileHandler(cfg.File))
+		writers = append(writers, newRollingFile(cfg.File))
 	}
 
-	logger := slog.New(slogmulti.Fanout(handlers...))
-	slog.SetDefault(logger)
+	mw := io.MultiWriter(writers...)
+
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+		return file + ":" + strconv.Itoa(line)
+	}
+	zerolog.SetGlobalLevel(parseLevel(cfg.Level))
+	log.Logger = zerolog.
+		New(mw).
+		Hook(pidHook{}, gidHook{}).
+		With().
+		Timestamp().
+		Caller().
+		Logger()
 }
 
-func setupConsoleHandler(cfg ConsoleLoggerConfig) slog.Handler {
-	// Parse logging level
-	level, err := parseLevel(string(cfg.Level))
-	if err != nil {
-		level = slog.LevelInfo
+func newRollingFile(cfg FileLoggerConfig) io.Writer {
+	if err := os.MkdirAll(cfg.DirPath, 0744); err != nil {
+		log.Error().Err(err).Msgf("can't create log directory %s", cfg.DirPath)
+		return nil
 	}
 
-	// Setup console handler options
-	var opts slogzerolog.Option
-	switch cfg.Encoding {
-	case logEncodingText:
-		zerologLogger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}).Hook(
-			&pidHook{}, &gidHook{},
-		).With().Timestamp().Logger()
-		opts = slogzerolog.Option{
-			Level:  level,
-			Logger: &zerologLogger,
-		}
-	case logEncodingJson:
-		zerologLogger := zerolog.New(os.Stdout).Hook(
-			&pidHook{}, &gidHook{},
-		).With().Timestamp().Logger()
-		opts = slogzerolog.Option{
-			Level:     level,
-			Logger:    &zerologLogger,
-			AddSource: true,
-		}
-	}
-
-	return opts.NewZerologHandler()
-}
-
-func setupFileHandler(cfg FileLoggerConfig) slog.Handler {
-	// Parse logging level
-	level, err := parseLevel(cfg.Level)
-	if err != nil {
-		level = slog.LevelInfo
-	}
-
-	// Setup file handler options
-	lumberjackLogger := &lumberjack.Logger{
-		Filename:   cfg.DirPath + "/app.log",
+	return &lumberjack.Logger{
+		Filename:   path.Join(cfg.DirPath, "app.log"),
 		MaxSize:    cfg.MaxSize,
 		MaxAge:     cfg.MaxAge,
 		MaxBackups: 3,
 	}
-	zerologLogger := zerolog.New(lumberjackLogger).Hook(
-		&pidHook{}, &gidHook{},
-	).With().Timestamp().Logger()
-	opts := slogzerolog.Option{
-		Level:     level,
-		Logger:    &zerologLogger,
-		AddSource: true,
-	}
+}
 
-	return opts.NewZerologHandler()
+func parseLevel(s string) zerolog.Level {
+	switch s {
+	case "debug":
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warn":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
+	case "fatal":
+		return zerolog.FatalLevel
+	case "panic":
+		return zerolog.PanicLevel
+	default:
+		return zerolog.InfoLevel
+	}
 }
 
 type pidHook struct{}
 
-func (h *pidHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
+func (h pidHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
 	e.Int("pid", os.Getpid())
 }
 
 type gidHook struct{}
 
-func (h *gidHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
+func (h gidHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
 	e.Int64("gid", routine.Goid())
-}
-
-func parseLevel(s string) (slog.Level, error) {
-	var level slog.Level
-	var err = level.UnmarshalText([]byte(s))
-	return level, err
 }

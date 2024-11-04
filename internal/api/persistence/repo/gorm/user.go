@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/persistence/repo"
 )
 
 type userRepository struct {
@@ -18,6 +19,7 @@ func NewUserRepository(db *gorm.DB) repo.UserRepository {
 }
 
 func (u *userRepository) CreateUser(ctx context.Context, user *model.UserEntity) (*model.UserEntity, error) {
+	log.Debug().Msg("create user")
 	tx := u.db.WithContext(ctx).Create(user)
 	if errors.Is(tx.Error, gorm.ErrDuplicatedKey) {
 		return user, repo.ErrDuplicateUser
@@ -26,6 +28,7 @@ func (u *userRepository) CreateUser(ctx context.Context, user *model.UserEntity)
 }
 
 func (u *userRepository) UpdateUser(ctx context.Context, user *model.UserEntity) (*model.UserEntity, error) {
+	log.Debug().Msg("update user")
 	tx := u.db.WithContext(ctx).Save(user)
 	if errors.Is(tx.Error, gorm.ErrDuplicatedKey) {
 		return user, repo.ErrDuplicateUser
@@ -34,6 +37,7 @@ func (u *userRepository) UpdateUser(ctx context.Context, user *model.UserEntity)
 }
 
 func (u *userRepository) FindUserById(ctx context.Context, id uuid.UUID, roleJoin bool) (*model.UserEntity, error) {
+	log.Debug().Msg("find user by id")
 	var db *gorm.DB
 	if roleJoin {
 		db = u.db.WithContext(ctx).Joins("Role")
@@ -53,6 +57,7 @@ func (u *userRepository) FindUserById(ctx context.Context, id uuid.UUID, roleJoi
 }
 
 func (u *userRepository) FindUserByUsername(ctx context.Context, username string, roleJoin bool) (*model.UserEntity, error) {
+	log.Debug().Msg("find user by username")
 	var db *gorm.DB
 	if roleJoin {
 		db = u.db.WithContext(ctx).Joins("Role")
@@ -72,6 +77,7 @@ func (u *userRepository) FindUserByUsername(ctx context.Context, username string
 }
 
 func (u *userRepository) FindUserByEmail(ctx context.Context, email string, roleJoin bool) (*model.UserEntity, error) {
+	log.Debug().Msg("find user by email")
 	var db *gorm.DB
 	if roleJoin {
 		db = u.db.WithContext(ctx).Joins("Role")
@@ -91,6 +97,7 @@ func (u *userRepository) FindUserByEmail(ctx context.Context, email string, role
 }
 
 func (u *userRepository) FindUserByUsernameOrEmail(ctx context.Context, login string, roleJoin bool) (*model.UserEntity, error) {
+	log.Debug().Msg("find user by username or email")
 	var db *gorm.DB
 	if roleJoin {
 		db = u.db.WithContext(ctx).Joins("Role")
@@ -111,6 +118,7 @@ func (u *userRepository) FindUserByUsernameOrEmail(ctx context.Context, login st
 }
 
 func (u *userRepository) ExistsUserById(ctx context.Context, id uuid.UUID) (bool, error) {
+	log.Debug().Msg("exists user by id")
 	var exists bool
 	tx := u.db.WithContext(ctx).
 		Model(&model.UserEntity{}).
@@ -122,6 +130,7 @@ func (u *userRepository) ExistsUserById(ctx context.Context, id uuid.UUID) (bool
 }
 
 func (u *userRepository) ExistsUserByUsername(ctx context.Context, username string) (bool, error) {
+	log.Debug().Msg("exists user by username")
 	var exists bool
 	tx := u.db.WithContext(ctx).
 		Model(&model.UserEntity{}).
@@ -133,6 +142,7 @@ func (u *userRepository) ExistsUserByUsername(ctx context.Context, username stri
 }
 
 func (u *userRepository) ExistsUserByEmail(ctx context.Context, email string) (bool, error) {
+	log.Debug().Msg("exists user by email")
 	var exists bool
 	tx := u.db.WithContext(ctx).
 		Model(&model.UserEntity{}).
@@ -144,6 +154,7 @@ func (u *userRepository) ExistsUserByEmail(ctx context.Context, email string) (b
 }
 
 func (u *userRepository) ExistsUserByUsernameOrEmail(ctx context.Context, username string, email string) (bool, error) {
+	log.Debug().Msg("exists user by username or email")
 	var exists bool
 	tx := u.db.WithContext(ctx).
 		Model(&model.UserEntity{}).
@@ -156,6 +167,7 @@ func (u *userRepository) ExistsUserByUsernameOrEmail(ctx context.Context, userna
 }
 
 func (u *userRepository) DeleteExpiredUser(ctx context.Context) (*model.UserEntity, error) {
+	log.Debug().Msg("delete expired user")
 	userEntity := &model.UserEntity{}
 	tx := u.db.WithContext(ctx).
 		Scopes(deletedUsers).

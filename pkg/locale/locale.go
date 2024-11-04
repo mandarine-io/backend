@@ -2,12 +2,10 @@ package locale
 
 import (
 	"encoding/json"
+	"github.com/mandarine-io/Backend/internal/api/helper/file"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
-	"log/slog"
-	"mandarine/internal/api/helper/file"
-	"mandarine/pkg/logging"
-	"os"
 	"path"
 	"path/filepath"
 )
@@ -19,36 +17,35 @@ type Config struct {
 
 func MustLoadLocales(cfg *Config) *i18n.Bundle {
 	// Parse default language tag
+	log.Debug().Msg("parse default language")
 	tag, err := language.Parse(cfg.Language)
 	if err != nil {
-		slog.Warn("Default language parsing error", logging.ErrorAttr(err))
+		log.Warn().Stack().Err(err).Msg("failed to parse default language")
 		tag = language.English
 	}
-	slog.Info("Default language: " + tag.String())
+	log.Info().Msgf("set default language: %s", tag)
 
 	// Read locale files
 	bundle := i18n.NewBundle(tag)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
+	log.Debug().Msg("read locale files")
 	files, err := file.GetFilesFromDir(cfg.Path)
 	if err != nil {
-		slog.Error("Locales set up error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to get locale files")
 	}
 
 	for _, f := range files {
 		filePath := path.Join(cfg.Path, f)
 		absFilePath, err := filepath.Abs(filePath)
 		if err != nil {
-			slog.Error("Locales set up error", logging.ErrorAttr(err))
-			os.Exit(1)
+			log.Fatal().Stack().Err(err).Msgf("failed to get absolute path of locale file: %s", filePath)
 		}
 
-		slog.Info("Read translation file: " + absFilePath)
+		log.Info().Msgf("load translation file: %s", absFilePath)
 		_, err = bundle.LoadMessageFile(absFilePath)
 		if err != nil {
-			slog.Error("Locales set up error", logging.ErrorAttr(err))
-			os.Exit(1)
+			log.Fatal().Stack().Err(err).Msg("failed to load locale file")
 		}
 	}
 
@@ -56,19 +53,21 @@ func MustLoadLocales(cfg *Config) *i18n.Bundle {
 }
 
 func Localize(localizer *i18n.Localizer, tag string) string {
+	log.Debug().Msgf("localize message by tag: %s", tag)
 	message, err := localizer.Localize(
 		&i18n.LocalizeConfig{
 			MessageID: tag,
 		},
 	)
 	if err != nil {
-		slog.Warn("Localize error", logging.ErrorAttr(err))
+		log.Warn().Stack().Err(err).Msg("failed to localize message by tag, use tag as fallback")
 		message = tag
 	}
 	return message
 }
 
 func LocalizeWithArgs(localizer *i18n.Localizer, tag string, args interface{}) string {
+	log.Debug().Msgf("localize message by tag: %s", tag)
 	message, err := localizer.Localize(
 		&i18n.LocalizeConfig{
 			MessageID:    tag,
@@ -76,7 +75,7 @@ func LocalizeWithArgs(localizer *i18n.Localizer, tag string, args interface{}) s
 		},
 	)
 	if err != nil {
-		slog.Warn("Localize error", logging.ErrorAttr(err))
+		log.Warn().Stack().Err(err).Msg("failed to localize message by tag, use tag as fallback")
 		message = tag
 	}
 	return message

@@ -38,7 +38,8 @@
     "resource_not_uploaded": "Resource not uploaded",
     "failed_to_send_email": "Failed to send email",
     "banned_user": "User is banned",
-    "deleted_user": "User has been deleted"
+    "deleted_user": "User has been deleted",
+    "ws_pool_is_full": "Websocket pool is full"
   },
   "email": {
     "register-confirm": {

@@ -1,0 +1,141 @@
+version: '3.8'
+
+networks:
+  mandarine-test-net:
+
+volumes:
+  mandarine-test-postgres-data:
+  mandarine-test-redis-data:
+  mandarine-test-minio-data:
+
+services:
+  ################################
+  ########## PostgreSQL ##########
+  ################################
+  postgres:
+    image: postgis/postgis:17-3.4-alpine
+    container_name: mandarine-test-postgres
+    restart: unless-stopped
+    command: -c 'max_connections=1024'
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mandarine
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - 25432:5432
+    volumes:
+      - mandarine-test-postgres-data:/var/lib/postgresql/data
+    networks:
+      - mandarine-test-net
+
+  ###########################
+  ########## Redis ##########
+  ###########################
+  redis:
+    image: redis/redis-stack:7.4.0-v0
+    container_name: mandarine-test-redis
+    restart: unless-stopped
+    environment:
+      REDIS_USER: admin
+      REDIS_PASSWORD: password
+      REDIS_ARGS: |
+        --requirepass passsword --user admin on >password ~* allcommands
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - 26379:6379
+      - 28001:8001
+    volumes:
+      - mandarine-test-redis-data:/data
+    networks:
+      - mandarine-test-net
+
+  ###########################
+  ########## Minio ##########
+  ###########################
+  minio:
+    image: bitnami/minio:2024.8.3
+    container_name: mandarine-test-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: Password10
+      MINIO_DEFAULT_BUCKETS: mandarine
+    healthcheck:
+      test: [ "CMD-SHELL", "mc ready local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - 29000:9000
+    volumes:
+      - mandarine-test-minio-data:/bitnami/minio/data
+    networks:
+      - mandarine-test-net
+
+  ##########################
+  ########## SMTP ##########
+  ##########################
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mandarine-test-mailhog
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8025 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    networks:
+      - mandarine-test-net
+
+  ###########################
+  ######### Backend #########
+  ###########################
+  backend:
+    build:
+      context: ../../
+      dockerfile: deploy/images/app.Dockerfile
+    container_name: mandarine-test-backend
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - 28080:8080
+    networks:
+      - mandarine-test-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+  migrate-test-data:
+    build:
+      context: .
+      dockerfile: ../images/psql.Dockerfile
+    container_name: mandarine-test-migrate-data
+    restart: no
+    command: [ "sh", "-c", "export PGPASSWORD=password && find /data -iname *.up.sql | xargs printf -- ' -f %s' | xargs -t psql -h postgres -p 5432 -U admin -d mandarine -q" ]
+    volumes:
+      - ../../migrations/test:/data
+    networks:
+      - mandarine-test-net
+    depends_on:
+      backend:
+        condition: service_healthy

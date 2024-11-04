@@ -1,7 +1,7 @@
 package random_test
 
 import (
-	"mandarine/internal/api/helper/random"
+	"github.com/mandarine-io/Backend/internal/api/helper/random"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

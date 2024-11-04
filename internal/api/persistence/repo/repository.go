@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 	"github.com/google/uuid"
-	"mandarine/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
 )
 
 type UserRepository interface {

@@ -7,16 +7,16 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-testfixtures/testfixtures/v3"
 	"github.com/google/uuid"
+	appconfig "github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/service/account/dto"
+	http2 "github.com/mandarine-io/Backend/internal/api/transport/http"
+	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
+	validator2 "github.com/mandarine-io/Backend/pkg/transport/http/validator"
+	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"
 	"io"
-	appconfig "mandarine/internal/api/config"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/rest"
-	"mandarine/internal/api/service/account/dto"
-	dto2 "mandarine/pkg/rest/dto"
-	validator3 "mandarine/pkg/rest/validator"
-	"mandarine/tests/e2e"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -51,23 +51,41 @@ func TestMain(m *testing.M) {
 			ExternalOrigin: "http://localhost:8081",
 			Port:           8081,
 			Version:        "0.0.0",
+			RPS:            100,
+			MaxRequestSize: 524288000,
 		},
-		Postgres: appconfig.PostgresConfig{
-			Username: "mandarine",
-			Password: "password",
-			DBName:   "mandarine_test",
+		Database: appconfig.DatabaseConfig{
+			Type: "postgres",
+			Postgres: &appconfig.PostgresDatabaseConfig{
+				Username: "mandarine",
+				Password: "password",
+				DBName:   "mandarine_test",
+			},
 		},
-		Redis: appconfig.RedisConfig{
-			Host:     "127.0.0.1",
-			Port:     6379,
-			Username: "default",
-			Password: "password",
-			DBIndex:  0,
+		Cache: appconfig.CacheConfig{
+			TTL:  120,
+			Type: "redis",
+			Redis: &appconfig.RedisCacheConfig{
+				Username: "default",
+				Password: "password",
+				DBIndex:  0,
+			},
 		},
-		Minio: appconfig.MinioConfig{
-			AccessKey:  "admin",
-			SecretKey:  "Password_10",
-			BucketName: "mandarine-test",
+		PubSub: appconfig.PubSubConfig{
+			Type: "redis",
+			Redis: &appconfig.RedisPubSubConfig{
+				Username: "default",
+				Password: "password",
+				DBIndex:  0,
+			},
+		},
+		S3: appconfig.S3Config{
+			Type: "minio",
+			Minio: &appconfig.MinioS3Config{
+				AccessKey: "admin",
+				SecretKey: "Password_10",
+				Bucket:    "mandarine-test",
+			},
 		},
 		SMTP: appconfig.SmtpConfig{
 			Host:     "127.0.0.1",
@@ -76,9 +94,6 @@ func TestMain(m *testing.M) {
 			Password: "password",
 			From:     "Mandarine <admin@localhost>",
 			SSL:      false,
-		},
-		Cache: appconfig.CacheConfig{
-			TTL: 120,
 		},
 		Locale: appconfig.LocaleConfig{
 			Path:     pwd + "/../../../../locales",
@@ -91,24 +106,25 @@ func TestMain(m *testing.M) {
 			Path: pwd + "/../../../../migrations",
 		},
 		Logger: appconfig.LoggerConfig{
+			Level: "debug",
 			Console: appconfig.ConsoleLoggerConfig{
-				Level:    "debug",
+				Enable:   true,
 				Encoding: "text",
 			},
 			File: appconfig.FileLoggerConfig{
 				Enable: false,
 			},
 		},
-		OAuthClient: appconfig.OAuthClientConfig{
-			Google: appconfig.GoogleOAuthClientConfig{
+		OAuthClients: map[string]appconfig.OauthClientConfig{
+			"google": {
 				ClientID:     "",
 				ClientSecret: "",
 			},
-			Yandex: appconfig.YandexOAuthClientConfig{
+			"yandex": {
 				ClientID:     "",
 				ClientSecret: "",
 			},
-			MailRu: appconfig.MailRuOAuthClientConfig{
+			"mailru": {
 				ClientID:     "",
 				ClientSecret: "",
 			},
@@ -123,9 +139,9 @@ func TestMain(m *testing.M) {
 				Length: 6,
 				TTL:    300,
 			},
-			RateLimit: appconfig.RateLimitConfig{
-				RPS: 100,
-			},
+		},
+		Websocket: appconfig.WebsocketConfig{
+			PoolSize: 1024,
 		},
 	}
 
@@ -135,12 +151,12 @@ func TestMain(m *testing.M) {
 	testEnvironment.MustInitialize(cfg)
 
 	// Setup routes
-	router := rest.SetupRouter(testEnvironment.Container)
+	router := http2.SetupRouter(testEnvironment.Container)
 	// Setup validators
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		_ = v.RegisterValidation("pastdate", validator3.PastDateValidator)
-		_ = v.RegisterValidation("zxcvbn", validator3.ZxcvbnPasswordValidator)
-		_ = v.RegisterValidation("username", validator3.UsernameValidator)
+		_ = v.RegisterValidation("pastdate", validator2.PastDateValidator)
+		_ = v.RegisterValidation("zxcvbn", validator2.ZxcvbnPasswordValidator)
+		_ = v.RegisterValidation("username", validator2.UsernameValidator)
 	}
 
 	// Create server

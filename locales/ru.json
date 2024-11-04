@@ -38,7 +38,8 @@
     "resource_not_uploaded": "Ресурс не загружен",
     "failed_to_send_email": "Не удалось отправить письмо",
     "banned_user": "Пользователь заблокирован",
-    "deleted_user": "Пользователь удален"
+    "deleted_user": "Пользователь удален",
+    "ws_pool_is_full": "Пул вебсокетов заполнен"
   },
   "email": {
     "register-confirm": {

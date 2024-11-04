@@ -1,9 +1,9 @@
 package mapper
 
 import (
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/service/auth/dto"
-	"mandarine/pkg/oauth"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
+	"github.com/mandarine-io/Backend/pkg/oauth"
 )
 
 func MapRegisterRequestToUserEntity(req dto.RegisterInput) *model.UserEntity {

@@ -3,7 +3,7 @@ package dto
 import "mime/multipart"
 
 type UploadResourceInput struct {
-	Resource *multipart.FileHeader `form:"resource" binding:"required"`
+	Resource *multipart.FileHeader `form:"redis" binding:"required"`
 }
 
 type UploadResourceOutput struct {

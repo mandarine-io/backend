@@ -30,7 +30,7 @@ const docTemplate = `{
     "paths": {
         "/health": {
             "get": {
-                "description": "Request for getting health status. In response will be status of all checks (database, minio, smtp, redis).",
+                "description": "Request for getting health status. In response will be status of all check (database, minio, smtp, redis).",
                 "consumes": [
                     "application/json"
                 ],
@@ -48,7 +48,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/health.Response"
+                                "$ref": "#/definitions/dto.HealthOutput"
                             }
                         }
                     }
@@ -1281,6 +1281,44 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/ws": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for connect to websocket server. If pool is not full, a new websocket connection is created.",
+                "tags": [
+                    "Websocket API"
+                ],
+                "summary": "Connect to websocket server",
+                "operationId": "WsConnect",
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1342,6 +1380,17 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.HealthOutput": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "pass": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1563,17 +1612,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "health.Response": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "pass": {
-                    "type": "boolean"
-                }
-            }
         }
     },
     "securityDefinitions": {
@@ -1595,6 +1633,10 @@ const docTemplate = `{
         {
             "description": "API for resource management",
             "name": "Resource API"
+        },
+        {
+            "description": "API for websocket connection",
+            "name": "Websocket API"
         },
         {
             "description": "API for getting metrics",

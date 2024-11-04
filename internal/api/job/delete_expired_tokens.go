@@ -2,24 +2,17 @@ package job
 
 import (
 	"context"
-	"github.com/go-co-op/gocron/v2"
-	"log/slog"
-	"mandarine/internal/api/persistence/repo"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/scheduler"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/mandarine-io/Backend/pkg/scheduler"
 )
 
-func deleteExpiredTokensJob(bannedTokensRepo repo.BannedTokenRepository) scheduler.Job {
+func DeleteExpiredTokensJob(bannedTokensRepo repo.BannedTokenRepository) scheduler.Job {
 	return scheduler.Job{
-		Name:       "delete-expired-tokens",
-		Definition: gocron.CronJob("0 * * * *", false),
-		Task: gocron.NewTask(
-			func() {
-				err := bannedTokensRepo.DeleteExpiredBannedToken(context.Background())
-				if err != nil {
-					slog.Error("Delete expired tokens error", logging.ErrorAttr(err))
-				}
-			},
-		),
+		Ctx:            context.Background(),
+		Name:           "delete-expired-tokens",
+		CronExpression: "0 * * * *",
+		Action: func(ctx context.Context) error {
+			return bannedTokensRepo.DeleteExpiredBannedToken(ctx)
+		},
 	}
 }

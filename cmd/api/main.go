@@ -4,23 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"mandarine/internal/api/cli"
-	appconfig "mandarine/internal/api/config"
-	"mandarine/internal/api/job"
-	"mandarine/internal/api/registry"
-	"mandarine/internal/api/rest"
-	"mandarine/pkg/config"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/scheduler"
+	appconfig "github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/job"
+	"github.com/mandarine-io/Backend/internal/api/registry"
+	"github.com/mandarine-io/Backend/internal/api/transport/http"
+	"github.com/mandarine-io/Backend/pkg/logging"
+	"github.com/mandarine-io/Backend/pkg/scheduler"
+	"github.com/num30/config"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	syshttp "net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
-)
-
-const (
-	versionEnv = "MANDARINE_SERVER__VERSION"
+	"time"
 )
 
 var (
@@ -32,23 +30,40 @@ var (
 			" | |  | | (_| | | | | (_| | (_| | |  | | | | |\n"+
 			" |_|  |_|\\__,_|_| |_|\\__,_|\\__,_|_|  |_|_| |_|\n"+
 			"\n"+
-			"Mandarine: %s\n", getEnvWithDefault(versionEnv, "0.0.0"),
+			"Mandarine: %s\n", getEnvWithDefault("SERVER_VERSION", "0.0.0"),
 	)
 )
 
-func main() {
-	// Parse command line arguments
+func init() {
+	// Print banner
 	fmt.Println(banner)
-	options := cli.MustParseCommandLine()
+}
 
-	// Setup logger
-	var loggerCfg appconfig.OnlyLoggerConfig
-	config.MustLoadConfig(options.ConfigFilePath, options.EnvFilePath, &loggerCfg)
-	logging.SetupLogger(mapAppLoggerConfigToLoggerConfig(&loggerCfg.Logger))
+func main() {
+	configPath := getEnvWithDefault("MANDARINE_CONFIG_FILE", "config/config.yaml")
+	configName := strings.
+		NewReplacer(".yaml", "", ".yml", "", ".json", "", ".toml", "", ".conf", "").
+		Replace(configPath)
 
 	// Load config
+	log.Logger = zerolog.
+		New(zerolog.ConsoleWriter{
+			Out:        os.Stdout,
+			TimeFormat: time.RFC3339,
+		}).
+		With().
+		Timestamp().
+		Caller().
+		Logger()
+
 	var cfg appconfig.Config
-	config.MustLoadConfig(options.ConfigFilePath, options.EnvFilePath, &cfg)
+	err := config.NewConfReader(configName).WithPrefix("MANDARINE").Read(&cfg)
+	if err != nil {
+		log.Fatal().Stack().Err(err).Msg("failed to load config")
+	}
+
+	// Setup logger
+	logging.SetupLogger(mapAppLoggerConfigToLoggerConfig(&cfg.Logger))
 
 	// Setup container
 	container := registry.NewContainer()
@@ -58,44 +73,56 @@ func main() {
 	}()
 
 	// Setup scheduler
-	jobs := job.SetupJobs(container)
-	cronScheduler := scheduler.MustSetupJobScheduler(jobs)
+	jobs := []scheduler.Job{
+		job.DeleteExpiredTokensJob(container.Repos.BannedToken),
+		job.DeleteExpiredDeletedUsersJob(container.Repos.User),
+	}
+	cronScheduler := scheduler.MustSetupJobScheduler()
+	for _, j := range jobs {
+		_, err := cronScheduler.AddJob(j)
+		if err != nil {
+			log.Warn().Stack().Err(err).Msgf("job %s setup error", j.Name)
+		}
+	}
+	cronScheduler.Start()
 	defer func() {
 		err := cronScheduler.Shutdown()
 		if err != nil {
-			slog.Error("Job scheduler shutdown error", logging.ErrorAttr(err))
+			log.Warn().Stack().Err(err).Msg("failed to shutdown scheduler")
 		}
 	}()
-	cronScheduler.Start()
-
-	// SIGINT and SIGTERM handler
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 
 	// Create server
-	srv := rest.NewServer(container)
+	srv := http.NewServer(container)
 
 	// Run server
-	slog.Info(fmt.Sprintf("The server listens on port %d", cfg.Server.Port))
+	log.Info().Msgf("the server listens on port %d", cfg.Server.Port)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, syshttp.ErrServerClosed) {
-			slog.Error("Server error", logging.ErrorAttr(err))
-			stop()
+			log.Fatal().Stack().Err(err).Msg("failed to start server")
 		}
 	}()
 
+	// SIGINT and SIGTERM handler
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	// Wait for signal
-	slog.Info("To stop server press Ctrl+C")
-	<-ctx.Done()
-	stop()
-	slog.Info("Waiting for the server to complete")
+	log.Info().Msg("to stop application press Ctrl+C")
+	<-quit
+	fmt.Println()
+	log.Info().Msg("waiting for the server to complete")
 
 	// Shutdown server
-	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("Server shutdown error", logging.ErrorAttr(err))
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.TODO(), 1*time.Second)
+	defer shutdownRelease()
+
+	err = srv.Shutdown(shutdownCtx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to shutdown server")
 	}
 
-	slog.Info("Server is shutdown")
+	log.Info().Msg("the server is shutting down")
 }
 
 func getEnvWithDefault(envName, defaultValue string) string {
@@ -107,13 +134,13 @@ func getEnvWithDefault(envName, defaultValue string) string {
 
 func mapAppLoggerConfigToLoggerConfig(cfg *appconfig.LoggerConfig) *logging.Config {
 	return &logging.Config{
+		Level: cfg.Level,
 		Console: logging.ConsoleLoggerConfig{
-			Level:    cfg.Console.Level,
+			Enable:   cfg.Console.Enable,
 			Encoding: cfg.Console.Encoding,
 		},
 		File: logging.FileLoggerConfig{
 			Enable:  cfg.File.Enable,
-			Level:   cfg.File.Level,
 			DirPath: cfg.File.DirPath,
 			MaxSize: cfg.File.MaxSize,
 			MaxAge:  cfg.File.MaxAge,

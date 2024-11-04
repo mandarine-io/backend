@@ -2,17 +2,14 @@ package e2e
 
 import (
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"log/slog"
-	"mandarine/pkg/logging"
-	"os"
 )
 
 func MustNewFixtures(db *gorm.DB, paths ...string) *testfixtures.Loader {
 	sqlDb, err := db.DB()
 	if err != nil {
-		slog.Error("Postgres connection error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to get sql db")
 	}
 
 	fixtures, err := testfixtures.New(
@@ -21,8 +18,7 @@ func MustNewFixtures(db *gorm.DB, paths ...string) *testfixtures.Loader {
 		testfixtures.Paths(paths...),
 	)
 	if err != nil {
-		slog.Error("Fixtures creation error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to create fixtures")
 	}
 
 	return fixtures
@@ -30,7 +26,6 @@ func MustNewFixtures(db *gorm.DB, paths ...string) *testfixtures.Loader {
 
 func MustLoadFixtures(fixtures *testfixtures.Loader) {
 	if err := fixtures.Load(); err != nil {
-		slog.Error("Fixtures loading error", logging.ErrorAttr(err))
-		os.Exit(1)
+		log.Fatal().Stack().Err(err).Msg("failed to load fixtures")
 	}
 }

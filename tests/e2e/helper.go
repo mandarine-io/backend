@@ -3,9 +3,8 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/rs/zerolog/log"
 	"io"
-	"log/slog"
-	"mandarine/pkg/logging"
 	"net/http"
 )
 
@@ -13,7 +12,7 @@ func ReadResponseBody(resp *http.Response, body interface{}) error {
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			slog.Error("Response body closing error", logging.ErrorAttr(err))
+			log.Warn().Stack().Err(err).Msg("failed to close response body")
 		}
 	}()
 

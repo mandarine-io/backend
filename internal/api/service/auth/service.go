@@ -5,23 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mandarine-io/Backend/internal/api/config"
+	"github.com/mandarine-io/Backend/internal/api/helper/cache"
+	"github.com/mandarine-io/Backend/internal/api/helper/random"
+	"github.com/mandarine-io/Backend/internal/api/helper/security"
+	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
+	"github.com/mandarine-io/Backend/internal/api/service/auth/mapper"
+	"github.com/mandarine-io/Backend/pkg/oauth"
+	"github.com/mandarine-io/Backend/pkg/smtp"
+	cache2 "github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/mandarine-io/Backend/pkg/template"
+	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"log/slog"
-	"mandarine/internal/api/config"
-	"mandarine/internal/api/helper/cache"
-	"mandarine/internal/api/helper/random"
-	"mandarine/internal/api/helper/security"
-	"mandarine/internal/api/persistence/model"
-	"mandarine/internal/api/persistence/repo"
-	"mandarine/internal/api/service/auth/dto"
-	"mandarine/internal/api/service/auth/mapper"
-	"mandarine/pkg/logging"
-	"mandarine/pkg/oauth"
-	dto2 "mandarine/pkg/rest/dto"
-	"mandarine/pkg/rest/middleware"
-	"mandarine/pkg/smtp"
-	"mandarine/pkg/storage/cache/manager"
-	"mandarine/pkg/template"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -49,7 +47,7 @@ type Service struct {
 	userRepo        repo.UserRepository
 	bannedTokenRepo repo.BannedTokenRepository
 	oauthProviders  map[string]oauth.Provider
-	cacheManager    manager.CacheManager
+	cacheManager    cache2.Manager
 	smtpSender      smtp.Sender
 	templateEngine  template.Engine
 	cfg             *config.Config
@@ -59,7 +57,7 @@ func NewService(
 	userRepo repo.UserRepository,
 	bannedTokenRepo repo.BannedTokenRepository,
 	oauthProviders map[string]oauth.Provider,
-	cacheManager manager.CacheManager,
+	cacheManager cache2.Manager,
 	smtpSender smtp.Sender,
 	templateEngine template.Engine,
 	cfg *config.Config,
@@ -77,14 +75,14 @@ func NewService(
 
 //////////////////// Register ////////////////////
 
-func (s *Service) Register(ctx context.Context, input dto.RegisterInput) error {
-	slog.Info("Register")
+func (s *Service) Register(ctx context.Context, input dto.RegisterInput, localizer *i18n.Localizer) error {
+	log.Info().Msgf("register: %s", input.Username)
 	factoryErr := func(err error) error {
-		slog.Error("Register error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to register user")
 		return err
 	}
 	factoryChildErr := func(err error, childErr error) error {
-		slog.Error("Register error", logging.ErrorAttr(childErr))
+		log.Error().Stack().Err(childErr).Msg("failed to register user")
 		return err
 	}
 
@@ -121,14 +119,10 @@ func (s *Service) Register(ctx context.Context, input dto.RegisterInput) error {
 		return factoryErr(err)
 	}
 
-	// Get localizer
-	localizer := ctx.Value(middleware.LocalizerKey)
+	// Localize email title
 	emailTitle := registerEmailDefaultTitle
 	if localizer != nil {
-		switch localizer := localizer.(type) {
-		case *i18n.Localizer:
-			emailTitle = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "email.register-confirm.title"})
-		}
+		emailTitle = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "email.register-confirm.title"})
 	}
 
 	// Send mail
@@ -153,9 +147,9 @@ func (s *Service) Register(ctx context.Context, input dto.RegisterInput) error {
 //////////////////// Register confirmation ////////////////////
 
 func (s *Service) RegisterConfirm(ctx context.Context, input dto.RegisterConfirmInput) error {
-	slog.Info("Register confirm")
+	log.Info().Msg("register confirm")
 	factoryErr := func(err error) error {
-		slog.Error("Register confirm error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to register confirm user")
 		return err
 	}
 
@@ -163,7 +157,7 @@ func (s *Service) RegisterConfirm(ctx context.Context, input dto.RegisterConfirm
 	var cacheEntry dto.RegisterCache
 	err := s.cacheManager.Get(ctx, cache.CreateCacheKey(registerCachePrefix, input.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache2.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)
@@ -202,7 +196,7 @@ func (s *Service) RegisterConfirm(ctx context.Context, input dto.RegisterConfirm
 	// Delete cache
 	err = s.cacheManager.Delete(ctx, cache.CreateCacheKey(registerCachePrefix, input.Email))
 	if err != nil {
-		slog.Warn("Register confirm error", logging.ErrorAttr(err))
+		log.Warn().Stack().Err(err).Msg("failed to delete cache")
 	}
 
 	return nil
@@ -211,9 +205,9 @@ func (s *Service) RegisterConfirm(ctx context.Context, input dto.RegisterConfirm
 //////////////////// Login ////////////////////
 
 func (s *Service) Login(ctx context.Context, input dto.LoginInput) (dto.JwtTokensOutput, error) {
-	slog.Info("Login")
+	log.Info().Msg("login")
 	factoryErr := func(err error) (dto.JwtTokensOutput, error) {
-		slog.Error("Login error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to login")
 		return dto.JwtTokensOutput{}, err
 	}
 
@@ -248,9 +242,9 @@ func (s *Service) Login(ctx context.Context, input dto.LoginInput) (dto.JwtToken
 //////////////////// Refresh Tokens ////////////////////
 
 func (s *Service) RefreshTokens(ctx context.Context, refreshToken string) (dto.JwtTokensOutput, error) {
-	slog.Info("RefreshTokens tokens")
+	log.Info().Msg("refresh tokens")
 	factoryErr := func(err error) (dto.JwtTokensOutput, error) {
-		slog.Error("RefreshTokens tokens error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to refresh tokens")
 		return dto.JwtTokensOutput{}, err
 	}
 
@@ -260,7 +254,7 @@ func (s *Service) RefreshTokens(ctx context.Context, refreshToken string) (dto.J
 		return factoryErr(ErrInvalidJwtToken)
 	}
 
-	// Get user ID from token
+	// Get user id from token
 	claims, err := security.GetClaimsFromJwtToken(token)
 	if err != nil {
 		return factoryErr(ErrInvalidJwtToken)
@@ -302,24 +296,35 @@ func (s *Service) RefreshTokens(ctx context.Context, refreshToken string) (dto.J
 //////////////////// Logout ////////////////////
 
 func (s *Service) Logout(ctx context.Context, jti string) error {
+	log.Info().Msg("logout")
+	factoryErr := func(err error) error {
+		log.Error().Stack().Err(err).Msg("failed to logout")
+		return err
+	}
+
+	// Create banned token
 	bannedToken := &model.BannedTokenEntity{
 		JTI:       jti,
 		ExpiredAt: time.Now().Add(time.Duration(s.cfg.Security.JWT.RefreshTokenTTL) * time.Second).Unix(),
 	}
 	_, err := s.bannedTokenRepo.CreateOrUpdateBannedToken(ctx, bannedToken)
-	return err
+	if err != nil {
+		return factoryErr(err)
+	}
+
+	return nil
 }
 
 //////////////////// Recovery password ////////////////////
 
-func (s *Service) RecoveryPassword(ctx context.Context, input dto.RecoveryPasswordInput) error {
-	slog.Info("Recovery password")
+func (s *Service) RecoveryPassword(ctx context.Context, input dto.RecoveryPasswordInput, localizer *i18n.Localizer) error {
+	log.Info().Msg("recovery password")
 	factoryErr := func(err error) error {
-		slog.Error("Recovery password error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to recovery password")
 		return err
 	}
 	factoryChildErr := func(err error, childErr error) error {
-		slog.Error("Recovery password error", logging.ErrorAttr(childErr))
+		log.Error().Stack().Err(childErr).Err(err).Msg("failed to recovery password")
 		return err
 	}
 
@@ -351,14 +356,10 @@ func (s *Service) RecoveryPassword(ctx context.Context, input dto.RecoveryPasswo
 		return factoryErr(err)
 	}
 
-	// Get localizer
-	localizer := ctx.Value(middleware.LocalizerKey)
+	// Localize email title
 	emailTitle := recoveryEmailDefaultTitle
 	if localizer != nil {
-		switch localizer := localizer.(type) {
-		case *i18n.Localizer:
-			emailTitle = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "email.recovery-password.title"})
-		}
+		emailTitle = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "email.recovery-password.title"})
 	}
 
 	// Send email
@@ -383,9 +384,9 @@ func (s *Service) RecoveryPassword(ctx context.Context, input dto.RecoveryPasswo
 //////////////////// Verify recovery password ////////////////////
 
 func (s *Service) VerifyRecoveryCode(ctx context.Context, input dto.VerifyRecoveryCodeInput) error {
-	slog.Info("Verify recovery password")
+	log.Info().Msg("verify recovery password")
 	factoryErr := func(err error) error {
-		slog.Error("Verify recovery password error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to verify recovery password")
 		return err
 	}
 
@@ -393,7 +394,7 @@ func (s *Service) VerifyRecoveryCode(ctx context.Context, input dto.VerifyRecove
 	var cacheEntry dto.RecoveryPasswordCache
 	err := s.cacheManager.Get(ctx, cache.CreateCacheKey(recoveryPasswordCachePrefix, input.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache2.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)
@@ -410,9 +411,9 @@ func (s *Service) VerifyRecoveryCode(ctx context.Context, input dto.VerifyRecove
 //////////////////// Reset password ////////////////////
 
 func (s *Service) ResetPassword(ctx context.Context, input dto.ResetPasswordInput) error {
-	slog.Info("Reset password")
+	log.Info().Msg("reset password")
 	factoryErr := func(err error) error {
-		slog.Error("Reset password error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to reset password")
 		return err
 	}
 
@@ -420,7 +421,7 @@ func (s *Service) ResetPassword(ctx context.Context, input dto.ResetPasswordInpu
 	var cacheEntry dto.RecoveryPasswordCache
 	err := s.cacheManager.Get(ctx, cache.CreateCacheKey(recoveryPasswordCachePrefix, input.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache2.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)
@@ -458,12 +459,16 @@ func (s *Service) ResetPassword(ctx context.Context, input dto.ResetPasswordInpu
 //////////////////// Get consent page url ////////////////////
 
 func (s *Service) GetConsentPageUrl(_ context.Context, provider string, redirectUrl string) (dto.GetConsentPageUrlOutput, error) {
-	slog.Info(fmt.Sprintf("Get consent page url: provider=%s", provider))
+	log.Info().Msgf("get consent page url: provider=%s", provider)
+	factoryErr := func(err error) (dto.GetConsentPageUrlOutput, error) {
+		log.Error().Stack().Err(err).Msg("failed to get consent page url")
+		return dto.GetConsentPageUrlOutput{}, err
+	}
 
 	// Get oauth provider
 	oauthProvider, ok := s.oauthProviders[provider]
 	if !ok {
-		return dto.GetConsentPageUrlOutput{}, ErrInvalidProvider
+		return factoryErr(ErrInvalidProvider)
 	}
 
 	consentPageUrl, oauthState := oauthProvider.GetConsentPageUrl(redirectUrl)
@@ -475,8 +480,9 @@ func (s *Service) GetConsentPageUrl(_ context.Context, provider string, redirect
 func (s *Service) FetchUserInfo(ctx context.Context, provider string, input dto.FetchUserInfoInput) (
 	oauth.UserInfo, error,
 ) {
+	log.Info().Msgf("fetch user info: provider=%s", provider)
 	factoryErr := func(err error) (oauth.UserInfo, error) {
-		slog.Error("Get user info error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to fetch user info")
 		return oauth.UserInfo{}, err
 	}
 
@@ -487,7 +493,7 @@ func (s *Service) FetchUserInfo(ctx context.Context, provider string, input dto.
 	}
 
 	// Exchange code to token
-	slog.Info("Exchange code to token")
+	log.Info().Msg("exchange code to token")
 	socialLoginCallbackUrl := fmt.Sprintf("%s/auth/social/%s/callback/", s.cfg.Server.ExternalOrigin, provider)
 	token, err := oauthProvider.ExchangeCodeToToken(ctx, input.Code, socialLoginCallbackUrl)
 	if err != nil {
@@ -495,7 +501,7 @@ func (s *Service) FetchUserInfo(ctx context.Context, provider string, input dto.
 	}
 
 	// Get user info
-	slog.Info("Get user info")
+	log.Info().Msg("get user info")
 	userInfo, err := oauthProvider.GetUserInfo(ctx, token)
 	if err != nil {
 		if errors.Is(err, oauth.ErrUserInfoNotReceived) {
@@ -510,9 +516,9 @@ func (s *Service) FetchUserInfo(ctx context.Context, provider string, input dto.
 //////////////////// Register or login ////////////////////
 
 func (s *Service) RegisterOrLogin(ctx context.Context, userInfo oauth.UserInfo) (dto.JwtTokensOutput, error) {
-	slog.Info("Register and login")
+	log.Info().Msg("register or login")
 	factoryErr := func(err error) (dto.JwtTokensOutput, error) {
-		slog.Error("Register and login error", logging.ErrorAttr(err))
+		log.Error().Stack().Err(err).Msg("failed to register or login")
 		return dto.JwtTokensOutput{}, err
 	}
 
@@ -524,7 +530,7 @@ func (s *Service) RegisterOrLogin(ctx context.Context, userInfo oauth.UserInfo) 
 
 	// Save user
 	if userEntity == nil {
-		slog.Info("Create new user")
+		log.Info().Msg("create new user")
 		userInfo.Username, err = s.searchUniqueUsername(ctx, userInfo.Username)
 		if err != nil {
 			return factoryErr(err)
@@ -551,7 +557,7 @@ func (s *Service) RegisterOrLogin(ctx context.Context, userInfo oauth.UserInfo) 
 //////////////////// Additional helpers ////////////////////
 
 func (s *Service) searchUniqueUsername(ctx context.Context, defaultUsername string) (string, error) {
-	slog.Info("Search unique username")
+	log.Debug().Msg("search unique username")
 	exists, err := s.userRepo.ExistsUserByUsername(ctx, defaultUsername)
 	if err != nil {
 		return "", err
@@ -575,6 +581,6 @@ func (s *Service) searchUniqueUsername(ctx context.Context, defaultUsername stri
 			return username, nil
 		}
 
-		slog.Debug("Unique username not found")
+		log.Debug().Msg("unique username not found")
 	}
 }
