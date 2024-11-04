@@ -40,7 +40,7 @@ func init() {
 }
 
 func main() {
-	configPath := getEnvWithDefault("CONFIG_FILE", "config/config.yaml")
+	configPath := getEnvWithDefault("MANDARINE_CONFIG_FILE", "config/config.yaml")
 	configName := strings.
 		NewReplacer(".yaml", "", ".yml", "", ".json", "", ".toml", "", ".conf", "").
 		Replace(configPath)

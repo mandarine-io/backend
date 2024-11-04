@@ -6,15 +6,15 @@
 
 ### Name
 
-Set server name (default: mandarine-server)
+Set server name (default: server)
 
 ```yaml
 server:
-    name: mandarine-server
+    name: server
 ```
 
 ```dotenv
-MANDARINE_SERVER__NAME=mandarine-server
+MANDARINE_SERVER_NAME=server
 ```
 
 ### Port
@@ -27,7 +27,7 @@ server:
 ```
 
 ```dotenv
-MANDARINE_SERVER__PORT=8080
+MANDARINE_SERVER_PORT=8080
 ```
 
 ### External origin
@@ -36,11 +36,11 @@ Set server external origin (default: http://localhost:8080)
 
 ```yaml
 server:
-    external_origin: http://localhost:8080
+    externalorigin: http://localhost:8080
 ```
 
 ```dotenv
-MANDARINE_SERVER__EXTERNAL_ORIGIN=http://localhost:8080
+MANDARINE_SERVER_EXTERNALORIGIN=http://localhost:8080
 ```
 
 ### Mode
@@ -53,7 +53,7 @@ server:
 ```
 
 ```dotenv
-MANDARINE_SERVER__MODE=development
+MANDARINE_SERVER_MODE=development
 ```
 
 ### Version
@@ -66,214 +66,336 @@ server:
 ```
 
 ```dotenv
-MANDARINE_SERVER__VERSION=0.0.0
+MANDARINE_SERVER_VERSION=0.0.0
+```
+
+### Request per second (RPS) (default: 100)
+
+```yaml
+server:
+    rps: 100
+```
+
+```dotenv
+MANDARINE_SERVER_RPS=100
+```
+
+### Max request body size (bytes) (default: 524288000 (500MB))
+
+```yaml
+server:
+    maxrequestsize: 524288000
+```
+
+```dotenv
+MANDARINE_SERVER_MAXREQUESTSIZE=524288000
 ```
 
 <a id="database-provider"></a>
 
-## Database provider settings (PostgreSQL)
+## Database provider settings
 
-### Host
+### Type
 
-Set database host (default: localhost)
+Set database type (postgres) (default: postgres)
 
 ```yaml
-postgres:
-    host: localhost
+database:
+    type: postgres
 ```
 
 ```dotenv
-MANDARINE_POSTGRES__HOST=localhost
+MANDARINE_DATABASE_TYPE=postgres
 ```
 
-### Port
+<a id="postgres-database-provider"></a>
 
-Set database port (default: 5432)
+### PostgreSQL
+
+#### Address
+
+Set postgres database address
 
 ```yaml
-postgres:
-    port: 5432
+database:
+    postgres:
+        address: localhost:5432
 ```
 
 ```dotenv
-MANDARINE_POSTGRES__PORT=5432
+MANDARINE_DATABASE_POSTGRES_ADDRESS=localhost:5432
 ```
 
-### Username
+#### Username
 
-Set database username
+Set postgres database username
 
 ```yaml
-postgres:
-    username: admin
+database:
+    postgres:
+        username: admin
 ```
 
 ```dotenv
-MANDARINE_POSTGRES__USERNAME=admin
+MANDARINE_DATABASE_POSTGRES_USERNAME=admin
 ```
 
-### Password
+#### Password
 
-Set database password
+Set postgres database password
 
 ```yaml
-postgres:
-    password: password
+database:
+    postgres:
+        password: password
 ```
 
 ```dotenv
-MANDARINE_POSTGRES__PASSWORD=password
+MANDARINE_DATABASE_POSTGRES_PASSWORD=password
 ```
 
-### Database name
+#### Database name
 
-Set database name
+Set postgres database name
 
 ```yaml
-postgres:
-    db_name: mandarine
+database:
+    postgres:
+        dbname: mandarine
 ```
 
 ```dotenv
-MANDARINE_POSTGRES__DB_NAME=mandarine
+MANDARINE_DATABASE_POSTGRES_DBNAME=mandarine
 ```
 
 <a id="cache-provider"></a>
 
-## Cache provider settings (Redis)
+## Cache provider settings
 
-### Host
+### TTL
 
-Set cache host (default: localhost)
+Set cache TTL (default: 120)
 
 ```yaml
-redis:
-    host: localhost
+cache:
+    ttl: 120
 ```
 
 ```dotenv
-MANDARINE_REDIS__HOST=localhost
+MANDARINE_CACHE_TTL=120
 ```
 
-### Port
+### Type
 
-Set cache port (default: 6379)
+Set cache type (memory, redis) (default: memory)
 
 ```yaml
-redis:
-    port: 6379
+cache:
+    type: memory
 ```
 
 ```dotenv
-MANDARINE_REDIS__PORT=6379
+MANDARINE_CACHE_TYPE=memory
 ```
 
-### Username
+<a id="redis-cache-provider"></a>
 
-Set cache username
+### Redis
+
+#### Address
+
+Set redis cache address
 
 ```yaml
-redis:
-    username: default
+cache:
+    redis:
+        address: localhost:6379
 ```
 
 ```dotenv
-MANDARINE_REDIS__USERNAME=default
+MANDARINE_CACHE_REDIS_ADDRESS=localhost:6379
 ```
 
-### Password
+#### Username
 
-Set cache password
+Set redis cache username
 
 ```yaml
-redis:
-    password: password
+cache:
+    redis:
+        username: default
 ```
 
 ```dotenv
-MANDARINE_REDIS__PASSWORD=password
+MANDARINE_CACHE_REDIS_USERNAME=default
 ```
 
-### Database index
+#### Password
 
-Set cache database index (default: 0)
+Set redis cache password
 
 ```yaml
-redis:
-    db_index: 0
+cache:
+    redis:
+        password: password
 ```
 
 ```dotenv
-MANDARINE_REDIS__DB_INDEX=0
+MANDARINE_CACHE_REDIS_PASSWORD=password
+```
+
+#### Database index
+
+Set redis cache database index (default: 0)
+
+```yaml
+cache:
+    redis:
+        dbindex: 0
+```
+
+```dotenv
+MANDARINE_CACHE_REDIS_DBINDEX=0
 ```
 
 <a id="s3-provider"></a>
 
-## S3 provider settings (MinIO)
+## S3 provider settings
 
-### Host
+### Type
 
-Set S3 host (default: localhost)
+Set S3 type (minio) (default: minio)
 
 ```yaml
-minio:
-    host: localhost
+s3:
+    type: minio
 ```
 
 ```dotenv
-MANDARINE_MINIO__HOST=localhost
+MANDARINE_S3_TYPE=minio
 ```
 
-### Port
+<a id="minio-provider"></a>
 
-Set S3 port (default: 9000)
+### Minio
+
+#### Address
+
+Set Minio S3 address
 
 ```yaml
-minio:
-    port: 9000
+s3:
+    minio:
+        address: localhost:9000
 ```
 
 ```dotenv
-MANDARINE_MINIO__PORT=9000
+MANDARINE_S3_MINIO_ADDRESS=localhost:9000
 ```
 
-### Access key
+#### Access key
 
-Set S3 access key
+Set Minio S3 access key
 
 ```yaml
-minio:
-    access_key: admin
+s3:
+    minio:
+        accesskey: admin
 ```
 
 ```dotenv
-MANDARINE_MINIO__ACCESS_KEY=admin
+MANDARINE_S3_MINIO_ACCESSKEY=admin
 ```
 
-### Secret key
+#### Secret key
 
-Set S3 secret key
+Set Minio S3 secret key
 
 ```yaml
-minio:
-    secret_key: secret_key
+s3:
+    minio:
+        secretkey: secret_key
 ```
 
 ```dotenv
-MANDARINE_MINIO__SECRET_KEY=secret_key
+MANDARINE_S3_MINIO_SECRETKEY=secret_key
 ```
 
-### Bucket name
+#### Bucket name
 
-Set S3 bucket name
+Set Minio S3 bucket name
 
 ```yaml
-minio:
-    bucket_name: mandarine
+s3:
+    minio:
+        bucket: mandarine
 ```
 
 ```dotenv
-MANDARINE_MINIO__BUCKET_NAME=mandarine
+MANDARINE_S3_MINIO_BUCKET=mandarine
+```
+
+<a id="pubsub-provider"></a>
+
+## Pub/Sub provider settings
+
+### Type
+
+Set pubsub type (memory, redis) (default: memory)
+
+```yaml
+pubsub:
+    type: memory
+```
+
+```dotenv
+MANDARINE_PUBSUB_TYPE=memory
+```
+
+<a id="redis-pubsub-provider"></a>
+
+### Redis
+
+#### Address
+
+Set redis pubsub address
+
+```yaml
+pubsub:
+    redis:
+        address: localhost:6379
+```
+
+```dotenv
+MANDARINE_PUBSUB_REDIS_ADDRESS=localhost:6379
+```
+
+#### Username
+
+Set redis pubsub username (default: default)
+
+```yaml
+pubsub:
+    redis:
+        username: default
+```
+
+```dotenv
+MANDARINE_PUBSUB_REDIS_USERNAME=default
+```
+
+#### Password
+
+Set redis pubsub password (default: password)
+
+```yaml
+pubsub:
+    redis:
+        password: password
+```
+
+```dotenv
+MANDARINE_PUBSUB_REDIS_PASSWORD=password
 ```
 
 <a id="smtp"></a>
@@ -282,7 +404,7 @@ MANDARINE_MINIO__BUCKET_NAME=mandarine
 
 ### Host
 
-Set SMTP host (default: smtp.yandex.ru)
+Set SMTP host
 
 ```yaml
 smtp:
@@ -290,12 +412,12 @@ smtp:
 ```
 
 ```dotenv
-MANDARINE_SMTP__HOST=smtp.yandex.ru
+MANDARINE_SMTP_HOST=smtp.yandex.ru
 ```
 
 ### Port
 
-Set SMTP port (default: 465)
+Set SMTP port
 
 ```yaml
 smtp:
@@ -303,7 +425,7 @@ smtp:
 ```
 
 ```dotenv
-MANDARINE_SMTP__PORT=465
+MANDARINE_SMTP_PORT=465
 ```
 
 ### Username
@@ -316,7 +438,7 @@ smtp:
 ```
 
 ```dotenv
-MANDARINE_SMTP__USERNAME=example@yandex.ru
+MANDARINE_SMTP_USERNAME=example@yandex.ru
 ```
 
 ### Password
@@ -329,12 +451,12 @@ smtp:
 ```
 
 ```dotenv
-MANDARINE_SMTP__PASSWORD=password
+MANDARINE_SMTP_PASSWORD=password
 ```
 
 ### SSL
 
-Set SMTP SSL mode (default: true)
+Set SMTP SSL mode (default: false)
 
 ```yaml
 smtp:
@@ -342,7 +464,7 @@ smtp:
 ```
 
 ```dotenv
-MANDARINE_SMTP__SSL=true
+MANDARINE_SMTP_SSL=true
 ```
 
 ### From
@@ -355,7 +477,7 @@ smtp:
 ```
 
 ```dotenv
-MANDARINE_SMTP__FROM='Mandarine <example@yandex.ru>'
+MANDARINE_SMTP_FROM='Mandarine <example@yandex.ru>'
 ```
 
 <a id="websocket"></a>
@@ -368,29 +490,29 @@ Set websocket pool size (default: 1024)
 
 ```yaml
 websocket:
-    pool_size: 1024
+    poolsize: 1024
 ```
 
 ```dotenv
-MANDARINE_WEBSOCKET__POOL_SIZE=1024
+MANDARINE_WEBSOCKET_POOLSIZE=1024
 ```
 
 <a id="oauth-provider"></a>
 
-## OAuth provider settings (Google, Yandex, Mail.ru)
+## OAuth provider settings
 
 ### Client ID
 
 Set OAuth client ID
 
 ```yaml
-oauth:
-    google:
-        client_id: client_id
+oauthclients:
+    <provider>:
+        clientid: client_id
 ```
 
 ```dotenv
-MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID=client_id
+MANDARINE_OAUTHCLIENTS_<PROVIDER>_CLIENTID=client_id
 ```
 
 ### Client secret
@@ -398,30 +520,13 @@ MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_ID=client_id
 Set OAuth client secret
 
 ```yaml
-oauth:
-    google:
-        client_secret: client_secret
+oauthclients:
+    <provider>:
+        clientsecret: client_secret
 ```
 
 ```dotenv
-MANDARINE_GOOGLE_OAUTH_CLIENT__CLIENT_SECRET=client_secret
-```
-
-<a id="cache"></a>
-
-## Cache settings
-
-### TTL
-
-Set cache TTL (default: 120)
-
-```yaml
-cache:
-    ttl: 120
-```
-
-```dotenv
-MANDARINE_CACHE__TTL=120
+MANDARINE_OAUTHCLIENTS_<PROVIDER>_CLIENTSECRET=client_secret
 ```
 
 <a id="security"></a>
@@ -443,7 +548,7 @@ security:
 ```
 
 ```dotenv
-MANDARINE_JWT__SECRET=secret
+MANDARINE_JWT_SECRET=secret
 ```
 
 #### Access token TTL
@@ -453,11 +558,11 @@ Set JWT access token TTL (default: 3600)
 ```yaml
 security:
     jwt:
-        access_token_ttl: 3600
+        accesstokenttl: 3600
 ```
 
 ```dotenv
-MANDARINE_JWT__ACCESS_TOKEN_TTL=3600
+MANDARINE_JWT_ACCESSTOKENTTL=3600
 ```
 
 #### Refresh token TTL
@@ -467,11 +572,11 @@ Set JWT refresh token TTL (default: 86400)
 ```yaml
 security:
     jwt:
-        refresh_token_ttl: 86400
+        refreshtokenttl: 86400
 ```
 
 ```dotenv
-MANDARINE_JWT__REFRESH_TOKEN_TTL=86400
+MANDARINE_JWT_REFRESHTOKENTTL=86400
 ```
 
 <a id="security-otp"></a>
@@ -489,7 +594,7 @@ security:
 ```
 
 ```dotenv
-MANDARINE_OTP__LENGTH=6
+MANDARINE_OTP_LENGTH=6
 ```
 
 #### TTL
@@ -503,25 +608,7 @@ security:
 ```
 
 ```dotenv
-MANDARINE_OTP__TTL=600
-```
-
-<a id="security-rate-limit"></a>
-
-### Rate limit
-
-#### RPS
-
-Set rate limit RPS (default: 100)
-
-```yaml
-security:
-    rate_limit:
-        rps: 100
-```
-
-```dotenv
-MANDARINE_RATE_LIMIT__RPS=100
+MANDARINE_OTP_TTL=600
 ```
 
 <a id="locale"></a>
@@ -538,7 +625,7 @@ locale:
 ```
 
 ```dotenv
-MANDARINE_LOCALE__PATH=locales
+MANDARINE_LOCALE_PATH=locales
 ```
 
 ### Language
@@ -551,7 +638,7 @@ locale:
 ```
 
 ```dotenv
-MANDARINE_LOCALE__LANGUAGE=ru
+MANDARINE_LOCALE_LANGUAGE=ru
 ```
 
 <a id="template"></a>
@@ -568,7 +655,7 @@ template:
 ```
 
 ```dotenv
-MANDARINE_TEMPLATE__PATH=templates
+MANDARINE_TEMPLATE_PATH=templates
 ```
 
 <a id="migrations"></a>
@@ -585,7 +672,7 @@ migrations:
 ```
 
 ```dotenv
-MANDARINE_MIGRATIONS__PATH=migrations
+MANDARINE_MIGRATIONS_PATH=migrations
 ```
 
 <a id="logger"></a>
@@ -604,7 +691,7 @@ logger:
 ```
 
 ```dotenv
-MANDARINE_LOGGER__LEVEL=info
+MANDARINE_LOGGER_LEVEL=info
 ```
 
 ### Console
@@ -620,7 +707,7 @@ logger:
 ```
 
 ```dotenv
-MANDARINE_LOGGER__CONSOLE_ENABLE=false
+MANDARINE_LOGGER_CONSOLE_ENABLE=false
 ```
 
 #### Encoding
@@ -634,7 +721,7 @@ logger:
 ```
 
 ```dotenv
-MANDARINE_LOGGER__CONSOLE_ENCODING=text
+MANDARINE_LOGGER_CONSOLE_ENCODING=text
 ```
 
 <a id="logger-file"></a>
@@ -652,7 +739,7 @@ logger:
 ```
 
 ```dotenv
-MANDARINE_LOGGER__FILE_ENABLE=false
+MANDARINE_LOGGER_FILE_ENABLE=false
 ```
 
 #### Dir path
@@ -662,11 +749,11 @@ Set file logger directory path (default: logs)
 ```yaml
 logger:
     file:
-        dir_path: logs
+        dirpath: logs
 ```
 
 ```dotenv
-MANDARINE_LOGGER__FILE_DIR_PATH=logs
+MANDARINE_LOGGER_FILE_DIRPATH=logs
 ```
 
 #### Max size
@@ -676,11 +763,11 @@ Set file logger max size (default: 1)
 ```yaml
 logger:
     file:
-        max_size: 1
+        maxsize: 1
 ```
 
 ```dotenv
-MANDARINE_LOGGER__FILE_MAX_SIZE=1
+MANDARINE_LOGGER_FILE_MAXSIZE=1
 ```
 
 #### Max age
@@ -690,9 +777,9 @@ Set file logger max age
 ```yaml
 logger:
     file:
-        max_age: 30
+        maxage: 30
 ```
 
 ```dotenv
-MANDARINE_LOGGER__FILE_MAX_AGE=30
+MANDARINE_LOGGER_FILE_MAXAGE=30
 ```

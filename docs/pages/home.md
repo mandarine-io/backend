@@ -6,14 +6,17 @@
 - [Gin Gonic](https://gin-gonic.com/)
 - [GORM](https://gorm.io/index.html)
 - [gocron](https://github.com/go-co-op/gocron)
+- [gorilla/websocket](https://github.com/gorilla/websocket)
 - OAuth2
   providers ([Google](https://developers.google.com/identity/protocols/oauth2?hl=ru), [Yandex](https://yandex.ru/dev/id/doc/ru/concepts/ya-oauth-intro), [Mail.ru](https://help.mail.ru/developers/oauth))
 - [PostgreSQL](https://www.postgresql.org/)
 - [Redis](https://redis.io/)
 - [MinIO](https://min.io/)
+- [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 - [Nginx](https://nginx.org/)
 - [Mailhog](https://github.com/mailhog/MailHog)
 - [Testcontainers](https://testcontainers.com/)
+- [K6](https://k6.io/)
 - [Docker](https://www.docker.com/)
 - [Git](https://git-scm.com/)
 - [Make](https://www.gnu.org/software/make/)
@@ -60,17 +63,6 @@ Use the `config/.env.example` as reference to create your env file `.env`:
 ```bash
 cp config/.env.example .env
 nano .env
-```
-
-<h4 id="secrets">Secret files</h4>
-
-Secret file allows to store system secrets in files. It is recommended to use files with secrets in production.
-Use environment variables with the `_SECRET_FILE`, `_PASSWORD_FILE` and etc. suffix to set file names that contain
-system secrets:
-
-```bash
-MANDARINE_POSTGRES__PASSWORD_FILE=postgres-secret.txt
-openssl rand -base64 32 > postgres-secret.txt
 ```
 
 <h3 id="launch">Launch</h3>
@@ -156,7 +148,7 @@ After finishing, you can see the results in the `logs/e2e-test` folder (logs and
 To test the system under load and identify bottlenecks, load tests are written:
 
 ```bash
-make test.load
+make test.load LOAD_TEST_NAME=<test-file-name>
 ```
 
 After finishing, you can see the results in the `logs/load-test` folder (logs and performance reports).
