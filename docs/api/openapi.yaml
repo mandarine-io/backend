@@ -13,7 +13,7 @@ paths:
   /health:
     get:
       description: Request for getting health status. In response will be status of
-        all checks (database, minio, smtp, redis).
+        all check (database, minio, smtp, redis).
       operationId: Health
       responses:
         "200":
@@ -22,7 +22,7 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: "#/components/schemas/health.Response"
+                  $ref: "#/components/schemas/dto.HealthOutput"
                 type: array
       summary: Health
       tags:
@@ -952,8 +952,8 @@ paths:
         websocket connection is created.
       operationId: WsConnect
       responses:
-        "200":
-          description: OK
+        "101":
+          description: Switching Protocols
         "400":
           description: Bad Request
           content:
@@ -962,12 +962,6 @@ paths:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "401":
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/dto.ErrorResponse"
-        "500":
-          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -1049,6 +1043,13 @@ components:
         - path
         - status
         - timestamp
+      type: object
+    dto.HealthOutput:
+      properties:
+        name:
+          type: string
+        pass:
+          type: boolean
       type: object
     dto.JwtTokensOutput:
       properties:
@@ -1198,11 +1199,4 @@ components:
       required:
         - email
         - otp
-      type: object
-    health.Response:
-      properties:
-        name:
-          type: string
-        pass:
-          type: boolean
       type: object
