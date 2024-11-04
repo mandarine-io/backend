@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -166,6 +167,7 @@ func Test_CommonHandler_NoRoute(t *testing.T) {
 }
 
 func Test_CommonHandler_MaxRequestSize(t *testing.T) {
+	time.Sleep(2 * time.Second)
 	url := server.URL + "/v0/auth/login"
 
 	reqBody := map[string]interface{}{
