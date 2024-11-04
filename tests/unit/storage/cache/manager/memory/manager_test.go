@@ -2,8 +2,8 @@ package memory_test
 
 import (
 	"context"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager/memory"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/memory"
 	"testing"
 	"time"
 
@@ -12,7 +12,7 @@ import (
 
 func Test_CacheManager_Memory(t *testing.T) {
 	ttl := time.Minute
-	cacheManager := memory.NewCacheManager(ttl)
+	cacheManager := memory.NewManager(ttl)
 	ctx := context.Background()
 
 	t.Run(
@@ -34,7 +34,7 @@ func Test_CacheManager_Memory(t *testing.T) {
 		"get non-existent key", func(t *testing.T) {
 			var result string
 			err := cacheManager.Get(ctx, "non-existent-key", &result)
-			assert.ErrorIs(t, err, manager.ErrCacheEntryNotFound)
+			assert.ErrorIs(t, err, cache.ErrCacheEntryNotFound)
 		},
 	)
 
@@ -51,7 +51,7 @@ func Test_CacheManager_Memory(t *testing.T) {
 
 			var result string
 			err = cacheManager.Get(ctx, key, &result)
-			assert.ErrorIs(t, err, manager.ErrCacheEntryNotFound)
+			assert.ErrorIs(t, err, cache.ErrCacheEntryNotFound)
 		},
 	)
 
@@ -67,7 +67,7 @@ func Test_CacheManager_Memory(t *testing.T) {
 
 			var result string
 			err = cacheManager.Get(ctx, key, &result)
-			assert.ErrorIs(t, err, manager.ErrCacheEntryNotFound)
+			assert.ErrorIs(t, err, cache.ErrCacheEntryNotFound)
 		},
 	)
 
@@ -82,10 +82,10 @@ func Test_CacheManager_Memory(t *testing.T) {
 
 			var result string
 			err = cacheManager.Get(ctx, "prefix-key1", &result)
-			assert.ErrorIs(t, err, manager.ErrCacheEntryNotFound)
+			assert.ErrorIs(t, err, cache.ErrCacheEntryNotFound)
 
 			err = cacheManager.Get(ctx, "prefix-key2", &result)
-			assert.ErrorIs(t, err, manager.ErrCacheEntryNotFound)
+			assert.ErrorIs(t, err, cache.ErrCacheEntryNotFound)
 
 			err = cacheManager.Get(ctx, "other-key", &result)
 			assert.NoError(t, err)

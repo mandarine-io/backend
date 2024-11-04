@@ -2,8 +2,8 @@ package health_test
 
 import (
 	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/rest"
-	"github.com/mandarine-io/Backend/internal/api/rest/handler/health"
+	"github.com/mandarine-io/Backend/internal/api/service/health/dto"
+	http2 "github.com/mandarine-io/Backend/internal/api/transport/http"
 	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -30,23 +30,41 @@ func TestMain(m *testing.M) {
 			ExternalOrigin: "http://localhost:8081",
 			Port:           8081,
 			Version:        "0.0.0",
+			RPS:            100,
+			MaxRequestSize: 524288000,
 		},
-		Postgres: appconfig.PostgresConfig{
-			Username: "mandarine",
-			Password: "password",
-			DBName:   "mandarine_test",
+		Database: appconfig.DatabaseConfig{
+			Type: "postgres",
+			Postgres: &appconfig.PostgresDatabaseConfig{
+				Username: "mandarine",
+				Password: "password",
+				DBName:   "mandarine_test",
+			},
 		},
-		Redis: appconfig.RedisConfig{
-			Host:     "127.0.0.1",
-			Port:     6379,
-			Username: "default",
-			Password: "password",
-			DBIndex:  0,
+		Cache: appconfig.CacheConfig{
+			TTL:  120,
+			Type: "redis",
+			Redis: &appconfig.RedisCacheConfig{
+				Username: "default",
+				Password: "password",
+				DBIndex:  0,
+			},
 		},
-		Minio: appconfig.MinioConfig{
-			AccessKey:  "admin",
-			SecretKey:  "Password_10",
-			BucketName: "mandarine-test",
+		PubSub: appconfig.PubSubConfig{
+			Type: "redis",
+			Redis: &appconfig.RedisPubSubConfig{
+				Username: "default",
+				Password: "password",
+				DBIndex:  0,
+			},
+		},
+		S3: appconfig.S3Config{
+			Type: "minio",
+			Minio: &appconfig.MinioS3Config{
+				AccessKey: "admin",
+				SecretKey: "Password_10",
+				Bucket:    "mandarine-test",
+			},
 		},
 		SMTP: appconfig.SmtpConfig{
 			Host:     "127.0.0.1",
@@ -55,9 +73,6 @@ func TestMain(m *testing.M) {
 			Password: "password",
 			From:     "Mandarine <admin@localhost>",
 			SSL:      false,
-		},
-		Cache: appconfig.CacheConfig{
-			TTL: 120,
 		},
 		Locale: appconfig.LocaleConfig{
 			Path:     pwd + "/../../../locales",
@@ -79,16 +94,16 @@ func TestMain(m *testing.M) {
 				Enable: false,
 			},
 		},
-		OAuthClient: appconfig.OAuthClientConfig{
-			Google: appconfig.GoogleOAuthClientConfig{
+		OAuthClients: map[string]appconfig.OauthClientConfig{
+			"google": {
 				ClientID:     "",
 				ClientSecret: "",
 			},
-			Yandex: appconfig.YandexOAuthClientConfig{
+			"yandex": {
 				ClientID:     "",
 				ClientSecret: "",
 			},
-			MailRu: appconfig.MailRuOAuthClientConfig{
+			"mailru": {
 				ClientID:     "",
 				ClientSecret: "",
 			},
@@ -103,9 +118,9 @@ func TestMain(m *testing.M) {
 				Length: 6,
 				TTL:    300,
 			},
-			RateLimit: appconfig.RateLimitConfig{
-				RPS: 100,
-			},
+		},
+		Websocket: appconfig.WebsocketConfig{
+			PoolSize: 1024,
 		},
 	}
 
@@ -113,7 +128,7 @@ func TestMain(m *testing.M) {
 	defer testEnvironment.Close()
 
 	testEnvironment.MustInitialize(cfg)
-	router := rest.SetupRouter(testEnvironment.Container)
+	router := http2.SetupRouter(testEnvironment.Container)
 	server = httptest.NewServer(router)
 	defer server.Close()
 
@@ -128,7 +143,7 @@ func Test_HealthCheck(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	//// Check response
-	var body []health.Response
+	var body []dto.HealthOutput
 	err = e2e.ReadResponseBody(resp, &body)
 	assert.NoError(t, err)
 	for _, v := range body {

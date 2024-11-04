@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	appconfig "github.com/mandarine-io/Backend/internal/api/config"
 	"github.com/mandarine-io/Backend/internal/api/registry"
 	"github.com/mandarine-io/Backend/pkg/logging"
@@ -82,8 +83,8 @@ func (tc *TestEnvironment) Close() {
 
 func mustSetupPostgresContainer(cfg *appconfig.Config) testcontainers.Container {
 	// https://github.com/go-testfixtures/testfixtures/blob/c756c9973ec0c741014dce19106369780dc88d37/testfixtures.go#L54
-	if !strings.HasSuffix(cfg.Postgres.DBName, "_test") {
-		cfg.Postgres.DBName += "_test"
+	if !strings.HasSuffix(cfg.Database.Postgres.DBName, "_test") {
+		cfg.Database.Postgres.DBName += "_test"
 	}
 
 	postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -91,9 +92,9 @@ func mustSetupPostgresContainer(cfg *appconfig.Config) testcontainers.Container 
 			Image:        "postgis/postgis:17-3.4-alpine",
 			ExposedPorts: []string{"5432/tcp"},
 			Env: map[string]string{
-				"POSTGRES_USER":     cfg.Postgres.Username,
-				"POSTGRES_PASSWORD": cfg.Postgres.Password,
-				"POSTGRES_DB":       cfg.Postgres.DBName,
+				"POSTGRES_USER":     cfg.Database.Postgres.Username,
+				"POSTGRES_PASSWORD": cfg.Database.Postgres.Password,
+				"POSTGRES_DB":       cfg.Database.Postgres.DBName,
 			},
 			WaitingFor: wait.ForListeningPort("5432/tcp"),
 		},
@@ -102,15 +103,17 @@ func mustSetupPostgresContainer(cfg *appconfig.Config) testcontainers.Container 
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to start postgres container")
 	}
-	cfg.Postgres.Host, err = postgresC.Host(ctx)
+	host, err := postgresC.Host(ctx)
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to get postgres container host")
 	}
-	port, err := postgresC.MappedPort(ctx, "5432")
+	portRaw, err := postgresC.MappedPort(ctx, "5432")
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to get postgres container port")
 	}
-	cfg.Postgres.Port = port.Int()
+	port := portRaw.Int()
+
+	cfg.Database.Postgres.Address = fmt.Sprintf("%s:%d", host, port)
 	return postgresC
 }
 
@@ -120,7 +123,7 @@ func mustSetupRedisContainer(cfg *appconfig.Config) testcontainers.Container {
 			Image:        "redis:7.4.1-alpine3.20",
 			ExposedPorts: []string{"6379/tcp"},
 			Env: map[string]string{
-				"REDIS_PASSWORD": cfg.Redis.Password,
+				"REDIS_PASSWORD": cfg.Cache.Redis.Password,
 			},
 			WaitingFor: wait.ForListeningPort("6379/tcp"),
 		},
@@ -129,17 +132,23 @@ func mustSetupRedisContainer(cfg *appconfig.Config) testcontainers.Container {
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to start redis container")
 	}
-	cfg.Redis.Host, err = redisC.Host(ctx)
+	host, err := redisC.Host(ctx)
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to get redis container host")
 	}
-	port, err := redisC.MappedPort(ctx, "6379")
+	portRaw, err := redisC.MappedPort(ctx, "6379")
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to get redis container port")
 	}
-	cfg.Redis.Port = port.Int()
-	cfg.Redis.Username = "default"
-	cfg.Redis.DBIndex = 0
+	port := portRaw.Int()
+
+	cfg.Cache.Redis.Address = fmt.Sprintf("%s:%d", host, port)
+	cfg.Cache.Redis.Username = "default"
+	cfg.Cache.Redis.DBIndex = 0
+
+	cfg.PubSub.Redis.Address = fmt.Sprintf("%s:%d", host, port)
+	cfg.PubSub.Redis.Username = "default"
+	cfg.PubSub.Redis.DBIndex = 0
 
 	return redisC
 }
@@ -151,8 +160,8 @@ func mustSetupMinioContainer(cfg *appconfig.Config) testcontainers.Container {
 			ExposedPorts: []string{"9000/tcp"},
 			Cmd:          []string{"server", "/data"},
 			Env: map[string]string{
-				"MINIO_ROOT_USER":     cfg.Minio.AccessKey,
-				"MINIO_ROOT_PASSWORD": cfg.Minio.SecretKey,
+				"MINIO_ROOT_USER":     cfg.S3.Minio.AccessKey,
+				"MINIO_ROOT_PASSWORD": cfg.S3.Minio.SecretKey,
 			},
 			WaitingFor: wait.ForListeningPort("9000/tcp"),
 		},
@@ -161,15 +170,17 @@ func mustSetupMinioContainer(cfg *appconfig.Config) testcontainers.Container {
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to start minio container")
 	}
-	cfg.Minio.Host, err = minioC.Host(ctx)
+	host, err := minioC.Host(ctx)
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to get minio container host")
 	}
-	port, err := minioC.MappedPort(ctx, "9000")
+	portRaw, err := minioC.MappedPort(ctx, "9000")
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to get minio container port")
 	}
-	cfg.Minio.Port = port.Int()
+	port := portRaw.Int()
+
+	cfg.S3.Minio.Address = fmt.Sprintf("%s:%d", host, port)
 
 	return minioC
 }

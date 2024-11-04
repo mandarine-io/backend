@@ -4,7 +4,6 @@ import (
 	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
 	gormRepo "github.com/mandarine-io/Backend/internal/api/persistence/repo/gorm"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 type Repositories struct {
@@ -12,10 +11,10 @@ type Repositories struct {
 	BannedToken repo.BannedTokenRepository
 }
 
-func newGormRepositories(db *gorm.DB) *Repositories {
+func setupGormRepositories(c *Container) {
 	log.Debug().Msg("setup gorm repositories")
-	return &Repositories{
-		User:        gormRepo.NewUserRepository(db),
-		BannedToken: gormRepo.NewBannedTokenRepository(db),
+	c.Repos = &Repositories{
+		User:        gormRepo.NewUserRepository(c.DB),
+		BannedToken: gormRepo.NewBannedTokenRepository(c.DB),
 	}
 }

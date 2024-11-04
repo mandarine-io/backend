@@ -16,8 +16,8 @@ import (
 	"github.com/mandarine-io/Backend/pkg/oauth"
 	mock3 "github.com/mandarine-io/Backend/pkg/oauth/mock"
 	mock5 "github.com/mandarine-io/Backend/pkg/smtp/mock"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
-	mock4 "github.com/mandarine-io/Backend/pkg/storage/cache/manager/mock"
+	cache2 "github.com/mandarine-io/Backend/pkg/storage/cache"
+	mock4 "github.com/mandarine-io/Backend/pkg/storage/cache/mock"
 	mock6 "github.com/mandarine-io/Backend/pkg/template/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -36,7 +36,7 @@ var (
 	userRepo        *mock2.UserRepositoryMock
 	bannedTokenRepo *mock2.BannedTokenRepositoryMock
 	oauthProviders  map[string]oauth.Provider
-	cacheManager    *mock4.CacheManagerMock
+	cacheManager    *mock4.ManagerMock
 	smtpSender      *mock5.SenderMock
 	templateEngine  *mock6.TemplateEngineMock
 	cfg             *config.Config
@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 	bannedTokenRepo = new(mock2.BannedTokenRepositoryMock)
 	oauthProviders = make(map[string]oauth.Provider)
 	oauthProviders["mock"] = new(mock3.OAuthProviderMock)
-	cacheManager = new(mock4.CacheManagerMock)
+	cacheManager = new(mock4.ManagerMock)
 	smtpSender = new(mock5.SenderMock)
 	templateEngine = new(mock6.TemplateEngineMock)
 	cfg = &config.Config{
@@ -387,7 +387,7 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 	})
 
 	t.Run("OTPNotFound", func(t *testing.T) {
-		cacheManager.On("Get", mock.Anything, mock.Anything, mock.Anything).Once().Return(manager.ErrCacheEntryNotFound)
+		cacheManager.On("Get", mock.Anything, mock.Anything, mock.Anything).Once().Return(cache2.ErrCacheEntryNotFound)
 
 		err := svc.RegisterConfirm(ctx, req)
 
@@ -616,7 +616,7 @@ func Test_AuthService_VerifyRecoveryCode(t *testing.T) {
 	t.Run("InvalidOrExpiredOtp", func(t *testing.T) {
 		input := dto.VerifyRecoveryCodeInput{Email: "test@example.com", OTP: "wrong"}
 
-		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Return(manager.ErrCacheEntryNotFound).Once()
+		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Return(cache2.ErrCacheEntryNotFound).Once()
 
 		err := svc.VerifyRecoveryCode(context.Background(), input)
 
@@ -626,7 +626,7 @@ func Test_AuthService_VerifyRecoveryCode(t *testing.T) {
 	t.Run("CacheEntryNotFound", func(t *testing.T) {
 		input := dto.VerifyRecoveryCodeInput{Email: "test@example.com", OTP: "123456"}
 
-		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Return(manager.ErrCacheEntryNotFound).Once()
+		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Return(cache2.ErrCacheEntryNotFound).Once()
 
 		err := svc.VerifyRecoveryCode(context.Background(), input)
 
@@ -677,7 +677,7 @@ func Test_AuthService_ResetPassword(t *testing.T) {
 	t.Run("CacheEntryNotFound", func(t *testing.T) {
 		input := dto.ResetPasswordInput{Email: "test@example.com", OTP: "123456", Password: "newpassword"}
 
-		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Return(manager.ErrCacheEntryNotFound).Once()
+		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Return(cache2.ErrCacheEntryNotFound).Once()
 
 		err := svc.ResetPassword(context.Background(), input)
 

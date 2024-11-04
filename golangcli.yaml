@@ -12,12 +12,12 @@ linters-settings:
       - map
   exhaustruct:
     exclude:
-      - "^net/rest.Client$"
-      - "^net/rest.Cookie$"
-      - "^net/rest.Request$"
-      - "^net/rest.Response$"
-      - "^net/rest.Server$"
-      - "^net/rest.Transport$"
+      - "^net/http.Client$"
+      - "^net/http.Cookie$"
+      - "^net/http.Request$"
+      - "^net/http.Response$"
+      - "^net/http.Server$"
+      - "^net/http.Transport$"
       - "^net/url.URL$"
       - "^os/exec.Cmd$"
       - "^reflect.StructField$"

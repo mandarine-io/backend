@@ -12,8 +12,8 @@ import (
 	"github.com/mandarine-io/Backend/internal/api/service/account"
 	accountDto "github.com/mandarine-io/Backend/internal/api/service/account/dto"
 	mock4 "github.com/mandarine-io/Backend/pkg/smtp/mock"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
-	mock3 "github.com/mandarine-io/Backend/pkg/storage/cache/manager/mock"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	mock3 "github.com/mandarine-io/Backend/pkg/storage/cache/mock"
 	mock5 "github.com/mandarine-io/Backend/pkg/template/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,7 +43,7 @@ func setup() {
 
 func Test_AccountService_GetAccount(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{}
@@ -103,7 +103,7 @@ func Test_AccountService_GetAccount(t *testing.T) {
 
 func Test_AccountService_UpdateUsername(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{
@@ -260,7 +260,7 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 
 func Test_AccountService_UpdateEmail(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{
@@ -555,7 +555,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 
 func Test_AccountService_VerifyEmail(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{
@@ -614,7 +614,7 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 			}
 
 			cacheManager.On("Get", ctx, strings.Join([]string{"email-verify", req.Email}, "."), mock.Anything).
-				Once().Return(manager.ErrCacheEntryNotFound)
+				Once().Return(cache.ErrCacheEntryNotFound)
 
 			err := service.VerifyEmail(ctx, userID, req)
 
@@ -829,7 +829,7 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 
 func Test_AccountService_SetPassword(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{}
@@ -949,7 +949,7 @@ func Test_AccountService_SetPassword(t *testing.T) {
 
 func Test_AccountService_UpdatePassword(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{}
@@ -1083,7 +1083,7 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 
 func Test_AccountService_RestoreAccount(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{}
@@ -1174,7 +1174,7 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 
 func Test_AccountService_DeleteAccount(t *testing.T) {
 	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.CacheManagerMock)
+	cacheManager := new(mock3.ManagerMock)
 	smtpSender := new(mock4.SenderMock)
 	templateEngine := new(mock5.TemplateEngineMock)
 	cfg := &config.Config{}

@@ -11,7 +11,7 @@ const (
 	ProviderKey = "mailru"
 )
 
-func NewOAuthMailRuProvider(clientID string, clientSecret string) oauth.Provider {
+func NewProvider(clientID string, clientSecret string) oauth.Provider {
 	oauthConfig := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,

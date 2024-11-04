@@ -17,16 +17,16 @@ services:
     container_name: mandarine-local-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${MANDARINE_POSTGRES__USERNAME}
-      POSTGRES_PASSWORD: ${MANDARINE_POSTGRES__PASSWORD}
-      POSTGRES_DB: ${MANDARINE_POSTGRES__DB_NAME}
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: LMRdskYdRNdXA0m1YK3stPFWAciSiwkvQVOZNebYvFI=
+      POSTGRES_DB: mandarine
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
       interval: 5s
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_POSTGRES__PORT}:5432
+      - 15432:5432
     volumes:
       - mandarine-local-postgres-data:/var/lib/postgresql/data
     networks:
@@ -40,17 +40,18 @@ services:
     container_name: mandarine-local-redis
     restart: unless-stopped
     environment:
-      REDIS_USER: ${MANDARINE_REDIS__USERNAME}
-      REDIS_PASSWORD: ${MANDARINE_REDIS__PASSWORD}
-      REDIS_ARGS: '--requirepass ${MANDARINE_REDIS__PASSWORD} --user ${MANDARINE_REDIS__USERNAME} on >${MANDARINE_REDIS__PASSWORD} ~* allcommands'
+      REDIS_USER: admin
+      REDIS_PASSWORD: r8E3YuDeCHXWiNOGTz5uqpCJyYeuvZLWokSalMjfHeQ=
+      REDIS_ARGS: |
+        --requirepass r8E3YuDeCHXWiNOGTz5uqpCJyYeuvZLWokSalMjfHeQ= --user admin on >r8E3YuDeCHXWiNOGTz5uqpCJyYeuvZLWokSalMjfHeQ= ~* allcommands
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli ping" ]
       interval: 5s
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_REDIS__PORT}:6379
-      - ${MANDARINE_REDIS__UI_PORT}:8001
+      - 16379:6379
+      - 18001:8001
     volumes:
       - mandarine-local-redis-data:/data
     networks:
@@ -64,17 +65,17 @@ services:
     container_name: mandarine-local-minio
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: ${MANDARINE_MINIO__ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MANDARINE_MINIO__SECRET_KEY}
-      MINIO_DEFAULT_BUCKETS: ${MANDARINE_MINIO__BUCKET_NAME}
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: WZuWsLUF+dkSJCn80R/bIeYSgurfEH6Xq3vqmLgX9RA=
+      MINIO_DEFAULT_BUCKETS: mandarine
     healthcheck:
       test: [ "CMD-SHELL", "mc ready local" ]
       interval: 5s
       timeout: 5s
       retries: 50
     ports:
-      - ${MANDARINE_MINIO__PORT}:9000
-      - ${MANDARINE_MINIO__UI_PORT}:9001
+      - 19000:9000
+      - 19001:9001
     volumes:
       - mandarine-local-minio-data:/bitnami/minio/data
     networks:

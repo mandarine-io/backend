@@ -30,7 +30,7 @@ const docTemplate = `{
     "paths": {
         "/health": {
             "get": {
-                "description": "Request for getting health status. In response will be status of all checks (database, minio, smtp, redis).",
+                "description": "Request for getting health status. In response will be status of all check (database, minio, smtp, redis).",
                 "consumes": [
                     "application/json"
                 ],
@@ -48,7 +48,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/health.Response"
+                                "$ref": "#/definitions/dto.HealthOutput"
                             }
                         }
                     }
@@ -1296,8 +1296,8 @@ const docTemplate = `{
                 "summary": "Connect to websocket server",
                 "operationId": "WsConnect",
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "101": {
+                        "description": "Switching Protocols"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1307,12 +1307,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1386,6 +1380,17 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.HealthOutput": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "pass": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1605,17 +1610,6 @@ const docTemplate = `{
                 },
                 "otp": {
                     "type": "string"
-                }
-            }
-        },
-        "health.Response": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "pass": {
-                    "type": "boolean"
                 }
             }
         }

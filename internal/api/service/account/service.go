@@ -11,10 +11,10 @@ import (
 	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
 	"github.com/mandarine-io/Backend/internal/api/service/account/dto"
 	"github.com/mandarine-io/Backend/internal/api/service/account/mapper"
-	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
 	"github.com/mandarine-io/Backend/pkg/smtp"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
 	"github.com/mandarine-io/Backend/pkg/template"
+	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog/log"
 	"time"
@@ -39,7 +39,7 @@ var (
 
 type Service struct {
 	userRepo       repo.UserRepository
-	cacheManager   manager.CacheManager
+	cacheManager   cache.Manager
 	smtpSender     smtp.Sender
 	templateEngine template.Engine
 	cfg            *config.Config
@@ -47,7 +47,7 @@ type Service struct {
 
 func NewService(
 	userRepo repo.UserRepository,
-	cacheManager manager.CacheManager,
+	cacheManager cache.Manager,
 	smtpSender smtp.Sender,
 	templateEngine template.Engine,
 	cfg *config.Config,
@@ -230,7 +230,7 @@ func (s *Service) VerifyEmail(ctx context.Context, id uuid.UUID, req dto.VerifyE
 	var cacheEntry dto.EmailVerifyCache
 	err := s.cacheManager.Get(ctx, cache2.CreateCacheKey(emailVerifyCachePrefix, req.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)

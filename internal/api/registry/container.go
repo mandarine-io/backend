@@ -6,20 +6,11 @@ import (
 	"github.com/mandarine-io/Backend/internal/api/config"
 	"github.com/mandarine-io/Backend/pkg/locale"
 	"github.com/mandarine-io/Backend/pkg/oauth"
-	"github.com/mandarine-io/Backend/pkg/oauth/google"
-	"github.com/mandarine-io/Backend/pkg/oauth/mailru"
-	"github.com/mandarine-io/Backend/pkg/oauth/yandex"
 	"github.com/mandarine-io/Backend/pkg/pubsub"
-	redis3 "github.com/mandarine-io/Backend/pkg/pubsub/redis"
 	"github.com/mandarine-io/Backend/pkg/smtp"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/db_cacher"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
-	redis2 "github.com/mandarine-io/Backend/pkg/storage/cache/manager/redis"
-	cacheResource "github.com/mandarine-io/Backend/pkg/storage/cache/resource"
-	"github.com/mandarine-io/Backend/pkg/storage/database"
-	dbResource "github.com/mandarine-io/Backend/pkg/storage/database/resource"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/mandarine-io/Backend/pkg/storage/database/postgres"
 	"github.com/mandarine-io/Backend/pkg/storage/s3"
-	s3Resource "github.com/mandarine-io/Backend/pkg/storage/s3/resource"
 	"github.com/mandarine-io/Backend/pkg/template"
 	"github.com/mandarine-io/Backend/pkg/websocket"
 	"github.com/minio/minio-go/v7"
@@ -28,7 +19,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Container struct {
@@ -36,7 +26,8 @@ type Container struct {
 
 	Logger        *zerolog.Logger
 	Bundle        *i18n.Bundle
-	RedisClient   *redis.Client
+	CacheRDB      *redis.Client
+	PubSubRDB     *redis.Client
 	DB            *gorm.DB
 	S3            *minio.Client
 	WebsocketPool *websocket.Pool
@@ -44,14 +35,14 @@ type Container struct {
 
 	OauthProviders map[string]oauth.Provider
 	TemplateEngine template.Engine
-	CacheManager   manager.CacheManager
+	CacheManager   cache.Manager
 	S3Client       s3.Client
 	SmtpSender     smtp.Sender
 	PubSub         pubsub.Agent
 
-	Repositories *Repositories
-	Services     *Services
-	Handlers     Handlers
+	Repos    *Repositories
+	SVCs     *Services
+	Handlers Handlers
 }
 
 func NewContainer() *Container {
@@ -77,81 +68,55 @@ func (c *Container) MustInitialize(cfg *config.Config) {
 	templateConfig := mapAppTemplateConfigToTemplateConfig(&cfg.Template)
 	c.TemplateEngine = template.MustLoadTemplates(templateConfig)
 
-	// Setup cache manager
-	log.Debug().Msg("setup cache manager")
-	redisConfig := mapAppRedisConfigToRedisConfig(&cfg.Redis)
-	c.RedisClient = cacheResource.MustConnectRedis(redisConfig)
-	c.CacheManager = redis2.NewCacheManager(c.RedisClient, time.Duration(cfg.Cache.TTL)*time.Second)
-
-	// Setup database
-	log.Debug().Msg("setup database")
-	postgresConfig := mapAppPostgresConfigToPostgresConfig(&cfg.Postgres)
-	c.DB = dbResource.MustConnectPostgres(postgresConfig)
-	err := database.UseCachePlugin(c.DB, db_cacher.NewDbCacher(c.CacheManager))
-	if err != nil {
-		log.Warn().Stack().Err(err).Msg("failed to use cache plugin")
-	}
-
-	// Migrate database
-	log.Debug().Msg("migrate database")
-	err = database.Migrate(dbResource.GetDSN(postgresConfig), cfg.Migrations.Path)
-	if err != nil {
-		log.Warn().Stack().Err(err).Msg("failed to migrate database")
-	}
-
-	// Setup S3
-	log.Debug().Msg("setup s3")
-	minioConfig := mapAppMinioConfigToMinioConfig(&cfg.Minio)
-	c.S3 = s3Resource.MustConnectMinio(minioConfig)
-	c.S3Client = s3.NewClient(c.S3, cfg.Minio.BucketName)
+	// Setup websocket pool
+	log.Debug().Msg("setup websocket pool")
+	c.WebsocketPool = websocket.NewPool(cfg.Websocket.PoolSize)
 
 	// Setup SMTP sender
 	log.Debug().Msg("setup smtp sender")
 	smtpConfig := mapAppSmtpConfigToSmtpConfig(&cfg.SMTP)
 	c.SmtpSender = smtp.MustNewSender(smtpConfig)
 
-	// Setup pub/sub
-	log.Debug().Msg("setup pub/sub")
-	c.PubSub = redis3.NewAgent(c.RedisClient)
-
-	// Setup websocket pool
-	log.Debug().Msg("setup websocket pool")
-	c.WebsocketPool = websocket.NewPool(cfg.Websocket.PoolSize)
-
 	// Setup HTTP client
 	log.Debug().Msg("setup http client")
 	c.HttpClient = resty.New()
 
-	// Setup OAuth providers
-	log.Debug().Msg("setup oauth providers")
-	c.OauthProviders = map[string]oauth.Provider{
-		google.ProviderKey: google.NewOAuthGoogleProvider(cfg.OAuthClient.Google.ClientID, cfg.OAuthClient.Google.ClientSecret),
-		yandex.ProviderKey: yandex.NewOAuthYandexProvider(cfg.OAuthClient.Yandex.ClientID, cfg.OAuthClient.Yandex.ClientSecret),
-		mailru.ProviderKey: mailru.NewOAuthMailRuProvider(cfg.OAuthClient.MailRu.ClientID, cfg.OAuthClient.MailRu.ClientSecret),
-	}
-
-	// Setup CSR components
-	log.Debug().Msg("setup csr components")
-	c.Repositories = newGormRepositories(c.DB)
-	c.Services = newServices(c)
-	c.Handlers = newHandlers(c)
+	setupCacheManager(c)
+	setupDatabase(c)
+	setupS3(c)
+	setupPubSub(c)
+	setupOAuthClients(c)
+	setupGormRepositories(c)
+	setupServices(c)
+	setupHandlers(c)
 }
 
 func (c *Container) Close() error {
 	var errs []error
 
-	if err := dbResource.Close(c.DB); err != nil {
+	if err := postgres.CloseGormDb(c.DB); err != nil {
 		log.Error().Stack().Err(err).Msg("failed to close postgres connection")
 		errs = append(errs, err)
 	} else {
 		log.Info().Msg("postgres connection is closed")
 	}
 
-	if err := c.RedisClient.Close(); err != nil {
-		log.Error().Stack().Err(err).Msg("failed to close redis connection")
-		errs = append(errs, err)
-	} else {
-		log.Info().Msg("redis connection is closed")
+	if c.CacheRDB != nil {
+		if err := c.CacheRDB.Close(); err != nil {
+			log.Error().Stack().Err(err).Msg("failed to close redis cache connection")
+			errs = append(errs, err)
+		} else {
+			log.Info().Msg("redis cache connection is closed")
+		}
+	}
+
+	if c.PubSubRDB != nil {
+		if err := c.PubSubRDB.Close(); err != nil {
+			log.Error().Stack().Err(err).Msg("failed to close redis pub/sub connection")
+			errs = append(errs, err)
+		} else {
+			log.Info().Msg("redis pub/sub connection is closed")
+		}
 	}
 
 	if err := c.PubSub.Close(); err != nil {
@@ -181,35 +146,6 @@ func mapAppLocaleConfigToLocaleConfig(cfg *config.LocaleConfig) *locale.Config {
 func mapAppTemplateConfigToTemplateConfig(cfg *config.TemplateConfig) *template.Config {
 	return &template.Config{
 		Path: cfg.Path,
-	}
-}
-
-func mapAppRedisConfigToRedisConfig(cfg *config.RedisConfig) *cacheResource.RedisConfig {
-	return &cacheResource.RedisConfig{
-		Host:     cfg.Host,
-		Port:     cfg.Port,
-		Username: cfg.Username,
-		Password: cfg.Password,
-	}
-}
-
-func mapAppPostgresConfigToPostgresConfig(cfg *config.PostgresConfig) *dbResource.PostgresConfig {
-	return &dbResource.PostgresConfig{
-		Host:     cfg.Host,
-		Port:     cfg.Port,
-		Username: cfg.Username,
-		Password: cfg.Password,
-		DBName:   cfg.DBName,
-	}
-}
-
-func mapAppMinioConfigToMinioConfig(cfg *config.MinioConfig) *s3Resource.MinioConfig {
-	return &s3Resource.MinioConfig{
-		Host:       cfg.Host,
-		Port:       cfg.Port,
-		AccessKey:  cfg.AccessKey,
-		SecretKey:  cfg.SecretKey,
-		BucketName: cfg.BucketName,
 	}
 }
 

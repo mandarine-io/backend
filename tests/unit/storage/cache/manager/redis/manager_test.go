@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-redis/redismock/v9"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager/redis"
+	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/mandarine-io/Backend/pkg/storage/cache/redis"
 	"testing"
 	"time"
 
@@ -16,7 +16,7 @@ func Test_CacheManager_Redis(t *testing.T) {
 	ctx := context.Background()
 	client, mock := redismock.NewClientMock()
 	ttl := time.Minute
-	cacheManager := redis.NewCacheManager(client, ttl)
+	cacheManager := redis.NewManager(client, ttl)
 
 	t.Run(
 		"set and get value", func(t *testing.T) {
@@ -46,7 +46,7 @@ func Test_CacheManager_Redis(t *testing.T) {
 
 			var result string
 			err := cacheManager.Get(ctx, key, &result)
-			assert.ErrorIs(t, err, manager.ErrCacheEntryNotFound)
+			assert.ErrorIs(t, err, cache.ErrCacheEntryNotFound)
 		},
 	)
 

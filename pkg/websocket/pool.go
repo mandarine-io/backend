@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
-	"github.com/mandarine-io/Backend/pkg/rest/dto"
+	"github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"sync"

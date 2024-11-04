@@ -6,9 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	dto2 "github.com/mandarine-io/Backend/internal/api/service/resource/dto"
-	dto3 "github.com/mandarine-io/Backend/pkg/rest/dto"
 	"github.com/mandarine-io/Backend/pkg/storage/s3"
-	"github.com/mandarine-io/Backend/pkg/storage/s3/dto"
+	dto3 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/rs/zerolog/log"
 	"io"
 	"mime/multipart"
@@ -64,7 +63,7 @@ func (s *Service) UploadResource(ctx context.Context, input *dto2.UploadResource
 	}
 
 	// Upload to S3
-	fileData := &dto.FileData{
+	fileData := &s3.FileData{
 		Reader:      f,
 		ID:          fmt.Sprintf("%s-%s", hash, file.Filename),
 		Size:        file.Size,
@@ -92,7 +91,7 @@ func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourc
 	files := input.Resources
 
 	// Open files
-	fileDatas := make([]*dto.FileData, 0)
+	fileDatas := make([]*s3.FileData, 0)
 	defer func() {
 		for _, fileData := range fileDatas {
 			err := fileData.Reader.(multipart.File).Close()
@@ -119,7 +118,7 @@ func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourc
 			return dto2.UploadResourcesOutput{}, err
 		}
 
-		fileData := &dto.FileData{
+		fileData := &s3.FileData{
 			Reader:      f,
 			ID:          fmt.Sprintf("%s-%s", hash, file.Filename),
 			Size:        file.Size,
@@ -155,7 +154,7 @@ func (s *Service) UploadResources(ctx context.Context, input *dto2.UploadResourc
 
 ////////// Download resource //////////
 
-func (s *Service) DownloadResource(ctx context.Context, objectID string) (*dto.FileData, error) {
+func (s *Service) DownloadResource(ctx context.Context, objectID string) (*s3.FileData, error) {
 	log.Info().Msg("download resource")
 	getDto := s.minioClient.GetOne(ctx, objectID)
 	return getDto.Data, getDto.Error

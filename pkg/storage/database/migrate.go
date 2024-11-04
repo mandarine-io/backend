@@ -21,7 +21,10 @@ func (l *migrateLogger) Verbose() bool {
 }
 
 func Migrate(dsn string, migrationDir string) error {
-	migrate, err := goMigrate.New(fmt.Sprintf("file://%s", migrationDir), dsn)
+	log.Info().Msg("migrating database")
+
+	sourceUrl := fmt.Sprintf("file://%s", migrationDir)
+	migrate, err := goMigrate.New(sourceUrl, dsn)
 	if err != nil {
 		return err
 	}

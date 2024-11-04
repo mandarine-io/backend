@@ -9,7 +9,7 @@ import (
 
 func Test_HttpUtil_IsPublicOrigin(t *testing.T) {
 	t.Run(
-		"origin with rest and localhost", func(t *testing.T) {
+		"origin with transport and localhost", func(t *testing.T) {
 			origin := "http://localhost"
 			result := http.IsPublicOrigin(origin)
 			assert.False(t, result)
@@ -25,7 +25,7 @@ func Test_HttpUtil_IsPublicOrigin(t *testing.T) {
 	)
 
 	t.Run(
-		"origin with rest and localhost with port", func(t *testing.T) {
+		"origin with transport and localhost with port", func(t *testing.T) {
 			origin := "http://localhost:8080"
 			result := http.IsPublicOrigin(origin)
 			assert.False(t, result)
@@ -41,7 +41,7 @@ func Test_HttpUtil_IsPublicOrigin(t *testing.T) {
 	)
 
 	t.Run(
-		"origin with rest and public persistence", func(t *testing.T) {
+		"origin with transport and public persistence", func(t *testing.T) {
 			origin := "http://example.com"
 			result := http.IsPublicOrigin(origin)
 			assert.True(t, result)

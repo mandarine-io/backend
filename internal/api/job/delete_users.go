@@ -6,7 +6,7 @@ import (
 	"github.com/mandarine-io/Backend/pkg/scheduler"
 )
 
-func deleteExpiredDeletedUsersJob(usersRepo repo.UserRepository) scheduler.Job {
+func DeleteExpiredDeletedUsersJob(usersRepo repo.UserRepository) scheduler.Job {
 	return scheduler.Job{
 		Ctx:            context.Background(),
 		Name:           "delete-expired-users",

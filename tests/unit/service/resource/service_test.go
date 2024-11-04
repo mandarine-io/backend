@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/mandarine-io/Backend/internal/api/service/resource"
 	"github.com/mandarine-io/Backend/internal/api/service/resource/dto"
-	dto2 "github.com/mandarine-io/Backend/pkg/storage/s3/dto"
+	dto2 "github.com/mandarine-io/Backend/pkg/storage/s3"
 	mock2 "github.com/mandarine-io/Backend/pkg/storage/s3/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

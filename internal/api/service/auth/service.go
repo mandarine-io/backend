@@ -14,10 +14,10 @@ import (
 	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
 	"github.com/mandarine-io/Backend/internal/api/service/auth/mapper"
 	"github.com/mandarine-io/Backend/pkg/oauth"
-	dto2 "github.com/mandarine-io/Backend/pkg/rest/dto"
 	"github.com/mandarine-io/Backend/pkg/smtp"
-	"github.com/mandarine-io/Backend/pkg/storage/cache/manager"
+	cache2 "github.com/mandarine-io/Backend/pkg/storage/cache"
 	"github.com/mandarine-io/Backend/pkg/template"
+	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog/log"
 	"time"
@@ -47,7 +47,7 @@ type Service struct {
 	userRepo        repo.UserRepository
 	bannedTokenRepo repo.BannedTokenRepository
 	oauthProviders  map[string]oauth.Provider
-	cacheManager    manager.CacheManager
+	cacheManager    cache2.Manager
 	smtpSender      smtp.Sender
 	templateEngine  template.Engine
 	cfg             *config.Config
@@ -57,7 +57,7 @@ func NewService(
 	userRepo repo.UserRepository,
 	bannedTokenRepo repo.BannedTokenRepository,
 	oauthProviders map[string]oauth.Provider,
-	cacheManager manager.CacheManager,
+	cacheManager cache2.Manager,
 	smtpSender smtp.Sender,
 	templateEngine template.Engine,
 	cfg *config.Config,
@@ -157,7 +157,7 @@ func (s *Service) RegisterConfirm(ctx context.Context, input dto.RegisterConfirm
 	var cacheEntry dto.RegisterCache
 	err := s.cacheManager.Get(ctx, cache.CreateCacheKey(registerCachePrefix, input.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache2.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)
@@ -394,7 +394,7 @@ func (s *Service) VerifyRecoveryCode(ctx context.Context, input dto.VerifyRecove
 	var cacheEntry dto.RecoveryPasswordCache
 	err := s.cacheManager.Get(ctx, cache.CreateCacheKey(recoveryPasswordCachePrefix, input.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache2.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)
@@ -421,7 +421,7 @@ func (s *Service) ResetPassword(ctx context.Context, input dto.ResetPasswordInpu
 	var cacheEntry dto.RecoveryPasswordCache
 	err := s.cacheManager.Get(ctx, cache.CreateCacheKey(recoveryPasswordCachePrefix, input.Email), &cacheEntry)
 	if err != nil {
-		if errors.Is(err, manager.ErrCacheEntryNotFound) {
+		if errors.Is(err, cache2.ErrCacheEntryNotFound) {
 			return factoryErr(ErrInvalidOrExpiredOtp)
 		}
 		return factoryErr(err)

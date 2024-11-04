@@ -6,7 +6,7 @@ import (
 	"github.com/mandarine-io/Backend/pkg/scheduler"
 )
 
-func deleteExpiredTokensJob(bannedTokensRepo repo.BannedTokenRepository) scheduler.Job {
+func DeleteExpiredTokensJob(bannedTokensRepo repo.BannedTokenRepository) scheduler.Job {
 	return scheduler.Job{
 		Ctx:            context.Background(),
 		Name:           "delete-expired-tokens",

@@ -2,8 +2,7 @@ package mock
 
 import (
 	"context"
-	"github.com/mandarine-io/Backend/pkg/storage/s3/dto"
-
+	"github.com/mandarine-io/Backend/pkg/storage/s3"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -13,27 +12,27 @@ type S3ClientMock struct {
 }
 
 // CreateOne mocks the CreateOne method
-func (m *S3ClientMock) CreateOne(ctx context.Context, file *dto.FileData) *dto.CreateDto {
+func (m *S3ClientMock) CreateOne(ctx context.Context, file *s3.FileData) *s3.CreateDto {
 	args := m.Called(ctx, file)
-	return args.Get(0).(*dto.CreateDto)
+	return args.Get(0).(*s3.CreateDto)
 }
 
 // CreateMany mocks the CreateMany method
-func (m *S3ClientMock) CreateMany(ctx context.Context, files []*dto.FileData) map[string]*dto.CreateDto {
+func (m *S3ClientMock) CreateMany(ctx context.Context, files []*s3.FileData) map[string]*s3.CreateDto {
 	args := m.Called(ctx, files)
-	return args.Get(0).(map[string]*dto.CreateDto)
+	return args.Get(0).(map[string]*s3.CreateDto)
 }
 
 // GetOne mocks the GetOne method
-func (m *S3ClientMock) GetOne(ctx context.Context, objectID string) *dto.GetDto {
+func (m *S3ClientMock) GetOne(ctx context.Context, objectID string) *s3.GetDto {
 	args := m.Called(ctx, objectID)
-	return args.Get(0).(*dto.GetDto)
+	return args.Get(0).(*s3.GetDto)
 }
 
 // GetMany mocks the GetMany method
-func (m *S3ClientMock) GetMany(ctx context.Context, objectIDs []string) map[string]*dto.GetDto {
+func (m *S3ClientMock) GetMany(ctx context.Context, objectIDs []string) map[string]*s3.GetDto {
 	args := m.Called(ctx, objectIDs)
-	return args.Get(0).(map[string]*dto.GetDto)
+	return args.Get(0).(map[string]*s3.GetDto)
 }
 
 // DeleteOne mocks the DeleteOne method
