@@ -3,33 +3,22 @@ on:
   workflow_dispatch:
     inputs:
       test_names:
-        description: 'Load test names. Example: "[test1.js, test2.js]"'
+        description: 'Load test names. Example: ["test1.js", "test2.js"]'
         required: true
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.setVariables.outputs.matrix }}
-    steps:
-      - id: setVariables
-        run: |
-          echo "::set-output name=matrix::$input"
-        env:
-          input: ${{ inputs.test_names }}
   test:
     runs-on: ubuntu-latest
-    needs: setup
     strategy:
       fail-fast: false
       max-parallel: 3
       matrix:
-        test: ${{fromJSON(needs.setup.outputs.matrix)}}
+        test: ${{ fromJSON(github.event.inputs.test_names)}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
       - name: Check if test exists
         run: |
-          if [ ! -d "tests/load/${{ matrix.test }}" ]; then
+          if [ ! -f "tests/load/${{ matrix.test }}" ]; then
             echo "Test tests/load/${{ matrix.test }} does not exist."
             exit 1
           fi
