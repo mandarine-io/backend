@@ -11,12 +11,14 @@
 .E2E_TEST_DIR = $(.TEST_DIR)/e2e
 .LOAD_TEST_DIR = $(.TEST_DIR)/load
 .LOGS_DIR = $(PWD)/logs
+.EDITORCONFIG_LOG_DIR = $(.LOGS_DIR)/editorconfig
 .FORMATER_LOG_DIR = $(.LOGS_DIR)/format
 .LINTER_LOG_DIR = $(.LOGS_DIR)/lint
 .UNIT_TEST_LOG_DIR = $(.LOGS_DIR)/unit-tests
 .E2E_TEST_LOG_DIR = $(.LOGS_DIR)/e2e-tests
 .LOAD_TEST_LOG_DIR = $(.LOGS_DIR)/load-tests
 .CONFIG_PATH = $(PWD)/config/config.yaml
+.MOCKERY_CONFIG_PATH = $(PWD)/.mockery.yaml
 .APP_ENV_FILE = $(PWD)/.env
 .LOCAL_ENV_FILE = $(.DOCKER_COMPOSE_DIR)/.env.local
 .DEV_ENV_FILE = $(.DOCKER_COMPOSE_DIR)/.env.dev
@@ -30,8 +32,10 @@
 .SWAG = swag
 .SWAG2OP = swagger2openapi
 .REDOC = redocly
+.ECLINT = eclint
 .FORMATTER = gofmt
 .LINTER = golangci-lint
+.MOCKERY = mockery
 .DOCKER = docker
 .DOCKER_COMPOSE = docker compose
 .K6 = k6
@@ -55,11 +59,16 @@ install:
 	$(.GO) install github.com/air-verse/air@latest
 	$(.GO) install github.com/swaggo/swag/cmd/swag@latest
 	$(.GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	$(.GO) install github.com/vektra/mockery/v2@latest
+	$(.NPM) i -g swagger2openapi
+	$(.NPM) i -g @redocly/cli
+	$(.NPM) i -g eclint
+
 
 .PHONY: swagger.gen
 swagger.gen:
 	$(.GO) install github.com/swaggo/swag/cmd/swag@latest
-	$(.SWAG) init --generalInfo ./internal/api/transport/http/router.go --outputTypes go,yaml,json --output $(.API_DOCS_DIR)
+	$(.SWAG) init --generalInfo ./internal/transport/http/router.go --outputTypes go,yaml,json --output $(.API_DOCS_DIR)
 
 .PHONY: openapi.gen
 openapi.gen:
@@ -70,6 +79,22 @@ openapi.gen:
 redoc.gen:
 	$(.NPM) i -g @redocly/cli
 	$(.REDOC) build-docs --output $(.API_DOCS_DIR)/redoc.html $(.API_DOCS_DIR)/swagger.yaml
+
+.PHONY: mock.gen
+mock.gen:
+	$(.MOCKERY) --config $(.MOCKERY_CONFIG_PATH)
+
+.PHONY: editorconfig
+editorconfig:
+	@mkdir -p $(.LOGS_DIR)
+	@mkdir -p $(.EDITORCONFIG_LOG_DIR)
+	$(.ECLINT) check | tee $(.EDITORCONFIG_LOG_DIR)/output-$(.TIMESTAMP).log
+
+.PHONY: editorconfig.fix
+editorconfig.fix:
+	@mkdir -p $(.LOGS_DIR)
+	@mkdir -p $(.EDITORCONFIG_LOG_DIR)
+	$(.ECLINT) fix | tee $(.EDITORCONFIG_LOG_DIR)/output-$(.TIMESTAMP).log
 
 .PHONY: format
 format:
@@ -112,7 +137,7 @@ start: build
 	elif [ ! -f $(.APP_ENV_FILE) ]; \
 		then $(.BUILD_DIR)/$(.SERVER_TARGET) --config $(.CONFIG_PATH); \
 	else \
-	  $(.BUILD_DIR)/$(.SERVER_TARGET) --config $(.CONFIG_PATH) --env $(.APP_ENV_FILE); \
+	$(.BUILD_DIR)/$(.SERVER_TARGET) --config $(.CONFIG_PATH) --env $(.APP_ENV_FILE); \
 	fi
 
 .PHONY: start.dev
@@ -172,6 +197,9 @@ help:
 	@echo "	make swagger.gen		${.GREEN_COLOR}Generate Swagger 2 specification${.NO_COLOR}"
 	@echo "	make openapi.gen		${.GREEN_COLOR}Generate OpenAPI 3 specification from Swagger 2 specification${.NO_COLOR}"
 	@echo "	make redoc.gen			${.GREEN_COLOR}Generate Redoc from OpenAPI 3${.NO_COLOR}"
+	@echo "	make mock.gen			${.GREEN_COLOR}Generate mocks${.NO_COLOR}"
+	@echo "	make editorconfig		${.GREEN_COLOR}Run editorconfig check${.NO_COLOR}"
+	@echo "	make editorconfig.fix		${.GREEN_COLOR}Run editorconfig check and fix found issues${.NO_COLOR}"
 	@echo "	make format			${.GREEN_COLOR}Run formatting${.NO_COLOR}"
 	@echo "	make format.fix			${.GREEN_COLOR}Run formatting and simplify code${.NO_COLOR}"
 	@echo "	make lint			${.GREEN_COLOR}Run linters${.NO_COLOR}"

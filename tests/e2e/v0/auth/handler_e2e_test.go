@@ -3,7 +3,6 @@ package auth_e2e_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -11,16 +10,17 @@ import (
 	"github.com/go-testfixtures/testfixtures/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/helper/security"
-	"github.com/mandarine-io/Backend/internal/api/persistence/model"
-	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
-	http2 "github.com/mandarine-io/Backend/internal/api/transport/http"
+	appconfig "github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/domain/dto"
+	"github.com/mandarine-io/Backend/internal/helper/security"
+	model2 "github.com/mandarine-io/Backend/internal/persistence/model"
+	http2 "github.com/mandarine-io/Backend/internal/transport/http"
 	"github.com/mandarine-io/Backend/pkg/oauth"
 	mock3 "github.com/mandarine-io/Backend/pkg/oauth/mock"
 	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	validator2 "github.com/mandarine-io/Backend/pkg/transport/http/validator"
 	"github.com/mandarine-io/Backend/tests/e2e"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
@@ -170,6 +170,7 @@ func TestMain(m *testing.M) {
 		_ = v.RegisterValidation("pastdate", validator2.PastDateValidator)
 		_ = v.RegisterValidation("zxcvbn", validator2.ZxcvbnPasswordValidator)
 		_ = v.RegisterValidation("username", validator2.UsernameValidator)
+		_ = v.RegisterValidation("point", validator2.PointValidator)
 	}
 
 	// Create server
@@ -408,7 +409,7 @@ func Test_LoginHandler_RefreshTokens(t *testing.T) {
 
 	t.Run("User not found", func(t *testing.T) {
 		// Create refresh token
-		_, refreshToken, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
+		_, refreshToken, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model2.UserEntity{
 			ID: uuid.New(),
 		})
 
@@ -431,11 +432,11 @@ func Test_LoginHandler_RefreshTokens(t *testing.T) {
 
 	t.Run("User is blocked", func(t *testing.T) {
 		// Create refresh token
-		_, refreshToken, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
+		_, refreshToken, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model2.UserEntity{
 			ID:       uuid.MustParse("dded243b-a58f-47ba-9007-2fc41cf950c6"),
 			Username: "user_for_refresh_blocked",
 			Email:    "user_for_refresh_blocked@example.com",
-			Role:     model.RoleEntity{Name: model.RoleUser},
+			Role:     model2.RoleEntity{Name: model2.RoleUser},
 		})
 
 		// Send request
@@ -452,11 +453,11 @@ func Test_LoginHandler_RefreshTokens(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		// Create refresh token
-		_, refreshToken, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
+		_, refreshToken, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model2.UserEntity{
 			ID:       uuid.MustParse("d7163725-df27-45de-ae9c-0b860c9ffd17"),
 			Username: "user_for_refresh",
 			Email:    "user_for_refresh@example.com",
-			Role:     model.RoleEntity{Name: model.RoleUser},
+			Role:     model2.RoleEntity{Name: model2.RoleUser},
 		})
 
 		// Send request
@@ -499,11 +500,11 @@ func Test_LogoutHandler_Logout(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		// New access token
-		accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model.UserEntity{
+		accessToken, _, _ := security.GenerateTokens(testEnvironment.Container.Config.Security.JWT, &model2.UserEntity{
 			ID:       uuid.MustParse("a83d9587-b01f-4146-8b1f-80f137f53534"),
 			Username: "user_for_logout",
 			Email:    "user_for_logout@example.com",
-			Role:     model.RoleEntity{Name: model.RoleUser},
+			Role:     model2.RoleEntity{Name: model2.RoleUser},
 		})
 
 		// Send request
@@ -741,7 +742,7 @@ func Test_RegisterHandler_RegisterConfirm(t *testing.T) {
 			OTP:       "123456",
 			ExpiredAt: time.Now().Add(time.Hour),
 		}
-		err := testEnvironment.Container.CacheManager.Set(
+		err := testEnvironment.Container.Cache.Manager.Set(
 			context.Background(),
 			"register.user_for_register_confirm@example.com",
 			cacheEntry,
@@ -778,7 +779,7 @@ func Test_RegisterHandler_RegisterConfirm(t *testing.T) {
 			OTP:       "123456",
 			ExpiredAt: time.Now().Add(time.Hour),
 		}
-		err := testEnvironment.Container.CacheManager.Set(
+		err := testEnvironment.Container.Cache.Manager.Set(
 			context.Background(),
 			"register.user_for_register_confirm_duplicate@example.com",
 			cacheEntry,
@@ -815,7 +816,7 @@ func Test_RegisterHandler_RegisterConfirm(t *testing.T) {
 			OTP:       "123456",
 			ExpiredAt: time.Now().Add(time.Hour),
 		}
-		err := testEnvironment.Container.CacheManager.Set(
+		err := testEnvironment.Container.Cache.Manager.Set(
 			context.Background(),
 			"register.user_for_register_confirm@example.com",
 			cacheEntry,
@@ -1193,7 +1194,7 @@ func Test_SocialLogin_SocialLogin(t *testing.T) {
 	e2e.MustLoadFixtures(fixtures)
 
 	prefixUrl := server.URL + "/v0/auth/social"
-	oauthProviderMock := testEnvironment.Container.OauthProviders["mock"].(*mock3.OAuthProviderMock)
+	oauthProviderMock := testEnvironment.Container.OauthProviders["mock"].(*mock3.ProviderMock)
 
 	t.Run("Unsupported provider", func(t *testing.T) {
 		// Send request
@@ -1241,7 +1242,7 @@ func Test_SocialLogin_SocialCallback(t *testing.T) {
 	e2e.MustLoadFixtures(fixtures)
 
 	prefixUrl := server.URL + "/v0/auth/social"
-	oauthProviderMock := testEnvironment.Container.OauthProviders["mock"].(*mock3.OAuthProviderMock)
+	oauthProviderMock := testEnvironment.Container.OauthProviders["mock"].(*mock3.ProviderMock)
 
 	t.Run("Unsupported provider", func(t *testing.T) {
 		// Send request

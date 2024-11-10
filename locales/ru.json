@@ -10,7 +10,9 @@
       "uri": "Неверный URI",
       "lowercase": "Может содержать только строчные буквы",
       "alphanum": "Может содержать только буквы и цифры",
-      "max": "Максимум {{.param}} символов"
+      "max": "Максимум {{.param}} символов",
+      "numeric": "Неверное число",
+      "point": "Неверная точка (долгота,широта)"
     },
     "access_denied": "Доступ запрещен",
     "too_many_requests": "Слишком много запросов",
@@ -39,7 +41,12 @@
     "failed_to_send_email": "Не удалось отправить письмо",
     "banned_user": "Пользователь заблокирован",
     "deleted_user": "Пользователь удален",
-    "ws_pool_is_full": "Пул вебсокетов заполнен"
+    "ws_pool_is_full": "Пул вебсокетов заполнен",
+    "duplicate_master_profile": "Профиль мастера уже создан",
+    "user_for_master_profile_not_exist": "Пользователя для профиля мастера не существует",
+    "master_profile_not_exist": "Профиль мастера не создан",
+    "master_profile_not_found": "Профиль мастера не найден",
+    "unavailable_sort_field": "Недоступное поле сортировки"
   },
   "email": {
     "register-confirm": {

@@ -19,7 +19,7 @@
 - **Configuration**
     - [Server settings](config#server)
     - [Database provider settings](config#database-provider)
-      - [Postgres](config#postgres-database-provider)
+        - [Postgres](config#postgres-database-provider)
     - [Cache provider settings](config#cache-provider)
         - [Redis](config#redis-cache-provider)
     - [S3 provider settings](config#s3-provider)

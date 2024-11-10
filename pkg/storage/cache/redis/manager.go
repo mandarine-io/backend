@@ -3,8 +3,8 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -12,11 +12,11 @@ import (
 )
 
 type manager struct {
-	client *redis.Client
+	client redis.UniversalClient
 	ttl    time.Duration
 }
 
-func NewManager(client *redis.Client, ttl time.Duration) cache.Manager {
+func NewManager(client redis.UniversalClient, ttl time.Duration) cache.Manager {
 	return &manager{client: client, ttl: ttl}
 }
 

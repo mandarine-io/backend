@@ -1,7 +1,7 @@
 package http_test
 
 import (
-	"github.com/mandarine-io/Backend/internal/api/helper/http"
+	"github.com/mandarine-io/Backend/internal/helper/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"github.com/rs/zerolog/pkgerrors"
 	"github.com/timandy/routine"
 	"io"
 	"os"
@@ -58,7 +57,7 @@ func SetupLogger(cfg *Config) {
 
 	mw := io.MultiWriter(writers...)
 
-	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	zerolog.ErrorStackMarshaler = marshalStack
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		return file + ":" + strconv.Itoa(line)
 	}
@@ -74,7 +73,7 @@ func SetupLogger(cfg *Config) {
 
 func newRollingFile(cfg FileLoggerConfig) io.Writer {
 	if err := os.MkdirAll(cfg.DirPath, 0744); err != nil {
-		log.Error().Err(err).Msgf("can't create log directory %s", cfg.DirPath)
+		log.Error().Stack().Err(err).Msgf("can't create log directory %s", cfg.DirPath)
 		return nil
 	}
 

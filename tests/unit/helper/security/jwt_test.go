@@ -6,9 +6,9 @@ import (
 	"crypto/rand"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/helper/security"
-	"github.com/mandarine-io/Backend/internal/api/persistence/model"
+	"github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/helper/security"
+	model2 "github.com/mandarine-io/Backend/internal/persistence/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -104,11 +104,11 @@ func Test_SecurityUtil_GenerateTokens(t *testing.T) {
 		AccessTokenTTL:  3600,  // 1 hour
 		RefreshTokenTTL: 86400, // 1 day
 	}
-	userEntity := &model.UserEntity{
+	userEntity := &model2.UserEntity{
 		ID:       uuid.New(),
 		Username: "testuser",
 		Email:    "user@example.com",
-		Role:     model.RoleEntity{Name: "user"},
+		Role:     model2.RoleEntity{Name: "user"},
 	}
 
 	t.Run(

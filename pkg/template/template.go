@@ -3,7 +3,7 @@ package template
 import (
 	"bytes"
 	"fmt"
-	"github.com/mandarine-io/Backend/internal/api/helper/file"
+	"github.com/mandarine-io/Backend/pkg/helper/file"
 	"github.com/rs/zerolog/log"
 	"html/template"
 	"path"

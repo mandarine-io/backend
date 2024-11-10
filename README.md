@@ -9,7 +9,7 @@
 - [gorilla/websocket](https://github.com/gorilla/websocket)
 - OAuth2
   providers ([Google](https://developers.google.com/identity/protocols/oauth2?hl=ru), [Yandex](https://yandex.ru/dev/id/doc/ru/concepts/ya-oauth-intro), [Mail.ru](https://help.mail.ru/developers/oauth))
-- [PostgreSQL](https://www.postgresql.org/)
+- [PostgreSQL (PostGIS, gin)](https://www.postgresql.org/)
 - [Redis](https://redis.io/)
 - [MinIO](https://min.io/)
 - [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
@@ -20,6 +20,7 @@
 - [Docker](https://www.docker.com/)
 - [Git](https://git-scm.com/)
 - [Make](https://www.gnu.org/software/make/)
+- [EditorConfig](https://editorconfig.org/)
 
 <h2 id="getting-started">Getting started</h2>
 

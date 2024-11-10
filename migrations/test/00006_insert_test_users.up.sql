@@ -10,5 +10,5 @@ INSERT INTO mandarine.public.users (username, email, password, role_id, is_enabl
             NOW(),
             NOW(),
             null
-     FROM generate_series(0, 2048) as id)
+    FROM generate_series(0, 2048) as id)
 ON CONFLICT DO NOTHING;

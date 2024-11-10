@@ -35,7 +35,7 @@ paths:
         "200":
           description: OK
           content:
-            application/yaml:
+            text/plain:
               schema:
                 type: string
       summary: Swagger JSON
@@ -49,7 +49,7 @@ paths:
         "200":
           description: OK
           content:
-            application/yaml:
+            text/plain:
               schema:
                 type: string
       summary: Swagger YAML
@@ -71,7 +71,7 @@ paths:
         - Swagger API
   /v0/account:
     delete:
-      description: Request for deleting account. User must be logged in. User must not
+      description: Request for deleting service. User must be logged in. User must not
         be deleted.
       operationId: DeleteAccount
       responses:
@@ -83,36 +83,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: User is deleted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
         - BearerAuth: []
-      summary: Delete account
+      summary: Delete service
       tags:
         - Account API
     get:
-      description: Request for receiving own account. User must be logged in. In
-        response will be returned own account info.
+      description: Request for receiving own service. User must be logged in. In
+        response will be returned own service info.
       operationId: GetAccount
       responses:
         "200":
-          description: OK
+          description: Account info
           content:
             application/json:
               schema:
@@ -123,27 +129,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
         - BearerAuth: []
-      summary: Get account
+      summary: Get service
       tags:
         - Account API
   /v0/account/email:
     patch:
       description: Request for updating email. User must be logged in. In process will
-        be sent verification email. In response will be returned updated account
+        be sent verification email. In response will be returned updated service
         info.
       operationId: UpdateEmail
       requestBody:
@@ -155,19 +167,19 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Account info (email is verified)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.AccountOutput"
         "202":
-          description: Accepted
+          description: Account info (email is not verified)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.AccountOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
@@ -178,20 +190,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: Duplicate email
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -216,7 +234,7 @@ paths:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
@@ -227,14 +245,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -259,7 +283,7 @@ paths:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
@@ -270,14 +294,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -301,7 +331,7 @@ paths:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
@@ -312,20 +342,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: Password is set
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -337,12 +373,12 @@ paths:
         - Account API
   /v0/account/restore:
     get:
-      description: Request for restoring account. User must be logged in. User must be
-        deleted. In response will be returned restored account info.
+      description: Request for restoring service. User must be logged in. User must be
+        deleted. In response will be returned restored service info.
       operationId: RestoreAccount
       responses:
         "200":
-          description: OK
+          description: Account info
           content:
             application/json:
               schema:
@@ -353,33 +389,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: User is not deleted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
       security:
         - BearerAuth: []
-      summary: Restore account
+      summary: Restore service
       tags:
         - Account API
   /v0/account/username:
     patch:
       description: Request for updating username. User must be logged in. In response
-        will be returned updated account info.
+        will be returned updated service info.
       operationId: UpdateUsername
       requestBody:
         content:
@@ -390,13 +432,13 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Account info
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.AccountOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
@@ -407,20 +449,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: Not found user
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: Duplicate username
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -432,8 +480,8 @@ paths:
         - Account API
   /v0/auth/login:
     post:
-      description: Request for authentication. In response will be new access token in
-        body and new refresh tokens in http-only cookie.
+      description: Request for serviceentication. In response will be new access token
+        in body and new refresh tokens in http-only cookie.
       operationId: Login
       requestBody:
         content:
@@ -444,36 +492,31 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
-          headers:
-            Set-Cookie:
-              description: RefreshToken=; HttpOnly; Max-Age=86400; Secure
-              schema:
-                type: string
+          description: JWT access token
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.JwtTokensOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "403":
-          description: Forbidden
+          description: User is blocked
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -495,7 +538,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -520,19 +563,19 @@ paths:
         "202":
           description: Accepted
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -556,13 +599,13 @@ paths:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -577,36 +620,31 @@ paths:
       operationId: RefreshTokens
       responses:
         "200":
-          description: OK
-          headers:
-            Set-Cookie:
-              description: RefreshToken=; HttpOnly; Max-Age=86400; Secure
-              schema:
-                type: string
+          description: JWT access token
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.JwtTokensOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "403":
-          description: Forbidden
+          description: User is blocked
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -618,36 +656,36 @@ paths:
     post:
       description: Request for creating new user. At the end will be sent confirmation
         email with code
-      operationId: Register
+      operationId: RegisterClient
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/dto.RegisterInput"
-        description: Register request body
+        description: RegisterClient request body
         required: true
       responses:
         "202":
           description: Accepted
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: User already exists
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
-      summary: Register
+      summary: RegisterClient
       tags:
         - Authentication and Authorization API
   /v0/auth/register/confirm:
@@ -659,30 +697,30 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/dto.RegisterConfirmInput"
-        description: Register confirm body
+        description: RegisterClient confirm body
         required: true
       responses:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "409":
-          description: Conflict
+          description: User already exists
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
-      summary: Register confirmation
+      summary: RegisterClient confirmation
       tags:
         - Authentication and Authorization API
   /v0/auth/reset-password:
@@ -700,19 +738,19 @@ paths:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -722,8 +760,9 @@ paths:
         - Authentication and Authorization API
   "/v0/auth/social/{provider}":
     get:
-      description: Request for redirecting to OAuth consent page. After authorization,
-        it will redirect to redirectUrl with authorization code and state
+      description: Request for redirecting to OAuth consent page. After
+        serviceorization, it will redirect to redirectUrl with serviceorization
+        code and state
       operationId: SocialLogin
       parameters:
         - description: Social login provider (yandex, google, mailru)
@@ -741,19 +780,14 @@ paths:
       responses:
         "302":
           description: Found
-          headers:
-            Set-Cookie:
-              description: OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure
-              schema:
-                type: string
         "404":
-          description: Not Found
+          description: Provider not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -763,7 +797,7 @@ paths:
         - Authentication and Authorization API
   "/v0/auth/social/{provider}/callback":
     post:
-      description: Request for exchanging authorization code to token pairs. In
+      description: Request for exchanging serviceorization code to token pairs. In
         process, it will exchange code to user info and register new user or
         login existing user. In response will be new access token in body and
         new refresh tokens in http-only cookie.
@@ -784,36 +818,31 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
-          headers:
-            Set-Cookie:
-              description: RefreshToken=; HttpOnly; Max-Age=86400; Secure
-              schema:
-                type: string
+          description: JWT access token
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.JwtTokensOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "403":
-          description: Forbidden
+          description: User already exists
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: Not Found
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -821,6 +850,237 @@ paths:
       summary: Social login callback
       tags:
         - Authentication and Authorization API
+  /v0/masters/profile:
+    get:
+      description: Request for finding master profiles. User must be logged in. In
+        response will be returned found master profiles.
+      operationId: FindMasterProfiles
+      parameters:
+        - in: query
+          name: displayName
+          schema:
+            type: string
+        - in: query
+          name: field
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: job
+          schema:
+            type: string
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: point
+          schema:
+            type: string
+            format: lng,lat
+        - in: query
+          name: radius
+          schema:
+            type: string
+            format: float
+      responses:
+        "200":
+          description: Found master profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.MasterProfilesOutput"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Master profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Find master profiles
+      tags:
+        - Master Profile API
+    patch:
+      description: Request for updating master profile. User must be logged in. In
+        response will be returned updated master profile.
+      operationId: UpdateMasterProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.UpdateMasterProfileInput"
+        description: Update master profile request body
+        required: true
+      responses:
+        "200":
+          description: Updated master profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.OwnMasterProfileOutput"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: Master profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Update master profile
+      tags:
+        - Master Profile API
+    post:
+      description: Request for creating master profile. User must be logged in. In
+        response will be returned created master profile.
+      operationId: CreateMasterProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/dto.CreateMasterProfileInput"
+        description: Create master profile request body
+        required: true
+      responses:
+        "201":
+          description: Created master profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.OwnMasterProfileOutput"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "409":
+          description: Master profile already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Create master profile
+      tags:
+        - Master Profile API
+  "/v0/masters/profile/{username}":
+    get:
+      description: Request for getting master profile. User must be logged in. In
+        response will be returned found master profile.
+      operationId: GetMasterProfile
+      parameters:
+        - description: Username
+          in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Found own master profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.OwnMasterProfileOutput"
+        "401":
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Get master profile
+      tags:
+        - Master Profile API
   "/v0/resources/{objectId}":
     get:
       description: Request for getting resource. Return the resource in S3 storage.
@@ -836,13 +1096,13 @@ paths:
         "200":
           description: OK
         "404":
-          description: Not Found
+          description: Resource not found
           content:
             "*/*":
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             "*/*":
               schema:
@@ -871,25 +1131,31 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: Uploaded resources
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.UploadResourcesOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "401":
-          description: Unauthorized
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -918,25 +1184,31 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: Uploaded resource
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.UploadResourceOutput"
         "400":
-          description: Bad Request
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "401":
-          description: Unauthorized
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -946,7 +1218,7 @@ paths:
       summary: Upload resource
       tags:
         - Resource API
-  /ws:
+  /v0/ws:
     get:
       description: Request for connect to websocket server. If pool is not full, a new
         websocket connection is created.
@@ -984,6 +1256,8 @@ tags:
     name: Authentication and Authorization API
   - description: API for resource management
     name: Resource API
+  - description: API for master profile management
+    name: Master Profile API
   - description: API for websocket connection
     name: Websocket API
   - description: API for getting metrics
@@ -1023,6 +1297,26 @@ components:
         - isEnabled
         - isPasswordTemp
         - username
+      type: object
+    dto.CreateMasterProfileInput:
+      properties:
+        address:
+          type: string
+        avatarId:
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        job:
+          type: string
+        point:
+          format: lng,lat
+          type: string
+      required:
+        - displayName
+        - job
+        - point
       type: object
     dto.ErrorResponse:
       properties:
@@ -1068,6 +1362,66 @@ components:
       required:
         - login
         - password
+      type: object
+    dto.MasterProfileOutput:
+      properties:
+        address:
+          type: string
+        avatarId:
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        job:
+          type: string
+        point:
+          $ref: "#/components/schemas/dto.PointOutput"
+      required:
+        - displayName
+        - job
+        - point
+      type: object
+    dto.MasterProfilesOutput:
+      properties:
+        count:
+          type: integer
+        data:
+          items:
+            $ref: "#/components/schemas/dto.MasterProfileOutput"
+          type: array
+      required:
+        - count
+        - data
+      type: object
+    dto.OwnMasterProfileOutput:
+      properties:
+        address:
+          type: string
+        avatarId:
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        isEnabled:
+          type: boolean
+        job:
+          type: string
+        point:
+          $ref: "#/components/schemas/dto.PointOutput"
+      required:
+        - displayName
+        - isEnabled
+        - job
+        - point
+      type: object
+    dto.PointOutput:
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
       type: object
     dto.RecoveryPasswordInput:
       properties:
@@ -1144,6 +1498,29 @@ components:
           type: string
       required:
         - email
+      type: object
+    dto.UpdateMasterProfileInput:
+      properties:
+        address:
+          type: string
+        avatarId:
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        isEnabled:
+          type: boolean
+        job:
+          type: string
+        point:
+          format: lng,lat
+          type: string
+      required:
+        - displayName
+        - isEnabled
+        - job
+        - point
       type: object
     dto.UpdatePasswordInput:
       properties:

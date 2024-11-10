@@ -1,9 +1,9 @@
 package health_test
 
 import (
-	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/service/health/dto"
-	http2 "github.com/mandarine-io/Backend/internal/api/transport/http"
+	appconfig "github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/domain/dto"
+	http2 "github.com/mandarine-io/Backend/internal/transport/http"
 	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"
 	"net/http"

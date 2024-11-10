@@ -2,53 +2,39 @@ package account_test
 
 import (
 	"context"
-	"errors"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/helper/random"
-	"github.com/mandarine-io/Backend/internal/api/helper/security"
-	model2 "github.com/mandarine-io/Backend/internal/api/persistence/model"
-	mock2 "github.com/mandarine-io/Backend/internal/api/persistence/repo/mock"
-	"github.com/mandarine-io/Backend/internal/api/service/account"
-	accountDto "github.com/mandarine-io/Backend/internal/api/service/account/dto"
+	"github.com/mandarine-io/Backend/internal/config"
+	accountDto "github.com/mandarine-io/Backend/internal/domain/dto"
+	"github.com/mandarine-io/Backend/internal/domain/service"
+	"github.com/mandarine-io/Backend/internal/domain/service/account"
+	"github.com/mandarine-io/Backend/internal/helper/random"
+	"github.com/mandarine-io/Backend/internal/helper/security"
+	model2 "github.com/mandarine-io/Backend/internal/persistence/model"
+	mock2 "github.com/mandarine-io/Backend/internal/persistence/repo/mock"
 	mock4 "github.com/mandarine-io/Backend/pkg/smtp/mock"
 	"github.com/mandarine-io/Backend/pkg/storage/cache"
 	mock3 "github.com/mandarine-io/Backend/pkg/storage/cache/mock"
 	mock5 "github.com/mandarine-io/Backend/pkg/template/mock"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
-	"log/slog"
-	"os"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestMain(m *testing.M) {
-	setup()
-	os.Exit(m.Run())
-}
-
-func setup() {
-	logger := slog.New(
-		slog.NewTextHandler(
-			os.Stdout, &slog.HandlerOptions{
-				Level: slog.Level(10000),
-			},
-		),
-	)
-	slog.SetDefault(logger)
-}
+var (
+	userRepo       = new(mock2.UserRepositoryMock)
+	cacheManager   = new(mock3.ManagerMock)
+	smtpSender     = new(mock4.SenderMock)
+	templateEngine = new(mock5.TemplateEngineMock)
+	cfg            = &config.Config{}
+	svc            = account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
+	ctx            = context.Background()
+)
 
 func Test_AccountService_GetAccount(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -64,7 +50,7 @@ func Test_AccountService_GetAccount(t *testing.T) {
 			}
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-			resp, err := service.GetAccount(ctx, userID)
+			resp, err := svc.GetAccount(ctx, userID)
 
 			assert.NoError(t, err)
 			assert.Equal(t, userEntity.Email, resp.Email)
@@ -79,10 +65,10 @@ func Test_AccountService_GetAccount(t *testing.T) {
 		"UserNotFound", func(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, nil)
 
-			resp, err := service.GetAccount(ctx, userID)
+			resp, err := svc.GetAccount(ctx, userID)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 		},
 	)
@@ -92,7 +78,7 @@ func Test_AccountService_GetAccount(t *testing.T) {
 			expectedErr := errors.New("database error")
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, expectedErr)
 
-			resp, err := service.GetAccount(ctx, userID)
+			resp, err := svc.GetAccount(ctx, userID)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -102,20 +88,6 @@ func Test_AccountService_GetAccount(t *testing.T) {
 }
 
 func Test_AccountService_UpdateUsername(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{
-		Security: config.SecurityConfig{
-			OTP: config.OTPConfig{
-				TTL:    300,
-				Length: 6,
-			},
-		},
-	}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -134,7 +106,7 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, nil)
 
-			resp, err := service.UpdateUsername(ctx, userID, req)
+			resp, err := svc.UpdateUsername(ctx, userID, req)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "username", resp.Username)
@@ -149,9 +121,9 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, nil)
 
-			resp, err := service.UpdateUsername(ctx, userID, req)
+			resp, err := svc.UpdateUsername(ctx, userID, req)
 
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 		},
 	)
@@ -164,7 +136,7 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 			err := errors.New("database error")
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, err)
 
-			resp, err1 := service.UpdateUsername(ctx, userID, req)
+			resp, err1 := svc.UpdateUsername(ctx, userID, req)
 
 			assert.Equal(t, err, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -183,7 +155,7 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 
 		userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-		resp, err := service.UpdateUsername(ctx, userID, req)
+		resp, err := svc.UpdateUsername(ctx, userID, req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "old-username", resp.Username)
@@ -203,10 +175,10 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("ExistsUserByUsername", ctx, "username").Once().Return(true, nil)
 
-			resp, err := service.UpdateUsername(ctx, userID, req)
+			resp, err := svc.UpdateUsername(ctx, userID, req)
 
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
-			assert.Equal(t, account.ErrDuplicateUsername, err)
+			assert.Equal(t, service.ErrDuplicateUsername, err)
 		},
 	)
 
@@ -226,7 +198,7 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("ExistsUserByUsername", ctx, "username").Once().Return(true, err)
 
-			resp, err1 := service.UpdateUsername(ctx, userID, req)
+			resp, err1 := svc.UpdateUsername(ctx, userID, req)
 
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 			assert.Equal(t, err, err1)
@@ -250,7 +222,7 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 			userRepo.On("ExistsUserByUsername", ctx, "username").Once().Return(false, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, err)
 
-			resp, err1 := service.UpdateUsername(ctx, userID, req)
+			resp, err1 := svc.UpdateUsername(ctx, userID, req)
 
 			assert.Equal(t, err, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -259,20 +231,6 @@ func Test_AccountService_UpdateUsername(t *testing.T) {
 }
 
 func Test_AccountService_UpdateEmail(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{
-		Security: config.SecurityConfig{
-			OTP: config.OTPConfig{
-				TTL:    300,
-				Length: 6,
-			},
-		},
-	}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -297,10 +255,10 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 				time.Duration(cfg.Security.OTP.TTL)*time.Second).
 				Once().Return(nil)
 			templateEngine.On("Render", "email-verify", mock.Anything).Once().Return("content", nil)
-			smtpSender.On("SendHtmlMessage", mock.Anything, "content", req.Email, []string(nil)).Once().Return(nil)
+			smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email).Once().Return(nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, nil)
 
-			resp, err := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "new@example.com", resp.Email)
@@ -316,9 +274,9 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, nil)
 
-			resp, err := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err := svc.UpdateEmail(ctx, userID, req, nil)
 
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 		},
 	)
@@ -331,7 +289,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 			err := errors.New("database error")
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, err)
 
-			resp, err1 := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err1 := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, err, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -351,7 +309,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-			resp, err := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.NoError(t, err)
 			assert.Equal(t, req.Email, resp.Email)
@@ -372,10 +330,10 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("ExistsUserByEmail", ctx, "new@example.com").Once().Return(true, nil)
 
-			resp, err := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
-			assert.Equal(t, account.ErrDuplicateEmail, err)
+			assert.Equal(t, service.ErrDuplicateEmail, err)
 		},
 	)
 
@@ -394,7 +352,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("ExistsUserByEmail", ctx, "new@example.com").Once().Return(true, err)
 
-			resp, err1 := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err1 := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 			assert.Equal(t, err, err1)
@@ -417,7 +375,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 			userRepo.On("ExistsUserByEmail", ctx, "new@example.com").Once().Return(false, nil)
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-			resp, err := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, random.ErrInvalidOtpLength, err)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -449,7 +407,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 				time.Duration(cfg.Security.OTP.TTL)*time.Second).
 				Once().Return(err)
 
-			resp, err1 := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err1 := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, err, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -480,7 +438,7 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 				Once().Return(nil)
 			templateEngine.On("Render", "email-verify", mock.Anything).Once().Return("", err)
 
-			resp, err1 := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err1 := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, err, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -510,11 +468,11 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 				time.Duration(cfg.Security.OTP.TTL)*time.Second).
 				Once().Return(nil)
 			templateEngine.On("Render", "email-verify", mock.Anything).Once().Return("content", nil)
-			smtpSender.On("SendHtmlMessage", mock.Anything, "content", req.Email, []string(nil)).Once().Return(err)
+			smtpSender.On("SendHtmlMessage", mock.Anything, "content", req.Email).Once().Return(err)
 
-			resp, err1 := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err1 := svc.UpdateEmail(ctx, userID, req, nil)
 
-			assert.Equal(t, account.ErrSendEmail, err1)
+			assert.Equal(t, service.ErrSendEmail, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 		},
 	)
@@ -542,10 +500,10 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 				time.Duration(cfg.Security.OTP.TTL)*time.Second).
 				Once().Return(nil)
 			templateEngine.On("Render", "email-verify", mock.Anything).Once().Return("content", nil)
-			smtpSender.On("SendHtmlMessage", mock.Anything, "content", req.Email, []string(nil)).Once().Return(nil)
+			smtpSender.On("SendHtmlMessage", mock.Anything, "content", req.Email).Once().Return(nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, err)
 
-			resp, err1 := service.UpdateEmail(ctx, userID, req, nil)
+			resp, err1 := svc.UpdateEmail(ctx, userID, req, nil)
 
 			assert.Equal(t, err, err1)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
@@ -554,20 +512,6 @@ func Test_AccountService_UpdateEmail(t *testing.T) {
 }
 
 func Test_AccountService_VerifyEmail(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{
-		Security: config.SecurityConfig{
-			OTP: config.OTPConfig{
-				TTL:    300,
-				Length: 6,
-			},
-		},
-	}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -597,10 +541,10 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 				Once().Return(nil)
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, nil)
-			cacheManager.On("Delete", ctx, []string{strings.Join([]string{"email-verify", req.Email}, ".")}).
+			cacheManager.On("Delete", ctx, strings.Join([]string{"email-verify", req.Email}, ".")).
 				Once().Return(nil)
 
-			err := service.VerifyEmail(ctx, userID, req)
+			err := svc.VerifyEmail(ctx, userID, req)
 
 			assert.NoError(t, err)
 		},
@@ -616,9 +560,9 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 			cacheManager.On("Get", ctx, strings.Join([]string{"email-verify", req.Email}, "."), mock.Anything).
 				Once().Return(cache.ErrCacheEntryNotFound)
 
-			err := service.VerifyEmail(ctx, userID, req)
+			err := svc.VerifyEmail(ctx, userID, req)
 
-			assert.Equal(t, account.ErrInvalidOrExpiredOtp, err)
+			assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 		},
 	)
 
@@ -633,7 +577,7 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 			cacheManager.On("Get", ctx, strings.Join([]string{"email-verify", req.Email}, "."), mock.Anything).
 				Once().Return(err)
 
-			err1 := service.VerifyEmail(ctx, userID, req)
+			err1 := svc.VerifyEmail(ctx, userID, req)
 
 			assert.Error(t, err, err1)
 		},
@@ -659,9 +603,9 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 				).
 				Once().Return(nil)
 
-			err := service.VerifyEmail(ctx, userID, req)
+			err := svc.VerifyEmail(ctx, userID, req)
 
-			assert.Error(t, account.ErrInvalidOrExpiredOtp, err)
+			assert.Error(t, service.ErrInvalidOrExpiredOtp, err)
 		},
 	)
 
@@ -686,9 +630,9 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 				Once().Return(nil)
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, nil)
 
-			err := service.VerifyEmail(ctx, userID, req)
+			err := svc.VerifyEmail(ctx, userID, req)
 
-			assert.Error(t, account.ErrUserNotFound, err)
+			assert.Error(t, service.ErrUserNotFound, err)
 		},
 	)
 
@@ -715,7 +659,7 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 			userRepo.On("ExistsUserByEmail", ctx, "new@example.com").Once().Return(false, nil)
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, err)
 
-			err1 := service.VerifyEmail(ctx, userID, req)
+			err1 := svc.VerifyEmail(ctx, userID, req)
 
 			assert.Equal(t, err, err1)
 		},
@@ -748,9 +692,9 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 			userRepo.On("ExistsUserByEmail", ctx, "new@example.com").Once().Return(false, nil)
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-			err := service.VerifyEmail(ctx, userID, req)
+			err := svc.VerifyEmail(ctx, userID, req)
 
-			assert.Equal(t, account.ErrInvalidOrExpiredOtp, err)
+			assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 		},
 	)
 
@@ -783,7 +727,7 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(nil, err)
 
-			err1 := service.VerifyEmail(ctx, userID, req)
+			err1 := svc.VerifyEmail(ctx, userID, req)
 
 			assert.Equal(t, err, err1)
 		},
@@ -817,10 +761,10 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 				Once().Return(nil)
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, nil)
-			cacheManager.On("Delete", ctx, []string{strings.Join([]string{"email-verify", req.Email}, ".")}).
+			cacheManager.On("Delete", ctx, strings.Join([]string{"email-verify", req.Email}, ".")).
 				Once().Return(err)
 
-			err1 := service.VerifyEmail(ctx, userID, req)
+			err1 := svc.VerifyEmail(ctx, userID, req)
 
 			assert.NoError(t, err1)
 		},
@@ -828,13 +772,6 @@ func Test_AccountService_VerifyEmail(t *testing.T) {
 }
 
 func Test_AccountService_SetPassword(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -850,7 +787,7 @@ func Test_AccountService_SetPassword(t *testing.T) {
 				Password: "newpassword",
 			}
 
-			err := service.SetPassword(ctx, userID, req)
+			err := svc.SetPassword(ctx, userID, req)
 
 			assert.NoError(t, err)
 		},
@@ -864,10 +801,10 @@ func Test_AccountService_SetPassword(t *testing.T) {
 				Password: "newpassword",
 			}
 
-			err := service.SetPassword(ctx, userID, req)
+			err := svc.SetPassword(ctx, userID, req)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 		},
 	)
 
@@ -880,7 +817,7 @@ func Test_AccountService_SetPassword(t *testing.T) {
 				Password: "newpassword",
 			}
 
-			err := service.SetPassword(ctx, userID, req)
+			err := svc.SetPassword(ctx, userID, req)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -899,10 +836,10 @@ func Test_AccountService_SetPassword(t *testing.T) {
 				Password: "newpassword",
 			}
 
-			err := service.SetPassword(ctx, userID, req)
+			err := svc.SetPassword(ctx, userID, req)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrPasswordIsSet, err)
+			assert.Equal(t, service.ErrPasswordIsSet, err)
 		},
 	)
 
@@ -918,7 +855,7 @@ func Test_AccountService_SetPassword(t *testing.T) {
 				Password: strings.Repeat("1", 1000),
 			}
 
-			err := service.SetPassword(ctx, userID, req)
+			err := svc.SetPassword(ctx, userID, req)
 
 			assert.Error(t, err)
 			assert.Equal(t, bcrypt.ErrPasswordTooLong, err)
@@ -939,7 +876,7 @@ func Test_AccountService_SetPassword(t *testing.T) {
 				Password: "newpassword",
 			}
 
-			err := service.SetPassword(ctx, userID, req)
+			err := svc.SetPassword(ctx, userID, req)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -948,13 +885,6 @@ func Test_AccountService_SetPassword(t *testing.T) {
 }
 
 func Test_AccountService_UpdatePassword(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -973,7 +903,7 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 				NewPassword: "newpassword",
 			}
 
-			err := service.UpdatePassword(ctx, userID, req)
+			err := svc.UpdatePassword(ctx, userID, req)
 
 			assert.NoError(t, err)
 		},
@@ -988,10 +918,10 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 				NewPassword: "newpassword",
 			}
 
-			err := service.UpdatePassword(ctx, userID, req)
+			err := svc.UpdatePassword(ctx, userID, req)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 		},
 	)
 
@@ -1005,7 +935,7 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 				NewPassword: "newpassword",
 			}
 
-			err := service.UpdatePassword(ctx, userID, req)
+			err := svc.UpdatePassword(ctx, userID, req)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -1027,10 +957,10 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 				NewPassword: "newpassword",
 			}
 
-			err := service.UpdatePassword(ctx, userID, req)
+			err := svc.UpdatePassword(ctx, userID, req)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrIncorrectOldPassword, err)
+			assert.Equal(t, service.ErrIncorrectOldPassword, err)
 		},
 	)
 
@@ -1049,7 +979,7 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 				NewPassword: strings.Repeat("1", 1000),
 			}
 
-			err := service.UpdatePassword(ctx, userID, req)
+			err := svc.UpdatePassword(ctx, userID, req)
 
 			assert.Error(t, err)
 			assert.Equal(t, bcrypt.ErrPasswordTooLong, err)
@@ -1073,7 +1003,7 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 				NewPassword: "newpassword",
 			}
 
-			err := service.UpdatePassword(ctx, userID, req)
+			err := svc.UpdatePassword(ctx, userID, req)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -1082,13 +1012,6 @@ func Test_AccountService_UpdatePassword(t *testing.T) {
 }
 
 func Test_AccountService_RestoreAccount(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -1103,7 +1026,7 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, nil)
 
-			resp, err := service.RestoreAccount(ctx, userID)
+			resp, err := svc.RestoreAccount(ctx, userID)
 
 			assert.NoError(t, err)
 			assert.Equal(t, userEntity.Email, resp.Email)
@@ -1115,10 +1038,10 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 		"UserNotFound", func(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, nil)
 
-			resp, err := service.RestoreAccount(ctx, userID)
+			resp, err := svc.RestoreAccount(ctx, userID)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 		},
 	)
@@ -1128,7 +1051,7 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 			expectedErr := errors.New("database error")
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, expectedErr)
 
-			resp, err := service.RestoreAccount(ctx, userID)
+			resp, err := svc.RestoreAccount(ctx, userID)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -1144,10 +1067,10 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 			}
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-			resp, err := service.RestoreAccount(ctx, userID)
+			resp, err := svc.RestoreAccount(ctx, userID)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserNotDeleted, err)
+			assert.Equal(t, service.ErrUserNotDeleted, err)
 			assert.Equal(t, accountDto.AccountOutput{}, resp)
 		},
 	)
@@ -1163,7 +1086,7 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(nil, expectedErr)
 
-			resp, err := service.RestoreAccount(ctx, userID)
+			resp, err := svc.RestoreAccount(ctx, userID)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -1173,13 +1096,6 @@ func Test_AccountService_RestoreAccount(t *testing.T) {
 }
 
 func Test_AccountService_DeleteAccount(t *testing.T) {
-	userRepo := new(mock2.UserRepositoryMock)
-	cacheManager := new(mock3.ManagerMock)
-	smtpSender := new(mock4.SenderMock)
-	templateEngine := new(mock5.TemplateEngineMock)
-	cfg := &config.Config{}
-	service := account.NewService(userRepo, cacheManager, smtpSender, templateEngine, cfg)
-	ctx := context.Background()
 	userID := uuid.New()
 
 	t.Run(
@@ -1190,7 +1106,7 @@ func Test_AccountService_DeleteAccount(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(userEntity, nil)
 
-			err := service.DeleteAccount(ctx, userID)
+			err := svc.DeleteAccount(ctx, userID)
 
 			assert.NoError(t, err)
 		},
@@ -1200,10 +1116,10 @@ func Test_AccountService_DeleteAccount(t *testing.T) {
 		"UserNotFound", func(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, nil)
 
-			err := service.DeleteAccount(ctx, userID)
+			err := svc.DeleteAccount(ctx, userID)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 		},
 	)
 
@@ -1212,7 +1128,7 @@ func Test_AccountService_DeleteAccount(t *testing.T) {
 			expectedErr := errors.New("database error")
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(nil, expectedErr)
 
-			err := service.DeleteAccount(ctx, userID)
+			err := svc.DeleteAccount(ctx, userID)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)
@@ -1228,10 +1144,10 @@ func Test_AccountService_DeleteAccount(t *testing.T) {
 			}
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 
-			err := service.DeleteAccount(ctx, userID)
+			err := svc.DeleteAccount(ctx, userID)
 
 			assert.Error(t, err)
-			assert.Equal(t, account.ErrUserAlreadyDeleted, err)
+			assert.Equal(t, service.ErrUserAlreadyDeleted, err)
 		},
 	)
 
@@ -1245,7 +1161,7 @@ func Test_AccountService_DeleteAccount(t *testing.T) {
 			userRepo.On("FindUserById", ctx, userID, false).Once().Return(userEntity, nil)
 			userRepo.On("UpdateUser", ctx, userEntity).Once().Return(nil, expectedErr)
 
-			err := service.DeleteAccount(ctx, userID)
+			err := svc.DeleteAccount(ctx, userID)
 
 			assert.Error(t, err)
 			assert.Equal(t, expectedErr, err)

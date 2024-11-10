@@ -9,10 +9,10 @@ import (
 )
 
 type agent struct {
-	rdb *redis.Client
+	rdb redis.UniversalClient
 }
 
-func NewAgent(rdb *redis.Client) pubsub.Agent {
+func NewAgent(rdb redis.UniversalClient) pubsub.Agent {
 	return &agent{rdb: rdb}
 }
 

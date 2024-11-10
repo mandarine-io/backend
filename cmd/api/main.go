@@ -2,21 +2,21 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/job"
-	"github.com/mandarine-io/Backend/internal/api/registry"
-	"github.com/mandarine-io/Backend/internal/api/transport/http"
+	appconfig "github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/helper/env"
+	"github.com/mandarine-io/Backend/internal/job"
+	"github.com/mandarine-io/Backend/internal/registry"
+	"github.com/mandarine-io/Backend/internal/transport/http"
 	"github.com/mandarine-io/Backend/pkg/logging"
 	"github.com/mandarine-io/Backend/pkg/scheduler"
 	"github.com/num30/config"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	syshttp "net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -30,7 +30,7 @@ var (
 			" | |  | | (_| | | | | (_| | (_| | |  | | | | |\n"+
 			" |_|  |_|\\__,_|_| |_|\\__,_|\\__,_|_|  |_|_| |_|\n"+
 			"\n"+
-			"Mandarine: %s\n", getEnvWithDefault("SERVER_VERSION", "0.0.0"),
+			"Mandarine: %s\n", env.GetEnvWithDefault("SERVER_VERSION", "0.0.0"),
 	)
 )
 
@@ -40,12 +40,7 @@ func init() {
 }
 
 func main() {
-	configPath := getEnvWithDefault("MANDARINE_CONFIG_FILE", "config/config.yaml")
-	configName := strings.
-		NewReplacer(".yaml", "", ".yml", "", ".json", "", ".toml", "", ".conf", "").
-		Replace(configPath)
-
-	// Load config
+	// Setup default logger
 	log.Logger = zerolog.
 		New(zerolog.ConsoleWriter{
 			Out:        os.Stdout,
@@ -56,7 +51,9 @@ func main() {
 		Caller().
 		Logger()
 
+	// Load config
 	var cfg appconfig.Config
+	configName := appconfig.GetConfigName()
 	err := config.NewConfReader(configName).WithPrefix("MANDARINE").Read(&cfg)
 	if err != nil {
 		log.Fatal().Stack().Err(err).Msg("failed to load config")
@@ -119,17 +116,10 @@ func main() {
 
 	err = srv.Shutdown(shutdownCtx)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to shutdown server")
+		log.Error().Stack().Err(err).Msg("failed to shutdown server")
 	}
 
 	log.Info().Msg("the server is shutting down")
-}
-
-func getEnvWithDefault(envName, defaultValue string) string {
-	if value, ok := os.LookupEnv(envName); ok {
-		return value
-	}
-	return defaultValue
 }
 
 func mapAppLoggerConfigToLoggerConfig(cfg *appconfig.LoggerConfig) *logging.Config {

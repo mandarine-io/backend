@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	"errors"
+	"github.com/pkg/errors"
 	"time"
 )
 

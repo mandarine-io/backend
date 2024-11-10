@@ -52,7 +52,7 @@
             "get": {
                 "description": "Request for getting swagger specification in JSON",
                 "produces": [
-                    "application/yaml"
+                    "text/plain"
                 ],
                 "tags": [
                     "Swagger API"
@@ -73,7 +73,7 @@
             "get": {
                 "description": "Request for getting swagger specification in YAML",
                 "produces": [
-                    "application/yaml"
+                    "text/plain"
                 ],
                 "tags": [
                     "Swagger API"
@@ -118,7 +118,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Request for receiving own account. User must be logged in. In response will be returned own account info.",
+                "description": "Request for receiving own service. User must be logged in. In response will be returned own service info.",
                 "consumes": [
                     "application/json"
                 ],
@@ -128,11 +128,11 @@
                 "tags": [
                     "Account API"
                 ],
-                "summary": "Get account",
+                "summary": "Get service",
                 "operationId": "GetAccount",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Account info",
                         "schema": {
                             "$ref": "#/definitions/dto.AccountOutput"
                         }
@@ -143,14 +143,20 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -163,7 +169,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Request for deleting account. User must be logged in. User must not be deleted.",
+                "description": "Request for deleting service. User must be logged in. User must not be deleted.",
                 "consumes": [
                     "application/json"
                 ],
@@ -173,7 +179,7 @@
                 "tags": [
                     "Account API"
                 ],
-                "summary": "Delete account",
+                "summary": "Delete service",
                 "operationId": "DeleteAccount",
                 "responses": {
                     "200": {
@@ -185,20 +191,26 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "User is deleted",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -213,7 +225,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Request for updating email. User must be logged in. In process will be sent verification email. In response will be returned updated account info.",
+                "description": "Request for updating email. User must be logged in. In process will be sent verification email. In response will be returned updated service info.",
                 "consumes": [
                     "application/json"
                 ],
@@ -238,19 +250,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Account info (email is verified)",
                         "schema": {
                             "$ref": "#/definitions/dto.AccountOutput"
                         }
                     },
                     "202": {
-                        "description": "Accepted",
+                        "description": "Account info (email is not verified)",
                         "schema": {
                             "$ref": "#/definitions/dto.AccountOutput"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -261,20 +273,26 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "Duplicate email",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -317,7 +335,7 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -328,14 +346,20 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -378,7 +402,7 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -389,20 +413,26 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "Password is set",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -443,7 +473,7 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -454,14 +484,20 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -476,7 +512,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Request for restoring account. User must be logged in. User must be deleted. In response will be returned restored account info.",
+                "description": "Request for restoring service. User must be logged in. User must be deleted. In response will be returned restored service info.",
                 "consumes": [
                     "application/json"
                 ],
@@ -486,11 +522,11 @@
                 "tags": [
                     "Account API"
                 ],
-                "summary": "Restore account",
+                "summary": "Restore service",
                 "operationId": "RestoreAccount",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Account info",
                         "schema": {
                             "$ref": "#/definitions/dto.AccountOutput"
                         }
@@ -501,20 +537,26 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "User is not deleted",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -529,7 +571,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Request for updating username. User must be logged in. In response will be returned updated account info.",
+                "description": "Request for updating username. User must be logged in. In response will be returned updated service info.",
                 "consumes": [
                     "application/json"
                 ],
@@ -554,13 +596,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Account info",
                         "schema": {
                             "$ref": "#/definitions/dto.AccountOutput"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -571,20 +613,26 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Not found user",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "Duplicate username",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -594,7 +642,7 @@
         },
         "/v0/auth/login": {
             "post": {
-                "description": "Request for authentication. In response will be new access token in body and new refresh tokens in http-only cookie.",
+                "description": "Request for serviceentication. In response will be new access token in body and new refresh tokens in http-only cookie.",
                 "consumes": [
                     "application/json"
                 ],
@@ -619,37 +667,31 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "JWT access token",
                         "schema": {
                             "$ref": "#/definitions/dto.JwtTokensOutput"
-                        },
-                        "headers": {
-                            "Set-Cookie": {
-                                "type": "string",
-                                "description": "RefreshToken=; HttpOnly; Max-Age=86400; Secure"
-                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "User is blocked",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -687,7 +729,7 @@
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -725,19 +767,19 @@
                         "description": "Accepted"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -775,13 +817,13 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -805,37 +847,31 @@
                 "operationId": "RefreshTokens",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "JWT access token",
                         "schema": {
                             "$ref": "#/definitions/dto.JwtTokensOutput"
-                        },
-                        "headers": {
-                            "Set-Cookie": {
-                                "type": "string",
-                                "description": "RefreshToken=; HttpOnly; Max-Age=86400; Secure"
-                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "User is blocked",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -855,11 +891,11 @@
                 "tags": [
                     "Authentication and Authorization API"
                 ],
-                "summary": "Register",
-                "operationId": "Register",
+                "summary": "RegisterClient",
+                "operationId": "RegisterClient",
                 "parameters": [
                     {
-                        "description": "Register request body",
+                        "description": "RegisterClient request body",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -873,19 +909,19 @@
                         "description": "Accepted"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "User already exists",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -905,11 +941,11 @@
                 "tags": [
                     "Authentication and Authorization API"
                 ],
-                "summary": "Register confirmation",
+                "summary": "RegisterClient confirmation",
                 "operationId": "RegisterConfirm",
                 "parameters": [
                     {
-                        "description": "Register confirm body",
+                        "description": "RegisterClient confirm body",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -923,19 +959,19 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "User already exists",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -973,19 +1009,19 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -995,7 +1031,7 @@
         },
         "/v0/auth/social/{provider}": {
             "get": {
-                "description": "Request for redirecting to OAuth consent page. After authorization, it will redirect to redirectUrl with authorization code and state",
+                "description": "Request for redirecting to OAuth consent page. After serviceorization, it will redirect to redirectUrl with serviceorization code and state",
                 "consumes": [
                     "application/json"
                 ],
@@ -1025,22 +1061,16 @@
                 ],
                 "responses": {
                     "302": {
-                        "description": "Found",
-                        "headers": {
-                            "Set-Cookie": {
-                                "type": "string",
-                                "description": "OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure"
-                            }
-                        }
+                        "description": "Found"
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Provider not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1050,7 +1080,7 @@
         },
         "/v0/auth/social/{provider}/callback": {
             "post": {
-                "description": "Request for exchanging authorization code to token pairs. In process, it will exchange code to user info and register new user or login existing user. In response will be new access token in body and new refresh tokens in http-only cookie.",
+                "description": "Request for exchanging serviceorization code to token pairs. In process, it will exchange code to user info and register new user or login existing user. In response will be new access token in body and new refresh tokens in http-only cookie.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1082,37 +1112,328 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "JWT access token",
                         "schema": {
                             "$ref": "#/definitions/dto.JwtTokensOutput"
-                        },
-                        "headers": {
-                            "Set-Cookie": {
-                                "type": "string",
-                                "description": "RefreshToken=; HttpOnly; Max-Age=86400; Secure"
-                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "User already exists",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v0/masters/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for finding master profiles. User must be logged in. In response will be returned found master profiles.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Master Profile API"
+                ],
+                "summary": "Find master profiles",
+                "operationId": "FindMasterProfiles",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "displayName",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "field",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "job",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "lng,lat",
+                        "name": "point",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "float",
+                        "name": "radius",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found master profiles",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MasterProfilesOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Master profile not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for creating master profile. User must be logged in. In response will be returned created master profile.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Master Profile API"
+                ],
+                "summary": "Create master profile",
+                "operationId": "CreateMasterProfile",
+                "parameters": [
+                    {
+                        "description": "Create master profile request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateMasterProfileInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created master profile",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OwnMasterProfileOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Master profile already exists",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for updating master profile. User must be logged in. In response will be returned updated master profile.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Master Profile API"
+                ],
+                "summary": "Update master profile",
+                "operationId": "UpdateMasterProfile",
+                "parameters": [
+                    {
+                        "description": "Update master profile request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateMasterProfileInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated master profile",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OwnMasterProfileOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Master profile not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v0/masters/profile/{username}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for getting master profile. User must be logged in. In response will be returned found master profile.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Master Profile API"
+                ],
+                "summary": "Get master profile",
+                "operationId": "GetMasterProfile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found own master profile",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OwnMasterProfileOutput"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1154,25 +1475,31 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Uploaded resources",
                         "schema": {
                             "$ref": "#/definitions/dto.UploadResourcesOutput"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is blocked or deleted",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1210,25 +1537,31 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Uploaded resource",
                         "schema": {
                             "$ref": "#/definitions/dto.UploadResourceOutput"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is blocked or deleted",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1261,13 +1594,13 @@
                         "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Resource not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1275,7 +1608,7 @@
                 }
             }
         },
-        "/ws": {
+        "/v0/ws": {
             "get": {
                 "security": [
                     {
@@ -1349,6 +1682,35 @@
                 }
             }
         },
+        "dto.CreateMasterProfileInput": {
+            "type": "object",
+            "required": [
+                "displayName",
+                "job",
+                "point"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatarId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "job": {
+                    "type": "string"
+                },
+                "point": {
+                    "type": "string",
+                    "format": "lng,lat"
+                }
+            }
+        },
         "dto.ErrorResponse": {
             "type": "object",
             "required": [
@@ -1411,6 +1773,95 @@
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.MasterProfileOutput": {
+            "type": "object",
+            "required": [
+                "displayName",
+                "job",
+                "point"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatarId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "job": {
+                    "type": "string"
+                },
+                "point": {
+                    "$ref": "#/definitions/dto.PointOutput"
+                }
+            }
+        },
+        "dto.MasterProfilesOutput": {
+            "type": "object",
+            "required": [
+                "count",
+                "data"
+            ],
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.MasterProfileOutput"
+                    }
+                }
+            }
+        },
+        "dto.OwnMasterProfileOutput": {
+            "type": "object",
+            "required": [
+                "displayName",
+                "isEnabled",
+                "job",
+                "point"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatarId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "isEnabled": {
+                    "type": "boolean"
+                },
+                "job": {
+                    "type": "string"
+                },
+                "point": {
+                    "$ref": "#/definitions/dto.PointOutput"
+                }
+            }
+        },
+        "dto.PointOutput": {
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
                 }
             }
         },
@@ -1524,6 +1975,39 @@
                 }
             }
         },
+        "dto.UpdateMasterProfileInput": {
+            "type": "object",
+            "required": [
+                "displayName",
+                "isEnabled",
+                "job",
+                "point"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "avatarId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "isEnabled": {
+                    "type": "boolean"
+                },
+                "job": {
+                    "type": "string"
+                },
+                "point": {
+                    "type": "string",
+                    "format": "lng,lat"
+                }
+            }
+        },
         "dto.UpdatePasswordInput": {
             "type": "object",
             "required": [
@@ -1626,6 +2110,10 @@
         {
             "description": "API for resource management",
             "name": "Resource API"
+        },
+        {
+            "description": "API for master profile management",
+            "name": "Master Profile API"
         },
         {
             "description": "API for websocket connection",

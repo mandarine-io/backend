@@ -4,6 +4,7 @@ In this directory we store all files and scripts that need to be deployed to loc
 environments.
 
 <a id="folder-structure"></a>
+
 ## Folder structure
 
 ```shell
@@ -27,6 +28,7 @@ environments.
 > **Note:** YAML config file and environment file for **application** are located in `<root>/config` directory.
 
 <a id="local-deployment"></a>
+
 ## Local deployment
 
 Local environment requires `docker-compose.local.yml` compose file to be deployed. It contains PostgreSQL, Redis and
@@ -48,6 +50,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
 <a id="development-deployment"></a>
+
 ## Development deployment
 
 Development environment requires `docker-compose.dev.yml` compose file to be deployed. It contains PostgreSQL, Redis,
@@ -70,6 +73,7 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
 ```
 
 <a id="test-deployment"></a>
+
 ## Test deployment
 
 Test environment requires `docker-compose.test.yml` compose file to be deployed. It contains PostgreSQL, Redis, Minio,

@@ -2,9 +2,9 @@ package s3
 
 import (
 	"context"
-	"errors"
 	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/minio/minio-go/v7"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"io"
 	"sync"
