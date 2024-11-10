@@ -2,10 +2,10 @@ package db_cacher
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/go-gorm/caches/v4"
 	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 

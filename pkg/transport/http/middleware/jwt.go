@@ -3,9 +3,9 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/helper/security"
-	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
+	"github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/helper/security"
+	"github.com/mandarine-io/Backend/internal/persistence/repo"
 	"github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/rs/zerolog/log"
 	"net/http"

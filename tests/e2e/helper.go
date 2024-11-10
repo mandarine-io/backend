@@ -12,16 +12,16 @@ func ReadResponseBody(resp *http.Response, body interface{}) error {
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			log.Warn().Stack().Err(err).Msg("failed to close response body")
+			log.Warn().Err(err).Msg("failed to close response body")
 		}
 	}()
 
-	bytes, err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(bytes, body)
+	return json.Unmarshal(b, body)
 }
 
 func NewJSONReader(body interface{}) (io.Reader, error) {

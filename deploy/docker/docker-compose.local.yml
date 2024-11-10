@@ -80,4 +80,3 @@ services:
       - mandarine-local-minio-data:/bitnami/minio/data
     networks:
       - mandarine-local-net
-

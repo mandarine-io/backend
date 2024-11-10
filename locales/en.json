@@ -10,7 +10,9 @@
       "uri": "Invalid URI",
       "lowercase": "Must be lowercase",
       "alphanum": "Must be alphanumeric",
-      "max": "Maximum {{.param}} characters"
+      "max": "Maximum {{.param}} characters",
+      "numeric": "Must be numeric",
+      "point": "Invalid point (longitude,latitude)"
     },
     "access_denied": "Access denied",
     "too_many_requests": "Too many requests",
@@ -39,7 +41,12 @@
     "failed_to_send_email": "Failed to send email",
     "banned_user": "User is banned",
     "deleted_user": "User has been deleted",
-    "ws_pool_is_full": "Websocket pool is full"
+    "ws_pool_is_full": "Websocket pool is full",
+    "duplicate_master_profile": "Master profile already exists",
+    "user_for_master_profile_not_exist": "User for master profile does not exist",
+    "master_profile_not_exist": "Master profile does not exist",
+    "master_profile_not_found": "Master profile not found",
+    "unavailable_sort_field": "Unavailable sort field"
   },
   "email": {
     "register-confirm": {

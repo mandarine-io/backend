@@ -1,7 +1,7 @@
 package cache_test
 
 import (
-	"github.com/mandarine-io/Backend/internal/api/helper/cache"
+	"github.com/mandarine-io/Backend/internal/helper/cache"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

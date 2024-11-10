@@ -23,7 +23,7 @@ func MustNewClient(cfg *Config) *redis.Client {
 		},
 	)
 
-	log.Info().Msgf("connected to redis host %v", cfg)
+	log.Info().Msgf("connected to redis host %s", cfg.Address)
 
 	return redisClient
 }

@@ -1,0 +1,106 @@
+# POST /v0/masters/profile
+- id: 9c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_create_master_profile
+  email: user_for_create_master_profile@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 8c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_create_master_profile_exists
+  email: user_for_create_master_profile_exists@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# PATCH /v0/masters/profile
+- id: 7c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_update_master_profile
+  email: user_for_update_master_profile@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 6c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_update_master_profile_not_exists
+  email: user_for_update_master_profile_not_exists@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# GET /v0/masters/profile/{username}
+- id: 5c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_get_master_profile
+  email: user_for_get_master_profile@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 4c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_get_master_profile_enabled
+  email: user_for_get_master_profile_enabled@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 3c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_get_master_profile_disabled
+  email: user_for_get_master_profile_disabled@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+- id: 2c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_get_master_profile_not_exists
+  email: user_for_get_master_profile_not_exists@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null
+
+# GET /v0/masters/profile
+- id: 1c4778b8-8af3-41fc-bf06-6b5bfeddbbad
+  username: user_for_find_master_profiles
+  email: user_for_find_master_profiles@example.com
+  password: $2a$12$rKquaEVs3ltdaMJj1yCaReka5T1TMm61AUYfiK3VsQJCOvaJLiOk2 # password
+  role_id: 1
+  is_enabled: true
+  is_email_verified: true
+  is_password_temp: false
+  created_at: 2024-10-12 00:00:00.000000 +00:00
+  updated_at: 2024-10-12 00:00:00.000000 +00:00
+  deleted_at: null

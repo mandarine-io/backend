@@ -1,7 +1,7 @@
 package file_test
 
 import (
-	"github.com/mandarine-io/Backend/internal/api/helper/file"
+	"github.com/mandarine-io/Backend/pkg/helper/file"
 	"os"
 	"path/filepath"
 	"testing"

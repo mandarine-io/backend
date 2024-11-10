@@ -3,8 +3,8 @@ package e2e
 import (
 	"context"
 	"fmt"
-	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/registry"
+	appconfig "github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/registry"
 	"github.com/mandarine-io/Backend/pkg/logging"
 	mock3 "github.com/mandarine-io/Backend/pkg/oauth/mock"
 	"github.com/rs/zerolog/log"
@@ -60,7 +60,7 @@ func (tc *TestEnvironment) MustInitialize(cfg *appconfig.Config) {
 	tc.Container.MustInitialize(cfg)
 
 	// Add mock oauth2 provider
-	oauthProvider := new(mock3.OAuthProviderMock)
+	oauthProvider := new(mock3.ProviderMock)
 	tc.Container.OauthProviders["mock"] = oauthProvider
 }
 

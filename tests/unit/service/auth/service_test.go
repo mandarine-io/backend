@@ -2,28 +2,28 @@ package auth_test
 
 import (
 	"context"
-	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/helper/cache"
-	"github.com/mandarine-io/Backend/internal/api/helper/security"
-	"github.com/mandarine-io/Backend/internal/api/persistence/model"
-	"github.com/mandarine-io/Backend/internal/api/persistence/repo"
-	mock2 "github.com/mandarine-io/Backend/internal/api/persistence/repo/mock"
-	"github.com/mandarine-io/Backend/internal/api/service/auth"
-	"github.com/mandarine-io/Backend/internal/api/service/auth/dto"
+	"github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/domain/dto"
+	"github.com/mandarine-io/Backend/internal/domain/service"
+	auth2 "github.com/mandarine-io/Backend/internal/domain/service/auth"
+	"github.com/mandarine-io/Backend/internal/helper/cache"
+	security2 "github.com/mandarine-io/Backend/internal/helper/security"
+	model2 "github.com/mandarine-io/Backend/internal/persistence/model"
+	"github.com/mandarine-io/Backend/internal/persistence/repo"
+	mock7 "github.com/mandarine-io/Backend/internal/persistence/repo/mock"
 	"github.com/mandarine-io/Backend/pkg/oauth"
 	mock3 "github.com/mandarine-io/Backend/pkg/oauth/mock"
 	mock5 "github.com/mandarine-io/Backend/pkg/smtp/mock"
 	cache2 "github.com/mandarine-io/Backend/pkg/storage/cache"
 	mock4 "github.com/mandarine-io/Backend/pkg/storage/cache/mock"
 	mock6 "github.com/mandarine-io/Backend/pkg/template/mock"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
-	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -33,32 +33,22 @@ import (
 var (
 	ctx = context.Background()
 
-	userRepo        *mock2.UserRepositoryMock
-	bannedTokenRepo *mock2.BannedTokenRepositoryMock
+	userRepo        *mock7.UserRepositoryMock
+	bannedTokenRepo *mock7.BannedTokenRepositoryMock
 	oauthProviders  map[string]oauth.Provider
 	cacheManager    *mock4.ManagerMock
 	smtpSender      *mock5.SenderMock
 	templateEngine  *mock6.TemplateEngineMock
 	cfg             *config.Config
-	svc             *auth.Service
+	svc             service.AuthService
 )
 
 func TestMain(m *testing.M) {
-	// Setup logger
-	logger := slog.New(
-		slog.NewTextHandler(
-			os.Stdout, &slog.HandlerOptions{
-				Level: slog.Level(10000),
-			},
-		),
-	)
-	slog.SetDefault(logger)
-
 	// Setup mocks
-	userRepo = new(mock2.UserRepositoryMock)
-	bannedTokenRepo = new(mock2.BannedTokenRepositoryMock)
+	userRepo = new(mock7.UserRepositoryMock)
+	bannedTokenRepo = new(mock7.BannedTokenRepositoryMock)
 	oauthProviders = make(map[string]oauth.Provider)
-	oauthProviders["mock"] = new(mock3.OAuthProviderMock)
+	oauthProviders["mock"] = new(mock3.ProviderMock)
 	cacheManager = new(mock4.ManagerMock)
 	smtpSender = new(mock5.SenderMock)
 	templateEngine = new(mock6.TemplateEngineMock)
@@ -78,7 +68,7 @@ func TestMain(m *testing.M) {
 			},
 		},
 	}
-	svc = auth.NewService(userRepo, bannedTokenRepo, oauthProviders, cacheManager, smtpSender, templateEngine, cfg)
+	svc = auth2.NewService(userRepo, bannedTokenRepo, oauthProviders, cacheManager, smtpSender, templateEngine, cfg)
 
 	os.Exit(m.Run())
 }
@@ -92,7 +82,7 @@ func Test_AuthService_Login(t *testing.T) {
 
 			resp, err := svc.Login(ctx, req)
 
-			assert.Equal(t, err, auth.ErrUserNotFound)
+			assert.Equal(t, err, service.ErrUserNotFound)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
@@ -111,7 +101,7 @@ func Test_AuthService_Login(t *testing.T) {
 
 	t.Run(
 		"ErrBadCredentials", func(t *testing.T) {
-			userEntity := &model.UserEntity{
+			userEntity := &model2.UserEntity{
 				Email:    req.Login,
 				Password: "hashedpassword",
 			}
@@ -119,15 +109,15 @@ func Test_AuthService_Login(t *testing.T) {
 
 			resp, err := svc.Login(ctx, req)
 
-			assert.Equal(t, err, auth.ErrBadCredentials)
+			assert.Equal(t, err, service.ErrBadCredentials)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
 
 	t.Run(
 		"ErrUserIsBlocked", func(t *testing.T) {
-			hashPassword, _ := security.HashPassword("password123")
-			userEntity := &model.UserEntity{
+			hashPassword, _ := security2.HashPassword("password123")
+			userEntity := &model2.UserEntity{
 				Email:     req.Login,
 				Password:  hashPassword,
 				IsEnabled: false,
@@ -136,15 +126,15 @@ func Test_AuthService_Login(t *testing.T) {
 
 			resp, err := svc.Login(ctx, req)
 
-			assert.Equal(t, err, auth.ErrUserIsBlocked)
+			assert.Equal(t, err, service.ErrUserIsBlocked)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
 
 	t.Run(
 		"Successful login", func(t *testing.T) {
-			hashPassword, _ := security.HashPassword("password123")
-			userEntity := &model.UserEntity{
+			hashPassword, _ := security2.HashPassword("password123")
+			userEntity := &model2.UserEntity{
 				Email:     req.Login,
 				Password:  hashPassword,
 				IsEnabled: true,
@@ -161,20 +151,20 @@ func Test_AuthService_Login(t *testing.T) {
 }
 
 func Test_AuthService_RefreshTokens(t *testing.T) {
-	userEntity := &model.UserEntity{
+	userEntity := &model2.UserEntity{
 		ID:    uuid.New(),
 		Email: "example@mail.ru",
-		Role: model.RoleEntity{
-			Name: model.RoleAdmin,
+		Role: model2.RoleEntity{
+			Name: model2.RoleAdmin,
 		},
 	}
-	_, refreshToken, _ := security.GenerateTokens(cfg.Security.JWT, userEntity)
+	_, refreshToken, _ := security2.GenerateTokens(cfg.Security.JWT, userEntity)
 
 	t.Run(
 		"InvalidJwtToken", func(t *testing.T) {
 			resp, err := svc.RefreshTokens(ctx, "invalid_refresh_token")
 
-			assert.Equal(t, auth.ErrInvalidJwtToken, err)
+			assert.Equal(t, service.ErrInvalidJwtToken, err)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
@@ -188,7 +178,7 @@ func Test_AuthService_RefreshTokens(t *testing.T) {
 			refreshTokenSigned, _ := refreshToken.SignedString([]byte(cfg.Security.JWT.Secret))
 			resp, err := svc.RefreshTokens(ctx, refreshTokenSigned)
 
-			assert.Equal(t, auth.ErrInvalidJwtToken, err)
+			assert.Equal(t, service.ErrInvalidJwtToken, err)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
@@ -204,7 +194,7 @@ func Test_AuthService_RefreshTokens(t *testing.T) {
 			refreshTokenSigned, _ := refreshToken.SignedString([]byte(cfg.Security.JWT.Secret))
 			resp, err := svc.RefreshTokens(ctx, refreshTokenSigned)
 
-			assert.Equal(t, auth.ErrInvalidJwtToken, err)
+			assert.Equal(t, service.ErrInvalidJwtToken, err)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
@@ -215,7 +205,7 @@ func Test_AuthService_RefreshTokens(t *testing.T) {
 
 			resp, err := svc.RefreshTokens(ctx, refreshToken)
 
-			assert.Equal(t, auth.ErrUserNotFound, err)
+			assert.Equal(t, service.ErrUserNotFound, err)
 			assert.Equal(t, dto.JwtTokensOutput{}, resp)
 		},
 	)
@@ -234,7 +224,7 @@ func Test_AuthService_RefreshTokens(t *testing.T) {
 
 	t.Run(
 		"Success", func(t *testing.T) {
-			userEntity := &model.UserEntity{
+			userEntity := &model2.UserEntity{
 				ID:        uuid.New(),
 				Email:     "test@example.com",
 				IsEnabled: true,
@@ -286,7 +276,7 @@ func Test_AuthService_Register(t *testing.T) {
 		userRepo.On("ExistsUserByUsernameOrEmail", mock.Anything, req.Username, req.Email).Once().Return(false, nil)
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once().Return(nil)
 		templateEngine.On("Render", mock.Anything, mock.Anything).Once().Return("email content", nil)
-		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email, []string(nil)).Once().Return(nil)
+		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email).Once().Return(nil)
 
 		err := svc.Register(ctx, req, nil)
 
@@ -305,7 +295,7 @@ func Test_AuthService_Register(t *testing.T) {
 		err := svc.Register(ctx, req, nil)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrDuplicateUser, err)
+		assert.Equal(t, service.ErrDuplicateUser, err)
 	})
 
 	t.Run("ErrorHashingPassword", func(t *testing.T) {
@@ -349,12 +339,12 @@ func Test_AuthService_Register(t *testing.T) {
 		userRepo.On("ExistsUserByUsernameOrEmail", mock.Anything, req.Username, req.Email).Once().Return(false, nil)
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once().Return(nil)
 		templateEngine.On("Render", mock.Anything, mock.Anything).Once().Return("email content", nil)
-		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email, []string(nil)).Once().Return(errors.New("smtp error"))
+		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, req.Email).Once().Return(errors.New("smtp error"))
 
 		err := svc.Register(ctx, req, nil)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrSendEmail, err)
+		assert.Equal(t, service.ErrSendEmail, err)
 	})
 }
 
@@ -376,10 +366,10 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("register", "test@example.com"), mock.Anything).Run(func(args mock.Arguments) {
 			*args.Get(2).(*dto.RegisterCache) = cacheEntry
 		}).Once().Return(nil)
-		userEntity := &model.UserEntity{Email: "test@example.com", Username: "testuser"}
+		userEntity := &model2.UserEntity{Email: "test@example.com", Username: "testuser"}
 		userRepo.On("ExistsUserByUsernameOrEmail", ctx, "testuser", "test@example.com").Once().Return(false, nil)
 		userRepo.On("CreateUser", mock.Anything, mock.Anything).Once().Return(userEntity, nil)
-		cacheManager.On("Delete", mock.Anything, []string{cache.CreateCacheKey("register", "test@example.com")}).Once().Return(nil)
+		cacheManager.On("Delete", mock.Anything, cache.CreateCacheKey("register", "test@example.com")).Once().Return(nil)
 
 		err := svc.RegisterConfirm(ctx, req)
 
@@ -392,7 +382,7 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		err := svc.RegisterConfirm(ctx, req)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("ErrorGettingCache", func(t *testing.T) {
@@ -421,7 +411,7 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		err := svc.RegisterConfirm(ctx, req)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("InvalidEmail", func(t *testing.T) {
@@ -440,7 +430,7 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		err := svc.RegisterConfirm(ctx, req)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("ExistsUser", func(t *testing.T) {
@@ -460,7 +450,7 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		err := svc.RegisterConfirm(ctx, req)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrDuplicateUser, err)
+		assert.Equal(t, service.ErrDuplicateUser, err)
 	})
 
 	t.Run("ErrorExistsUser", func(t *testing.T) {
@@ -502,7 +492,7 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		err := svc.RegisterConfirm(ctx, req)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrDuplicateUser, err)
+		assert.Equal(t, service.ErrDuplicateUser, err)
 	})
 
 	t.Run("ErrorSavingUser", func(t *testing.T) {
@@ -539,10 +529,10 @@ func Test_AuthService_RegisterConfirm(t *testing.T) {
 		cacheManager.On("Get", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 			*args.Get(2).(*dto.RegisterCache) = cacheEntry
 		}).Once().Return(nil)
-		userEntity := &model.UserEntity{Email: "test@example.com", Username: "testuser"}
+		userEntity := &model2.UserEntity{Email: "test@example.com", Username: "testuser"}
 		userRepo.On("ExistsUserByUsernameOrEmail", ctx, "testuser", "test@example.com").Once().Return(false, nil)
 		userRepo.On("CreateUser", mock.Anything, mock.Anything).Once().Return(userEntity, nil)
-		cacheManager.On("Delete", mock.Anything, []string{cache.CreateCacheKey("register", "test@example.com")}).Once().Return(cacheError)
+		cacheManager.On("Delete", mock.Anything, cache.CreateCacheKey("register", "test@example.com")).Once().Return(cacheError)
 
 		err := svc.RegisterConfirm(ctx, req)
 
@@ -554,10 +544,10 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 	input := dto.RecoveryPasswordInput{Email: "test@example.com"}
 
 	t.Run("Success", func(t *testing.T) {
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		userRepo.On("FindUserByEmail", mock.Anything, input.Email, false).Return(userEntity, nil).Once()
-		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, input.Email, []string(nil)).Return(nil).Once()
+		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, input.Email).Return(nil).Once()
 		templateEngine.On("Render", "recovery-password", mock.Anything).Return("email content", nil).Once()
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -571,11 +561,11 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 
 		err := svc.RecoveryPassword(context.Background(), input, nil)
 
-		assert.Equal(t, auth.ErrUserNotFound, err)
+		assert.Equal(t, service.ErrUserNotFound, err)
 	})
 
 	t.Run("ErrorSettingCache", func(t *testing.T) {
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		userRepo.On("FindUserByEmail", mock.Anything, input.Email, false).Return(userEntity, nil).Once()
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("cache error")).Once()
@@ -586,12 +576,12 @@ func Test_AuthService_RecoveryPassword(t *testing.T) {
 	})
 
 	t.Run("ErrorSendingEmail", func(t *testing.T) {
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		userRepo.On("FindUserByEmail", mock.Anything, input.Email, false).Return(userEntity, nil).Once()
 		cacheManager.On("SetWithExpiration", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		templateEngine.On("Render", "recovery-password", mock.Anything).Return("email content", nil).Once()
-		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, input.Email, []string(nil)).Return(errors.New("smtp error")).Once()
+		smtpSender.On("SendHtmlMessage", mock.Anything, mock.Anything, input.Email).Return(errors.New("smtp error")).Once()
 
 		err := svc.RecoveryPassword(context.Background(), input, nil)
 
@@ -620,7 +610,7 @@ func Test_AuthService_VerifyRecoveryCode(t *testing.T) {
 
 		err := svc.VerifyRecoveryCode(context.Background(), input)
 
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("CacheEntryNotFound", func(t *testing.T) {
@@ -630,7 +620,7 @@ func Test_AuthService_VerifyRecoveryCode(t *testing.T) {
 
 		err := svc.VerifyRecoveryCode(context.Background(), input)
 
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("ErrorGettingCache", func(t *testing.T) {
@@ -648,7 +638,7 @@ func Test_AuthService_ResetPassword(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := dto.ResetPasswordInput{Email: "test@example.com", OTP: "123456", Password: "newpassword"}
 		cacheEntry := dto.RecoveryPasswordCache{Email: "test@example.com", OTP: "123456"}
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Run(func(args mock.Arguments) {
 			*args.Get(2).(*dto.RecoveryPasswordCache) = cacheEntry
@@ -671,7 +661,7 @@ func Test_AuthService_ResetPassword(t *testing.T) {
 
 		err := svc.ResetPassword(context.Background(), input)
 
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("CacheEntryNotFound", func(t *testing.T) {
@@ -681,7 +671,7 @@ func Test_AuthService_ResetPassword(t *testing.T) {
 
 		err := svc.ResetPassword(context.Background(), input)
 
-		assert.Equal(t, auth.ErrInvalidOrExpiredOtp, err)
+		assert.Equal(t, service.ErrInvalidOrExpiredOtp, err)
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
@@ -695,13 +685,13 @@ func Test_AuthService_ResetPassword(t *testing.T) {
 
 		err := svc.ResetPassword(context.Background(), input)
 
-		assert.Equal(t, auth.ErrUserNotFound, err)
+		assert.Equal(t, service.ErrUserNotFound, err)
 	})
 
 	t.Run("ErrorUpdatingUser", func(t *testing.T) {
 		input := dto.ResetPasswordInput{Email: "test@example.com", OTP: "123456", Password: "newpassword"}
 		cacheEntry := dto.RecoveryPasswordCache{Email: "test@example.com", OTP: "123456"}
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		cacheManager.On("Get", mock.Anything, cache.CreateCacheKey("recovery_password", input.Email), mock.Anything).Run(func(args mock.Arguments) {
 			*args.Get(2).(*dto.RecoveryPasswordCache) = cacheEntry
@@ -717,13 +707,13 @@ func Test_AuthService_ResetPassword(t *testing.T) {
 
 func Test_AuthService_GetConsentPageUrl(t *testing.T) {
 	redirectUrl := "https://example.com/callback"
-	oauthProvider := oauthProviders["mock"].(*mock3.OAuthProviderMock)
+	oauthProvider := oauthProviders["mock"].(*mock3.ProviderMock)
 
 	t.Run("NotSupportedProvider", func(t *testing.T) {
 		_, err := svc.GetConsentPageUrl(context.Background(), "unsupported", redirectUrl)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrInvalidProvider, err)
+		assert.Equal(t, service.ErrInvalidProvider, err)
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -738,14 +728,14 @@ func Test_AuthService_GetConsentPageUrl(t *testing.T) {
 }
 
 func Test_AuthService_FetchUserInfo(t *testing.T) {
-	oauthProvider := oauthProviders["mock"].(*mock3.OAuthProviderMock)
+	oauthProvider := oauthProviders["mock"].(*mock3.ProviderMock)
 
 	t.Run("NotSupportedProvider", func(t *testing.T) {
 		input := dto.FetchUserInfoInput{Code: "someCode"}
 		_, err := svc.FetchUserInfo(context.Background(), "unsupported", input)
 
 		assert.Error(t, err)
-		assert.Equal(t, auth.ErrInvalidProvider, err)
+		assert.Equal(t, service.ErrInvalidProvider, err)
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -791,7 +781,7 @@ func Test_AuthService_FetchUserInfo(t *testing.T) {
 func Test_AuthService_RegisterOrLogin(t *testing.T) {
 	t.Run("Success_NewUser_UniqueUsername", func(t *testing.T) {
 		userInfo := oauth.UserInfo{Username: "test", Email: "test@example.com"}
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		userRepo.On("FindUserByEmail", mock.Anything, userInfo.Email, true).Return(nil, nil).Once()
 		userRepo.On("CreateUser", mock.Anything, mock.Anything).Return(userEntity, nil).Once()
@@ -806,7 +796,7 @@ func Test_AuthService_RegisterOrLogin(t *testing.T) {
 
 	t.Run("Success_NewUser_NotUniqueUsername", func(t *testing.T) {
 		userInfo := oauth.UserInfo{Username: "test", Email: "test@example.com"}
-		userEntity := &model.UserEntity{Email: "test@example.com"}
+		userEntity := &model2.UserEntity{Email: "test@example.com"}
 
 		userRepo.On("FindUserByEmail", mock.Anything, userInfo.Email, true).Return(nil, nil).Once()
 		userRepo.On("CreateUser", mock.Anything, mock.Anything).Return(userEntity, nil).Once()
@@ -822,7 +812,7 @@ func Test_AuthService_RegisterOrLogin(t *testing.T) {
 
 	t.Run("Success_ExistingUser", func(t *testing.T) {
 		userInfo := oauth.UserInfo{Email: "test@example.com"}
-		userEntity := &model.UserEntity{Email: "test@example.com", IsEnabled: true}
+		userEntity := &model2.UserEntity{Email: "test@example.com", IsEnabled: true}
 
 		userRepo.On("FindUserByEmail", mock.Anything, userInfo.Email, true).Return(userEntity, nil).Once()
 

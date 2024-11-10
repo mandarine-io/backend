@@ -2,8 +2,8 @@ package common_e2e_test
 
 import (
 	"context"
-	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	http2 "github.com/mandarine-io/Backend/internal/api/transport/http"
+	appconfig "github.com/mandarine-io/Backend/internal/config"
+	http2 "github.com/mandarine-io/Backend/internal/transport/http"
 	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/mandarine-io/Backend/tests/e2e"
 	"github.com/stretchr/testify/assert"

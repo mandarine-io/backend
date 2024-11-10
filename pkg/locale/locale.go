@@ -2,7 +2,7 @@ package locale
 
 import (
 	"encoding/json"
-	"github.com/mandarine-io/Backend/internal/api/helper/file"
+	"github.com/mandarine-io/Backend/pkg/helper/file"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
@@ -20,7 +20,7 @@ func MustLoadLocales(cfg *Config) *i18n.Bundle {
 	log.Debug().Msg("parse default language")
 	tag, err := language.Parse(cfg.Language)
 	if err != nil {
-		log.Warn().Stack().Err(err).Msg("failed to parse default language")
+		log.Warn().Err(err).Msg("failed to parse default language")
 		tag = language.English
 	}
 	log.Info().Msgf("set default language: %s", tag)
@@ -60,7 +60,7 @@ func Localize(localizer *i18n.Localizer, tag string) string {
 		},
 	)
 	if err != nil {
-		log.Warn().Stack().Err(err).Msg("failed to localize message by tag, use tag as fallback")
+		log.Warn().Err(err).Msg("failed to localize message by tag, use tag as fallback")
 		message = tag
 	}
 	return message
@@ -75,7 +75,7 @@ func LocalizeWithArgs(localizer *i18n.Localizer, tag string, args interface{}) s
 		},
 	)
 	if err != nil {
-		log.Warn().Stack().Err(err).Msg("failed to localize message by tag, use tag as fallback")
+		log.Warn().Err(err).Msg("failed to localize message by tag, use tag as fallback")
 		message = tag
 	}
 	return message

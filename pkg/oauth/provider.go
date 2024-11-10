@@ -73,7 +73,7 @@ func (c *provider) GetUserInfo(ctx context.Context, token *oauth2.Token) (UserIn
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			log.Warn().Stack().Err(err).Msg("failed to close response body")
+			log.Warn().Err(err).Msg("failed to close response body")
 		}
 	}()
 

@@ -2,8 +2,8 @@ package memory
 
 import (
 	"context"
-	"errors"
 	"github.com/mandarine-io/Backend/pkg/storage/cache"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"reflect"
 	"regexp"

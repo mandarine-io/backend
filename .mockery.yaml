@@ -1,0 +1,38 @@
+with-expecter: true
+mockname: "{{.InterfaceName}}Mock"
+filename: "{{.InterfaceNameSnake}}.go"
+outpkg: "mock"
+dir: "{{.InterfaceDir}}/mock"
+packages:
+  github.com/mandarine-io/Backend/internal/persistence/repo:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/internal/domain/service:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/oauth:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/pubsub:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/smtp:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/storage/cache:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/storage/s3:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/template:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"

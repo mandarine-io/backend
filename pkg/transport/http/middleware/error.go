@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/mandarine-io/Backend/pkg/locale"
 	"github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"strings"
 )

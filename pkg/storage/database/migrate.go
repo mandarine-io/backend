@@ -1,11 +1,11 @@
 package database
 
 import (
-	"errors"
 	"fmt"
 	goMigrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -31,10 +31,10 @@ func Migrate(dsn string, migrationDir string) error {
 	defer func() {
 		sourceErr, dbErr := migrate.Close()
 		if sourceErr != nil {
-			log.Warn().Stack().Err(sourceErr).Msg("failed to close source")
+			log.Warn().Err(sourceErr).Msg("failed to close source")
 		}
 		if dbErr != nil {
-			log.Warn().Stack().Err(dbErr).Msg("failed to close database")
+			log.Warn().Err(dbErr).Msg("failed to close database")
 		}
 	}()
 

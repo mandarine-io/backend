@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	appconfig "github.com/mandarine-io/Backend/internal/api/config"
-	"github.com/mandarine-io/Backend/internal/api/helper/security"
-	"github.com/mandarine-io/Backend/internal/api/persistence/model"
-	"github.com/mandarine-io/Backend/internal/api/service/resource/dto"
-	http2 "github.com/mandarine-io/Backend/internal/api/transport/http"
+	appconfig "github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/internal/domain/dto"
+	"github.com/mandarine-io/Backend/internal/helper/security"
+	model2 "github.com/mandarine-io/Backend/internal/persistence/model"
+	http2 "github.com/mandarine-io/Backend/internal/transport/http"
 	dto3 "github.com/mandarine-io/Backend/pkg/storage/s3"
 	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/mandarine-io/Backend/tests/e2e"
@@ -154,12 +154,12 @@ func TestMain(m *testing.M) {
 
 func Test_ResourceHandler_UploadResource(t *testing.T) {
 	// Create access token
-	userEntity := &model.UserEntity{
+	userEntity := &model2.UserEntity{
 		ID:        uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
 		Username:  "user1",
 		Email:     "user1@example.com",
 		Password:  "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
-		Role:      model.RoleEntity{Name: model.RoleUser},
+		Role:      model2.RoleEntity{Name: model2.RoleUser},
 		IsEnabled: true,
 		DeletedAt: nil,
 	}
@@ -192,11 +192,11 @@ func Test_ResourceHandler_UploadResource(t *testing.T) {
 	})
 
 	t.Run("Banned user", func(t *testing.T) {
-		anotherUserEntity := model.UserEntity{
+		anotherUserEntity := model2.UserEntity{
 			ID:        uuid.New(),
 			Username:  "user",
 			Email:     "user@example.com",
-			Role:      model.RoleEntity{Name: model.RoleUser},
+			Role:      model2.RoleEntity{Name: model2.RoleUser},
 			IsEnabled: false,
 			DeletedAt: nil,
 		}
@@ -211,11 +211,11 @@ func Test_ResourceHandler_UploadResource(t *testing.T) {
 
 	t.Run("Deleted user", func(t *testing.T) {
 		deletedTime := time.Now().UTC()
-		anotherUserEntity := model.UserEntity{
+		anotherUserEntity := model2.UserEntity{
 			ID:        uuid.New(),
 			Username:  "user",
 			Email:     "user@example.com",
-			Role:      model.RoleEntity{Name: model.RoleUser},
+			Role:      model2.RoleEntity{Name: model2.RoleUser},
 			IsEnabled: true,
 			DeletedAt: &deletedTime,
 		}
@@ -343,12 +343,12 @@ func Test_ResourceHandler_UploadResource(t *testing.T) {
 
 func Test_ResourceHandler_UploadResources(t *testing.T) {
 	// Create access token
-	userEntity := &model.UserEntity{
+	userEntity := &model2.UserEntity{
 		ID:        uuid.MustParse("a02fc7e1-c19a-4c1a-b66e-29fed1ed452f"),
 		Username:  "user1",
 		Email:     "user1@example.com",
 		Password:  "$2a$12$4XWfvkfvvLxLlLyPQ9CA7eNhkUIFSj7sF3768lAMJi9G2kl4XjGve",
-		Role:      model.RoleEntity{Name: model.RoleUser},
+		Role:      model2.RoleEntity{Name: model2.RoleUser},
 		IsEnabled: true,
 		DeletedAt: nil,
 	}
@@ -391,11 +391,11 @@ func Test_ResourceHandler_UploadResources(t *testing.T) {
 	})
 
 	t.Run("Banned user", func(t *testing.T) {
-		anotherUserEntity := model.UserEntity{
+		anotherUserEntity := model2.UserEntity{
 			ID:        uuid.New(),
 			Username:  "user",
 			Email:     "user@example.com",
-			Role:      model.RoleEntity{Name: model.RoleUser},
+			Role:      model2.RoleEntity{Name: model2.RoleUser},
 			IsEnabled: false,
 			DeletedAt: nil,
 		}
@@ -410,11 +410,11 @@ func Test_ResourceHandler_UploadResources(t *testing.T) {
 
 	t.Run("Deleted user", func(t *testing.T) {
 		deletedTime := time.Now().UTC()
-		anotherUserEntity := model.UserEntity{
+		anotherUserEntity := model2.UserEntity{
 			ID:        uuid.New(),
 			Username:  "user",
 			Email:     "user@example.com",
-			Role:      model.RoleEntity{Name: model.RoleUser},
+			Role:      model2.RoleEntity{Name: model2.RoleUser},
 			IsEnabled: true,
 			DeletedAt: &deletedTime,
 		}
@@ -625,7 +625,7 @@ func Test_ResourceHandler_DownloadResource(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Upload file
 		objectId := filepath.Base(file.Name())
-		testEnvironment.Container.S3Client.CreateOne(ctx, &dto3.FileData{
+		testEnvironment.Container.S3.Client.CreateOne(ctx, &dto3.FileData{
 			ID:     objectId,
 			Size:   1024,
 			Reader: file,

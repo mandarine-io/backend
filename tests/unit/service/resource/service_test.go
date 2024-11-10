@@ -3,17 +3,17 @@ package resource_test
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
-	"github.com/mandarine-io/Backend/internal/api/service/resource"
-	"github.com/mandarine-io/Backend/internal/api/service/resource/dto"
+	"github.com/mandarine-io/Backend/internal/domain/dto"
+	"github.com/mandarine-io/Backend/internal/domain/service"
+	resource2 "github.com/mandarine-io/Backend/internal/domain/service/resource"
 	dto2 "github.com/mandarine-io/Backend/pkg/storage/s3"
 	mock2 "github.com/mandarine-io/Backend/pkg/storage/s3/mock"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"io"
-	"log/slog"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -22,24 +22,14 @@ import (
 
 var (
 	ctx      = context.Background()
-	s3Client *mock2.S3ClientMock
-	svc      *resource.Service
+	s3Client *mock2.ClientMock
+	svc      service.ResourceService
 )
 
 func TestMain(m *testing.M) {
-	// Setup logger
-	logger := slog.New(
-		slog.NewTextHandler(
-			os.Stdout, &slog.HandlerOptions{
-				Level: slog.Level(10000),
-			},
-		),
-	)
-	slog.SetDefault(logger)
-
 	// Setup mocks
-	s3Client = new(mock2.S3ClientMock)
-	svc = resource.NewService(s3Client)
+	s3Client = new(mock2.ClientMock)
+	svc = resource2.NewService(s3Client)
 
 	os.Exit(m.Run())
 }
@@ -48,7 +38,7 @@ func Test_ResourceService_UploadResource(t *testing.T) {
 	t.Run("File is nil", func(t *testing.T) {
 		output, err := svc.UploadResource(ctx, &dto.UploadResourceInput{Resource: nil})
 
-		assert.Equal(t, resource.ErrResourceNotUploaded, err)
+		assert.Equal(t, service.ErrResourceNotUploaded, err)
 		assert.Equal(t, dto.UploadResourceOutput{}, output)
 	})
 
