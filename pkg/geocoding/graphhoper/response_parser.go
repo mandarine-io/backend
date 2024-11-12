@@ -31,8 +31,8 @@ type reverseGeocodeResponse struct {
 }
 
 type responseParser struct {
-	geocodeResponse
-	reverseGeocodeResponse
+	geocodeResponse        //nolint
+	reverseGeocodeResponse //nolint
 }
 
 func (r *geocodeResponse) Locations() ([]*geocoding.Location, error) {

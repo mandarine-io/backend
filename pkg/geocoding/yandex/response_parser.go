@@ -70,8 +70,8 @@ type errorResponse struct {
 }
 
 type responseParser struct {
-	geocodeResponse
-	reverseGeocodeResponse
+	geocodeResponse        //nolint
+	reverseGeocodeResponse //nolint
 	errorResponse
 }
 
