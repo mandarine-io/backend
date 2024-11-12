@@ -7,7 +7,7 @@ import (
 	"github.com/mandarine-io/Backend/internal/domain/service/geocoding/mapper"
 	cache2 "github.com/mandarine-io/Backend/internal/helper/cache"
 	"github.com/mandarine-io/Backend/pkg/geocoding"
-	"github.com/mandarine-io/Backend/pkg/geocoding/chained"
+	"github.com/mandarine-io/Backend/pkg/geocoding/factory"
 	"github.com/mandarine-io/Backend/pkg/storage/cache"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -25,7 +25,7 @@ type svc struct {
 }
 
 func NewService(providers []geocoding.Provider, manager cache.Manager) service.GeocodingService {
-	return &svc{provider: chained.NewProvider(providers...), manager: manager}
+	return &svc{provider: factory.NewProviderChained(providers...), manager: manager}
 }
 
 func (s *svc) Geocode(ctx context.Context, input dto.GeocodingInput, lang language.Tag) (dto.GeocodingOutput, error) {
