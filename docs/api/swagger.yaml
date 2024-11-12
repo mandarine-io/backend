@@ -1167,17 +1167,14 @@ paths:
       operationId: ReverseGeocode
       parameters:
       - in: query
-        name: latitude
-        required: true
-        type: number
-      - in: query
         minimum: 1
         name: limit
         type: integer
-      - in: query
-        name: longitude
+      - format: lng,lat
+        in: query
+        name: point
         required: true
-        type: number
+        type: string
       produces:
       - application/json
       responses:

@@ -909,20 +909,16 @@ paths:
       operationId: ReverseGeocode
       parameters:
         - in: query
-          name: latitude
-          required: true
-          schema:
-            type: number
-        - in: query
           name: limit
           schema:
             type: integer
             minimum: 1
         - in: query
-          name: longitude
+          name: point
           required: true
           schema:
-            type: number
+            type: string
+            format: lng,lat
       responses:
         "200":
           description: Reverse geocoded address

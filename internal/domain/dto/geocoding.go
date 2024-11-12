@@ -11,7 +11,7 @@ type GeocodingOutput struct {
 }
 
 type ReverseGeocodingInput struct {
-	Point string `form:"point" format:"lng,lat" binding:"point"`
+	Point string `form:"point" format:"lng,lat" binding:"required,point"`
 	Limit int    `form:"limit,default=1" binding:"min=1"`
 }
 

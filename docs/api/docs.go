@@ -1239,20 +1239,15 @@ const docTemplate = `{
                 "operationId": "ReverseGeocode",
                 "parameters": [
                     {
-                        "type": "number",
-                        "name": "latitude",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
                         "minimum": 1,
                         "type": "integer",
                         "name": "limit",
                         "in": "query"
                     },
                     {
-                        "type": "number",
-                        "name": "longitude",
+                        "type": "string",
+                        "format": "lng,lat",
+                        "name": "point",
                         "in": "query",
                         "required": true
                     }
