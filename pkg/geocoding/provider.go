@@ -2,7 +2,12 @@ package geocoding
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"golang.org/x/text/language"
+)
+
+var (
+	ErrGeocodeProvidersUnavailable = errors.New("geocode providers unavailable")
 )
 
 type Location struct {

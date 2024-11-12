@@ -4,12 +4,7 @@ import (
 	"atomicgo.dev/robin"
 	"context"
 	"github.com/mandarine-io/Backend/pkg/geocoding"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-)
-
-var (
-	ErrGeocodeProvidersUnavailable = errors.New("geocode providers unavailable")
 )
 
 type provider struct {
@@ -34,7 +29,7 @@ func (p *provider) Geocode(address string, config geocoding.GeocodeConfig) ([]*g
 		}
 		return loc, nil
 	}
-	return nil, ErrGeocodeProvidersUnavailable
+	return nil, geocoding.ErrGeocodeProvidersUnavailable
 }
 
 func (p *provider) GeocodeWithContext(ctx context.Context, address string, config geocoding.GeocodeConfig) ([]*geocoding.Location, error) {
@@ -47,7 +42,7 @@ func (p *provider) GeocodeWithContext(ctx context.Context, address string, confi
 		}
 		return loc, nil
 	}
-	return nil, ErrGeocodeProvidersUnavailable
+	return nil, geocoding.ErrGeocodeProvidersUnavailable
 }
 
 func (p *provider) ReverseGeocode(loc geocoding.Location, config geocoding.ReverseGeocodeConfig) ([]*geocoding.Address, error) {
@@ -60,7 +55,7 @@ func (p *provider) ReverseGeocode(loc geocoding.Location, config geocoding.Rever
 		}
 		return addr, nil
 	}
-	return nil, ErrGeocodeProvidersUnavailable
+	return nil, geocoding.ErrGeocodeProvidersUnavailable
 }
 
 func (p *provider) ReverseGeocodeWithContext(ctx context.Context, loc geocoding.Location, config geocoding.ReverseGeocodeConfig) ([]*geocoding.Address, error) {
@@ -73,5 +68,5 @@ func (p *provider) ReverseGeocodeWithContext(ctx context.Context, loc geocoding.
 		}
 		return addr, nil
 	}
-	return nil, ErrGeocodeProvidersUnavailable
+	return nil, geocoding.ErrGeocodeProvidersUnavailable
 }
