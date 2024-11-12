@@ -9,6 +9,7 @@
 - [gorilla/websocket](https://github.com/gorilla/websocket)
 - OAuth2
   providers ([Google](https://developers.google.com/identity/protocols/oauth2?hl=ru), [Yandex](https://yandex.ru/dev/id/doc/ru/concepts/ya-oauth-intro), [Mail.ru](https://help.mail.ru/developers/oauth))
+- Geocoding providers ([Graphhoper](https://docs.graphhopper.com/), [Here](https://developer.here.com/develop/rest-apis), [LocationIQ](https://docs.locationiq.com/reference/search), [OpenStreetMap (Nominatim)](https://nominatim.org/release-docs/latest/api/Overview/), [Yandex](https://yandex.ru/dev/geocode/doc/ru/))
 - [PostgreSQL (PostGIS, gin)](https://www.postgresql.org/)
 - [Redis](https://redis.io/)
 - [MinIO](https://min.io/)
