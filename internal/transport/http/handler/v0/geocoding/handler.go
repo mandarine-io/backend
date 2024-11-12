@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mandarine-io/Backend/internal/domain/dto"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	handler2 "github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	"github.com/mandarine-io/Backend/pkg/transport/http/middleware"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -16,11 +16,11 @@ type handler struct {
 	svc service.GeocodingService
 }
 
-func NewHandler(svc service.GeocodingService) handler2.ApiHandler {
+func NewHandler(svc service.GeocodingService) apihandler.ApiHandler {
 	return &handler{svc: svc}
 }
 
-func (h *handler) RegisterRoutes(router *gin.Engine, middlewares handler2.RouteMiddlewares) {
+func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register geocoding routes")
 
 	router.GET(

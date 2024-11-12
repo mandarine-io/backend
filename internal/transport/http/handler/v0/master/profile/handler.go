@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mandarine-io/Backend/internal/domain/dto"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	"github.com/mandarine-io/Backend/pkg/transport/http/middleware"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -15,11 +15,11 @@ type Handler struct {
 	svc service.MasterProfileService
 }
 
-func NewHandler(svc service.MasterProfileService) *Handler {
+func NewHandler(svc service.MasterProfileService) apihandler.ApiHandler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register master profile routes")
 
 	router.POST(
