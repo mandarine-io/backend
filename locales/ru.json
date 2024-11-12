@@ -46,7 +46,8 @@
     "user_for_master_profile_not_exist": "Пользователя для профиля мастера не существует",
     "master_profile_not_exist": "Профиль мастера не создан",
     "master_profile_not_found": "Профиль мастера не найден",
-    "unavailable_sort_field": "Недоступное поле сортировки"
+    "unavailable_sort_field": "Недоступное поле сортировки",
+    "geocode_providers_unavailable": "Поставщики геокодирования недоступны"
   },
   "email": {
     "register-confirm": {

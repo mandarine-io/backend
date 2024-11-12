@@ -46,7 +46,8 @@
     "user_for_master_profile_not_exist": "User for master profile does not exist",
     "master_profile_not_exist": "Master profile does not exist",
     "master_profile_not_found": "Master profile not found",
-    "unavailable_sort_field": "Unavailable sort field"
+    "unavailable_sort_field": "Unavailable sort field",
+    "geocode_providers_unavailable": "Geocode providers are unavailable"
   },
   "email": {
     "register-confirm": {

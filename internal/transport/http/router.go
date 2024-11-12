@@ -34,10 +34,12 @@ type RequireRoleMiddlewareFactory func(...string) gin.HandlerFunc
 //	@tag.description			API for account management
 //	@tag.name					Authentication and Authorization API
 //	@tag.description			API for authentication and authorization
-//	@tag.name					Resource API
-//	@tag.description			API for resource management
+//	@tag.name					Geocoding API
+//	@tag.description			API for geocoding
 //	@tag.name					Master Profile API
 //	@tag.description			API for master profile management
+//	@tag.name					Resource API
+//	@tag.description			API for resource management
 //	@tag.name					Websocket API
 //	@tag.description			API for websocket connection
 //	@tag.name					Metrics API

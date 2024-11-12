@@ -1,10 +1,5 @@
 package dto
 
-type PointOutput struct {
-	Longitude float64 `json:"longitude"`
-	Latitude  float64 `json:"latitude"`
-}
-
 type FindMasterProfilesFilterInput struct {
 	DisplayName *string `form:"displayName" binding:"omitempty"`
 	Job         *string `form:"job" binding:"omitempty"`

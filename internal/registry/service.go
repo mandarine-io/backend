@@ -4,6 +4,7 @@ import (
 	"github.com/mandarine-io/Backend/internal/domain/service"
 	"github.com/mandarine-io/Backend/internal/domain/service/account"
 	"github.com/mandarine-io/Backend/internal/domain/service/auth"
+	"github.com/mandarine-io/Backend/internal/domain/service/geocoding"
 	"github.com/mandarine-io/Backend/internal/domain/service/health"
 	masterprofile "github.com/mandarine-io/Backend/internal/domain/service/master/profile"
 	"github.com/mandarine-io/Backend/internal/domain/service/resource"
@@ -14,6 +15,7 @@ import (
 type Services struct {
 	Account       service.AccountService
 	Auth          service.AuthService
+	Geocoding     service.GeocodingService
 	Health        service.HealthService
 	MasterProfile service.MasterProfileService
 	Resource      service.ResourceService
@@ -38,6 +40,10 @@ func setupServices(c *Container) {
 			c.SmtpSender,
 			c.TemplateEngine,
 			c.Config,
+		),
+		Geocoding: geocoding.NewService(
+			c.GeocodingChainedProvider,
+			c.Cache.Manager,
 		),
 		Health: health.NewService(
 			c.DB,
