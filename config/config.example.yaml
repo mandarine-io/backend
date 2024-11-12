@@ -38,6 +38,17 @@ oauthclients:
   mailru:
     clientid: mock
     clientsecret: mock
+geocodingclients:
+  here:
+    apikey: mock
+  locationiq:
+    apikey: mock
+  osm_nominatim:
+    apikey: mock
+  graphhopper:
+    apikey: mock
+  yandex:
+    apikey: mock
 pubsub:
   type: memory
   redis:
