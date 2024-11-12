@@ -850,6 +850,115 @@ paths:
       summary: Social login callback
       tags:
         - Authentication and Authorization API
+  /v0/geocode/forward:
+    get:
+      description: Request for geocoding. User must be logged in. In response will be
+        returned coordinates.
+      operationId: Geocode
+      parameters:
+        - in: query
+          name: address
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Geocoded coordinates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.GeocodingOutput"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "503":
+          description: Geocoding service is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Geocode
+      tags:
+        - Geocoding API
+  /v0/geocode/reverse:
+    get:
+      description: Request for reverse geocoding. User must be logged in. In response
+        will be returned address.
+      operationId: ReverseGeocode
+      parameters:
+        - in: query
+          name: latitude
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: longitude
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Reverse geocoded address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ReverseGeocodingOutput"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "401":
+          description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "503":
+          description: Geocoding service is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Reverse geocode
+      tags:
+        - Geocoding API
   /v0/masters/profile:
     get:
       description: Request for finding master profiles. User must be logged in. In
@@ -912,6 +1021,12 @@ paths:
                 $ref: "#/components/schemas/dto.ErrorResponse"
         "401":
           description: Unauthorized error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
           content:
             application/json:
               schema:
@@ -1016,8 +1131,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: User not found
+          description: Master profile not found
           content:
             application/json:
               schema:
@@ -1064,8 +1185,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
+        "403":
+          description: User is blocked or deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/dto.ErrorResponse"
         "404":
-          description: User not found
+          description: Master profile not found
           content:
             application/json:
               schema:
@@ -1254,10 +1381,12 @@ tags:
     name: Account API
   - description: API for authentication and authorization
     name: Authentication and Authorization API
-  - description: API for resource management
-    name: Resource API
+  - description: API for geocoding
+    name: Geocoding API
   - description: API for master profile management
     name: Master Profile API
+  - description: API for resource management
+    name: Resource API
   - description: API for websocket connection
     name: Websocket API
   - description: API for getting metrics
@@ -1298,6 +1427,33 @@ components:
         - isPasswordTemp
         - username
       type: object
+    dto.AddressOutput:
+      properties:
+        city:
+          type: string
+        country:
+          type: string
+        countryCode:
+          type: string
+        county:
+          type: string
+        formattedAddress:
+          type: string
+        houseNumber:
+          type: string
+        postcode:
+          type: string
+        state:
+          type: string
+        stateCode:
+          type: string
+        stateDistrict:
+          type: string
+        street:
+          type: string
+        suburb:
+          type: string
+      type: object
     dto.CreateMasterProfileInput:
       properties:
         address:
@@ -1337,6 +1493,15 @@ components:
         - path
         - status
         - timestamp
+      type: object
+    dto.GeocodingOutput:
+      properties:
+        count:
+          type: integer
+        data:
+          items:
+            $ref: "#/components/schemas/dto.PointOutput"
+          type: array
       type: object
     dto.HealthOutput:
       properties:
@@ -1472,6 +1637,15 @@ components:
         - email
         - otp
         - password
+      type: object
+    dto.ReverseGeocodingOutput:
+      properties:
+        count:
+          type: integer
+        data:
+          items:
+            $ref: "#/components/schemas/dto.AddressOutput"
+          type: array
       type: object
     dto.SetPasswordInput:
       properties:
