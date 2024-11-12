@@ -5,7 +5,7 @@ import (
 	"github.com/mandarine-io/Backend/internal/config"
 	"github.com/mandarine-io/Backend/internal/domain/dto"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	middleware2 "github.com/mandarine-io/Backend/pkg/transport/http/middleware"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -27,19 +27,19 @@ var (
 	stateCookieMaxAge = 20 * 60
 )
 
-type Handler struct {
+type handler struct {
 	svc service.AuthService
 	cfg *config.Config
 }
 
-func NewHandler(svc service.AuthService, cfg *config.Config) *Handler {
-	return &Handler{
+func NewHandler(svc service.AuthService, cfg *config.Config) apihandler.ApiHandler {
+	return &handler{
 		svc: svc,
 		cfg: cfg,
 	}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register service routes")
 
 	router.POST("v0/auth/login", h.Login)
@@ -71,7 +71,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		404		{object}	dto.ErrorResponse	"User not found"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/login [post]
-func (h *Handler) Login(ctx *gin.Context) {
+func (h *handler) Login(ctx *gin.Context) {
 	log.Debug().Msg("handle login")
 
 	req := dto.LoginInput{}
@@ -114,7 +114,7 @@ func (h *Handler) Login(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"User not found"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/refresh [get]
-func (h *Handler) RefreshTokens(ctx *gin.Context) {
+func (h *handler) RefreshTokens(ctx *gin.Context) {
 	log.Debug().Msg("handle refresh tokens")
 
 	refreshToken, err := ctx.Cookie(refreshTokenCookieName)
@@ -155,7 +155,7 @@ func (h *Handler) RefreshTokens(ctx *gin.Context) {
 //	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/logout [get]
-func (h *Handler) Logout(c *gin.Context) {
+func (h *handler) Logout(c *gin.Context) {
 	log.Debug().Msg("handle logout")
 
 	principal, err := middleware2.GetAuthUser(c)
@@ -187,7 +187,7 @@ func (h *Handler) Logout(c *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"User already exists"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/register [post]
-func (h *Handler) Register(ctx *gin.Context) {
+func (h *handler) Register(ctx *gin.Context) {
 	log.Debug().Msg("handle register")
 
 	req := dto.RegisterInput{}
@@ -228,7 +228,7 @@ func (h *Handler) Register(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"User already exists"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/register/confirm [post]
-func (h *Handler) RegisterConfirm(ctx *gin.Context) {
+func (h *handler) RegisterConfirm(ctx *gin.Context) {
 	log.Debug().Msg("handle register confirm")
 
 	req := dto.RegisterConfirmInput{}
@@ -266,7 +266,7 @@ func (h *Handler) RegisterConfirm(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"User not found"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/recovery-password [post]
-func (h *Handler) RecoveryPassword(ctx *gin.Context) {
+func (h *handler) RecoveryPassword(ctx *gin.Context) {
 	log.Debug().Msg("handle recovery password")
 
 	req := dto.RecoveryPasswordInput{}
@@ -306,7 +306,7 @@ func (h *Handler) RecoveryPassword(ctx *gin.Context) {
 //	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/recovery-password/verify [post]
-func (h *Handler) VerifyRecoveryCode(ctx *gin.Context) {
+func (h *handler) VerifyRecoveryCode(ctx *gin.Context) {
 	log.Debug().Msg("handle verify recovery code")
 
 	req := dto.VerifyRecoveryCodeInput{}
@@ -342,7 +342,7 @@ func (h *Handler) VerifyRecoveryCode(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"User not found"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/reset-password [post]
-func (h *Handler) ResetPassword(ctx *gin.Context) {
+func (h *handler) ResetPassword(ctx *gin.Context) {
 	log.Debug().Msg("handle reset password")
 
 	req := dto.ResetPasswordInput{}
@@ -381,7 +381,7 @@ func (h *Handler) ResetPassword(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"Provider not found"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/social/{provider} [get]
-func (h *Handler) SocialLogin(ctx *gin.Context) {
+func (h *handler) SocialLogin(ctx *gin.Context) {
 	log.Debug().Msg("handle social login")
 
 	// Get provider
@@ -428,7 +428,7 @@ func (h *Handler) SocialLogin(ctx *gin.Context) {
 //	@Failure		404			{object}	dto.ErrorResponse	"User not found"
 //	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/auth/social/{provider}/callback [post]
-func (h *Handler) SocialLoginCallback(ctx *gin.Context) {
+func (h *handler) SocialLoginCallback(ctx *gin.Context) {
 	log.Debug().Msg("handle social login callback")
 
 	// Get provider

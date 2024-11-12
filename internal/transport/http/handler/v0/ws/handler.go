@@ -3,23 +3,21 @@ package ws
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	"github.com/mandarine-io/Backend/pkg/transport/http/middleware"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
-type Handler struct {
+type handler struct {
 	svc service.WebsocketService
 }
 
-func NewHandler(svc service.WebsocketService) *Handler {
-	return &Handler{
-		svc: svc,
-	}
+func NewHandler(svc service.WebsocketService) apihandler.ApiHandler {
+	return &handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register websocket routes")
 
 	router.GET(
@@ -43,7 +41,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		401	{object}	dto.ErrorResponse
 //	@Failure		503	{object}	dto.ErrorResponse
 //	@Router			/v0/ws [get]
-func (h *Handler) Connect(ctx *gin.Context) {
+func (h *handler) Connect(ctx *gin.Context) {
 	log.Debug().Msg("handle connect")
 
 	authUser, err := middleware.GetAuthUser(ctx)

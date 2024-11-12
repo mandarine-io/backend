@@ -529,6 +529,33 @@ oauthclients:
 MANDARINE_OAUTHCLIENTS_<PROVIDER>_CLIENTSECRET=client_secret
 ```
 
+> **_NOTE:_** If you want to set provider API key using only environment variable and not showing it in the
+> configuration file, set it to a random and not empty string in the configuration file.
+
+<a id="geocoding-provider"></a>
+
+## Geocoding provider settings
+
+### API key
+
+Set geocoding provider API key
+
+```yaml
+geocodingclients:
+    <provider>:
+       apikey: api_key
+```
+
+```dotenv
+MANDARINE_GEOCODINGCLIENTS_<PROVIDER>_APIKEY=api_key
+```
+
+> **_NOTE:_** If the provider doesn't need an API key, just set it to a random and not empty string. This is important 
+> because otherwise the parser will not recognize the provider with such a key.
+
+> **_NOTE:_** If you want to set provider API key using only environment variable and not showing it in the 
+> configuration file, set it to a random and not empty string in the configuration file.
+
 <a id="security"></a>
 
 ## Security settings

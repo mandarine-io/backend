@@ -12,6 +12,10 @@ packages:
     config:
       include-regex: ".*"
       filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/Backend/pkg/geocoding:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
   github.com/mandarine-io/Backend/pkg/oauth:
     config:
       include-regex: ".*"

@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mandarine-io/Backend/internal/domain/dto"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	middleware2 "github.com/mandarine-io/Backend/pkg/transport/http/middleware"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/pkg/errors"
@@ -12,15 +12,15 @@ import (
 	"net/http"
 )
 
-type Handler struct {
+type handler struct {
 	svc service.AccountService
 }
 
-func NewHandler(svc service.AccountService) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc service.AccountService) apihandler.ApiHandler {
+	return &handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register service routes")
 
 	router.GET(
@@ -89,7 +89,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account [get]
-func (h *Handler) GetAccount(ctx *gin.Context) {
+func (h *handler) GetAccount(ctx *gin.Context) {
 	log.Debug().Msg("handle get service")
 	principal, err := middleware2.GetAuthUser(ctx)
 	if err != nil {
@@ -129,7 +129,7 @@ func (h *Handler) GetAccount(ctx *gin.Context) {
 //	@Failure		409		{object}	dto.ErrorResponse	"Duplicate username"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/username [patch]
-func (h *Handler) UpdateUsername(ctx *gin.Context) {
+func (h *handler) UpdateUsername(ctx *gin.Context) {
 	log.Debug().Msg("handle update username")
 
 	req := dto.UpdateUsernameInput{}
@@ -179,7 +179,7 @@ func (h *Handler) UpdateUsername(ctx *gin.Context) {
 //	@Failure		409		{object}	dto.ErrorResponse	"Duplicate email"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/email [patch]
-func (h *Handler) UpdateEmail(ctx *gin.Context) {
+func (h *handler) UpdateEmail(ctx *gin.Context) {
 	log.Debug().Msg("handle update email")
 
 	req := dto.UpdateEmailInput{}
@@ -236,7 +236,7 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/email/verify [post]
-func (h *Handler) VerifyEmail(ctx *gin.Context) {
+func (h *handler) VerifyEmail(ctx *gin.Context) {
 	log.Debug().Msg("handle verify email")
 
 	req := dto.VerifyEmailInput{}
@@ -284,7 +284,7 @@ func (h *Handler) VerifyEmail(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"Password is set"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/password [post]
-func (h *Handler) SetPassword(ctx *gin.Context) {
+func (h *handler) SetPassword(ctx *gin.Context) {
 	log.Debug().Msg("handle set password")
 
 	req := dto.SetPasswordInput{}
@@ -331,7 +331,7 @@ func (h *Handler) SetPassword(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/password [patch]
-func (h *Handler) UpdatePassword(ctx *gin.Context) {
+func (h *handler) UpdatePassword(ctx *gin.Context) {
 	log.Debug().Msg("handle update password")
 
 	req := dto.UpdatePasswordInput{}
@@ -377,7 +377,7 @@ func (h *Handler) UpdatePassword(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"User is not deleted"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/restore [get]
-func (h *Handler) RestoreAccount(ctx *gin.Context) {
+func (h *handler) RestoreAccount(ctx *gin.Context) {
 	log.Debug().Msg("handle restore service")
 
 	principal, err := middleware2.GetAuthUser(ctx)
@@ -418,7 +418,7 @@ func (h *Handler) RestoreAccount(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"User is deleted"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account [delete]
-func (h *Handler) DeleteAccount(ctx *gin.Context) {
+func (h *handler) DeleteAccount(ctx *gin.Context) {
 	log.Debug().Msg("handle delete service")
 
 	principal, err := middleware2.GetAuthUser(ctx)

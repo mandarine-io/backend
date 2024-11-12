@@ -8,6 +8,7 @@ import (
 	"github.com/mandarine-io/Backend/pkg/storage/s3"
 	httpdto "github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"golang.org/x/text/language"
 	"net/http"
 )
 
@@ -32,6 +33,11 @@ var (
 	ErrInvalidJwtToken     = httpdto.NewI18nError("invalid JWT token", "errors.invalid_jwt_token")
 	ErrUserInfoNotReceived = httpdto.NewI18nError("user info not received", "errors.userinfo_not_received")
 	ErrInvalidProvider     = httpdto.NewI18nError("invalid provider", "errors.invalid_provider")
+)
+
+// Geocoding error
+var (
+	ErrGeocodeProvidersUnavailable = httpdto.NewI18nError("geocode providers unavailable", "errors.geocode_providers_unavailable")
 )
 
 // Master profile error
@@ -70,6 +76,11 @@ type AuthService interface {
 	GetConsentPageUrl(_ context.Context, provider string, redirectUrl string) (dto.GetConsentPageUrlOutput, error)
 	FetchUserInfo(ctx context.Context, provider string, input dto.FetchUserInfoInput) (oauth.UserInfo, error)
 	RegisterOrLogin(ctx context.Context, userInfo oauth.UserInfo) (dto.JwtTokensOutput, error)
+}
+
+type GeocodingService interface {
+	Geocode(ctx context.Context, input dto.GeocodingInput, lang language.Tag) (dto.GeocodingOutput, error)
+	ReverseGeocode(ctx context.Context, input dto.ReverseGeocodingInput, lang language.Tag) (dto.ReverseGeocodingOutput, error)
 }
 
 type HealthService interface {

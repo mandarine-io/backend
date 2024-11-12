@@ -26,6 +26,33 @@ definitions:
     - isPasswordTemp
     - username
     type: object
+  dto.AddressOutput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      countryCode:
+        type: string
+      county:
+        type: string
+      formattedAddress:
+        type: string
+      houseNumber:
+        type: string
+      postcode:
+        type: string
+      state:
+        type: string
+      stateCode:
+        type: string
+      stateDistrict:
+        type: string
+      street:
+        type: string
+      suburb:
+        type: string
+    type: object
   dto.CreateMasterProfileInput:
     properties:
       address:
@@ -65,6 +92,15 @@ definitions:
     - path
     - status
     - timestamp
+    type: object
+  dto.GeocodingOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/dto.PointOutput'
+        type: array
     type: object
   dto.HealthOutput:
     properties:
@@ -200,6 +236,15 @@ definitions:
     - email
     - otp
     - password
+    type: object
+  dto.ReverseGeocodingOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/dto.AddressOutput'
+        type: array
     type: object
   dto.SetPasswordInput:
     properties:
@@ -1069,6 +1114,95 @@ paths:
       summary: Social login callback
       tags:
       - Authentication and Authorization API
+  /v0/geocode/forward:
+    get:
+      consumes:
+      - application/json
+      description: Request for geocoding. User must be logged in. In response will
+        be returned coordinates.
+      operationId: Geocode
+      parameters:
+      - in: query
+        name: address
+        required: true
+        type: string
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Geocoded coordinates
+          schema:
+            $ref: '#/definitions/dto.GeocodingOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "503":
+          description: Geocoding service is unavailable
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Geocode
+      tags:
+      - Geocoding API
+  /v0/geocode/reverse:
+    get:
+      consumes:
+      - application/json
+      description: Request for reverse geocoding. User must be logged in. In response
+        will be returned address.
+      operationId: ReverseGeocode
+      parameters:
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - format: lng,lat
+        in: query
+        name: point
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reverse geocoded address
+          schema:
+            $ref: '#/definitions/dto.ReverseGeocodingOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "503":
+          description: Geocoding service is unavailable
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reverse geocode
+      tags:
+      - Geocoding API
   /v0/masters/profile:
     get:
       consumes:
@@ -1123,6 +1257,10 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
         "401":
           description: Unauthorized error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User is blocked or deleted
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
         "404":
@@ -1211,8 +1349,12 @@ paths:
           description: Unauthorized error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
         "404":
-          description: User not found
+          description: Master profile not found
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
         "409":
@@ -1252,8 +1394,12 @@ paths:
           description: Unauthorized error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
         "404":
-          description: User not found
+          description: Master profile not found
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
         "500":
@@ -1413,10 +1559,12 @@ tags:
   name: Account API
 - description: API for authentication and authorization
   name: Authentication and Authorization API
-- description: API for resource management
-  name: Resource API
+- description: API for geocoding
+  name: Geocoding API
 - description: API for master profile management
   name: Master Profile API
+- description: API for resource management
+  name: Resource API
 - description: API for websocket connection
   name: Websocket API
 - description: API for getting metrics

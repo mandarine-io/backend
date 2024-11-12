@@ -6,6 +6,7 @@ import (
 	"github.com/mandarine-io/Backend/internal/transport/http/handler/swagger"
 	"github.com/mandarine-io/Backend/internal/transport/http/handler/v0/account"
 	"github.com/mandarine-io/Backend/internal/transport/http/handler/v0/auth"
+	"github.com/mandarine-io/Backend/internal/transport/http/handler/v0/geocoding"
 	masterprofile "github.com/mandarine-io/Backend/internal/transport/http/handler/v0/master/profile"
 	"github.com/mandarine-io/Backend/internal/transport/http/handler/v0/resource"
 	"github.com/mandarine-io/Backend/internal/transport/http/handler/v0/ws"
@@ -19,6 +20,7 @@ func setupHandlers(c *Container) {
 	c.Handlers = Handlers{
 		account.NewHandler(c.SVCs.Account),
 		auth.NewHandler(c.SVCs.Auth, c.Config),
+		geocoding.NewHandler(c.SVCs.Geocoding),
 		health.NewHandler(c.SVCs.Health),
 		masterprofile.NewHandler(c.SVCs.MasterProfile),
 		resource.NewHandler(c.SVCs.Resource),

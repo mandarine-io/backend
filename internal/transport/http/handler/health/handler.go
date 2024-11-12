@@ -3,17 +3,17 @@ package health
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
-type Handler struct {
+type handler struct {
 	svc service.HealthService
 }
 
-func NewHandler(svc service.HealthService) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc service.HealthService) apihandler.ApiHandler {
+	return &handler{svc: svc}
 }
 
 // RegisterRoutes godoc
@@ -26,12 +26,12 @@ func NewHandler(svc service.HealthService) *Handler {
 //	@Produce		json
 //	@Success		200	{object}	[]dto.HealthOutput
 //	@Router			/health [get]
-func (h *Handler) RegisterRoutes(router *gin.Engine, _ handler.RouteMiddlewares) {
+func (h *handler) RegisterRoutes(router *gin.Engine, _ apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register healthcheck routes")
 	router.GET("/health", h.Health)
 }
 
-func (h *Handler) Health(c *gin.Context) {
+func (h *handler) Health(c *gin.Context) {
 	log.Debug().Msg("handle health")
 
 	resp := h.svc.Health()

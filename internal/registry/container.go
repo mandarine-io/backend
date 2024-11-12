@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/go-resty/resty/v2"
 	"github.com/mandarine-io/Backend/internal/config"
+	"github.com/mandarine-io/Backend/pkg/geocoding"
 	"github.com/mandarine-io/Backend/pkg/locale"
 	"github.com/mandarine-io/Backend/pkg/oauth"
 	"github.com/mandarine-io/Backend/pkg/pubsub"
@@ -22,15 +23,16 @@ import (
 )
 
 type Container struct {
-	Config         *config.Config
-	Logger         *zerolog.Logger
-	Bundle         *i18n.Bundle
-	DB             *gorm.DB
-	WebsocketPool  *websocket.Pool
-	HttpClient     *resty.Client
-	OauthProviders map[string]oauth.Provider
-	SmtpSender     smtp.Sender
-	TemplateEngine template.Engine
+	Config             *config.Config
+	Logger             *zerolog.Logger
+	Bundle             *i18n.Bundle
+	DB                 *gorm.DB
+	WebsocketPool      *websocket.Pool
+	HttpClient         *resty.Client
+	OauthProviders     map[string]oauth.Provider
+	GeocodingProviders map[string]geocoding.Provider
+	SmtpSender         smtp.Sender
+	TemplateEngine     template.Engine
 
 	Cache struct {
 		RDB     redis.UniversalClient
@@ -91,6 +93,7 @@ func (c *Container) MustInitialize(cfg *config.Config) {
 	setupS3(c)
 	setupPubSub(c)
 	setupOAuthClients(c)
+	setupGeocodingClients(c)
 	setupGormRepositories(c)
 	setupServices(c)
 	setupHandlers(c)

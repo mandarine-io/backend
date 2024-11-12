@@ -4,16 +4,19 @@ import (
 	"github.com/mandarine-io/Backend/internal/domain/service"
 	"github.com/mandarine-io/Backend/internal/domain/service/account"
 	"github.com/mandarine-io/Backend/internal/domain/service/auth"
+	"github.com/mandarine-io/Backend/internal/domain/service/geocoding"
 	"github.com/mandarine-io/Backend/internal/domain/service/health"
 	masterprofile "github.com/mandarine-io/Backend/internal/domain/service/master/profile"
 	"github.com/mandarine-io/Backend/internal/domain/service/resource"
 	"github.com/mandarine-io/Backend/internal/domain/service/ws"
+	geocoding2 "github.com/mandarine-io/Backend/pkg/geocoding"
 	"github.com/rs/zerolog/log"
 )
 
 type Services struct {
 	Account       service.AccountService
 	Auth          service.AuthService
+	Geocoding     service.GeocodingService
 	Health        service.HealthService
 	MasterProfile service.MasterProfileService
 	Resource      service.ResourceService
@@ -22,6 +25,12 @@ type Services struct {
 
 func setupServices(c *Container) {
 	log.Debug().Msg("setup services")
+
+	geocodingProviders := make([]geocoding2.Provider, 0, len(c.Config.GeocodingClients))
+	for _, provider := range c.GeocodingProviders {
+		geocodingProviders = append(geocodingProviders, provider)
+	}
+
 	c.SVCs = &Services{
 		Account: account.NewService(
 			c.Repos.User,
@@ -38,6 +47,10 @@ func setupServices(c *Container) {
 			c.SmtpSender,
 			c.TemplateEngine,
 			c.Config,
+		),
+		Geocoding: geocoding.NewService(
+			geocodingProviders,
+			c.Cache.Manager,
 		),
 		Health: health.NewService(
 			c.DB,

@@ -26,19 +26,20 @@ func GetConfigName() string {
 }
 
 type Config struct {
-	Server       ServerConfig
-	Database     DatabaseConfig
-	Cache        CacheConfig
-	S3           S3Config
-	PubSub       PubSubConfig
-	SMTP         SmtpConfig
-	Websocket    WebsocketConfig
-	Locale       LocaleConfig
-	Template     TemplateConfig
-	Migrations   MigrationConfig
-	Logger       LoggerConfig
-	OAuthClients map[string]OauthClientConfig
-	Security     SecurityConfig
+	Server           ServerConfig
+	Database         DatabaseConfig
+	Cache            CacheConfig
+	S3               S3Config
+	PubSub           PubSubConfig
+	SMTP             SmtpConfig
+	Websocket        WebsocketConfig
+	Locale           LocaleConfig
+	Template         TemplateConfig
+	Migrations       MigrationConfig
+	Logger           LoggerConfig
+	OAuthClients     map[string]OauthClientConfig
+	GeocodingClients map[string]GeocodingClientConfig
+	Security         SecurityConfig
 }
 
 ////////// Server //////////
@@ -159,6 +160,12 @@ type WebsocketConfig struct {
 type OauthClientConfig struct {
 	ClientID     string `validate:"required"`
 	ClientSecret string `validate:"required"`
+}
+
+////////// Geocoding Clients //////////
+
+type GeocodingClientConfig struct {
+	APIKey string `validate:"required"`
 }
 
 ////////// Security //////////

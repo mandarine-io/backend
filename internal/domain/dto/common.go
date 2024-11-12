@@ -13,3 +13,8 @@ type SortInput struct {
 	Field string `json:"field" form:"field" binding:"required"`
 	Order string `json:"order" form:"order" binding:"omitempty,oneof=asc desc"`
 }
+
+type PointOutput struct {
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+}

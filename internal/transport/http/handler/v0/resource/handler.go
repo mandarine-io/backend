@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	dto2 "github.com/mandarine-io/Backend/internal/domain/dto"
 	"github.com/mandarine-io/Backend/internal/domain/service"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
+	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
 	"github.com/mandarine-io/Backend/pkg/storage/s3"
 	"github.com/mandarine-io/Backend/pkg/transport/http/dto"
 	"github.com/pkg/errors"
@@ -16,17 +16,15 @@ var (
 	ErrResourceNotUploaded = dto.NewI18nError("resource not uploaded", "errors.resource_not_uploaded")
 )
 
-type Handler struct {
+type handler struct {
 	svc service.ResourceService
 }
 
-func NewHandler(svc service.ResourceService) *Handler {
-	return &Handler{
-		svc: svc,
-	}
+func NewHandler(svc service.ResourceService) apihandler.ApiHandler {
+	return &handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMiddlewares) {
+func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register resource routes")
 
 	router.GET("v0/resources/:objectId", h.DownloadResource)
@@ -63,7 +61,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Failure		403			{object}	dto.ErrorResponse	"User is blocked or deleted"
 //	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/resources/one [post]
-func (h *Handler) UploadResource(ctx *gin.Context) {
+func (h *handler) UploadResource(ctx *gin.Context) {
 	log.Debug().Msg("handle upload resource")
 
 	var req dto2.UploadResourceInput
@@ -102,7 +100,7 @@ func (h *Handler) UploadResource(ctx *gin.Context) {
 //	@Failure		403			{object}	dto.ErrorResponse	"User is blocked or deleted"
 //	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/resources/many [post]
-func (h *Handler) UploadResources(ctx *gin.Context) {
+func (h *handler) UploadResources(ctx *gin.Context) {
 	log.Debug().Msg("handle upload resources")
 
 	var req dto2.UploadResourcesInput
@@ -132,7 +130,7 @@ func (h *Handler) UploadResources(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"Resource not found"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/resources/{objectId} [get]
-func (h *Handler) DownloadResource(ctx *gin.Context) {
+func (h *handler) DownloadResource(ctx *gin.Context) {
 	log.Debug().Msg("handle download resource")
 
 	objectId := ctx.Param("objectId")

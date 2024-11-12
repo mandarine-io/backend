@@ -1144,6 +1144,141 @@
                 }
             }
         },
+        "/v0/geocode/forward": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for geocoding. User must be logged in. In response will be returned coordinates.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Geocoding API"
+                ],
+                "summary": "Geocode",
+                "operationId": "Geocode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "address",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Geocoded coordinates",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GeocodingOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Geocoding service is unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v0/geocode/reverse": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Request for reverse geocoding. User must be logged in. In response will be returned address.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Geocoding API"
+                ],
+                "summary": "Reverse geocode",
+                "operationId": "ReverseGeocode",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "lng,lat",
+                        "name": "point",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reverse geocoded address",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReverseGeocodingOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Geocoding service is unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v0/masters/profile": {
             "get": {
                 "security": [
@@ -1234,6 +1369,12 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Master profile not found",
                         "schema": {
@@ -1296,8 +1437,14 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "User not found",
+                        "description": "Master profile not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1426,8 +1573,14 @@
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "User is blocked or deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "User not found",
+                        "description": "Master profile not found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -1682,6 +1835,47 @@
                 }
             }
         },
+        "dto.AddressOutput": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "countryCode": {
+                    "type": "string"
+                },
+                "county": {
+                    "type": "string"
+                },
+                "formattedAddress": {
+                    "type": "string"
+                },
+                "houseNumber": {
+                    "type": "string"
+                },
+                "postcode": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "stateCode": {
+                    "type": "string"
+                },
+                "stateDistrict": {
+                    "type": "string"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "suburb": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateMasterProfileInput": {
             "type": "object",
             "required": [
@@ -1735,6 +1929,20 @@
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.GeocodingOutput": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PointOutput"
+                    }
                 }
             }
         },
@@ -1936,6 +2144,20 @@
                 }
             }
         },
+        "dto.ReverseGeocodingOutput": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AddressOutput"
+                    }
+                }
+            }
+        },
         "dto.SetPasswordInput": {
             "type": "object",
             "required": [
@@ -2108,12 +2330,16 @@
             "name": "Authentication and Authorization API"
         },
         {
-            "description": "API for resource management",
-            "name": "Resource API"
+            "description": "API for geocoding",
+            "name": "Geocoding API"
         },
         {
             "description": "API for master profile management",
             "name": "Master Profile API"
+        },
+        {
+            "description": "API for resource management",
+            "name": "Resource API"
         },
         {
             "description": "API for websocket connection",
