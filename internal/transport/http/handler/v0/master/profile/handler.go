@@ -65,8 +65,8 @@ func (h *Handler) RegisterRoutes(router *gin.Engine, middlewares handler.RouteMi
 //	@Success		201		{object}	dto.OwnMasterProfileOutput "Created master profile"
 //	@Failure		400		{object}	dto.ErrorResponse	"Validation error"
 //	@Failure		401		{object}	dto.ErrorResponse	"Unauthorized error"
+//	@Failure		403		{object}	dto.ErrorResponse	"User is blocked or deleted"
 //	@Failure		404		{object}	dto.ErrorResponse	"Master profile not found"
-//	@Failure		404		{object}	dto.ErrorResponse	"User not found"
 //	@Failure		409		{object}	dto.ErrorResponse	"Master profile already exists"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/masters/profile [post]
@@ -160,6 +160,7 @@ func (h *Handler) UpdateMasterProfile(ctx *gin.Context) {
 //	@Success		200		{object}	dto.MasterProfilesOutput	"Found master profiles"
 //	@Failure		400		{object}	dto.ErrorResponse	"Validation error"
 //	@Failure		401		{object}	dto.ErrorResponse	"Unauthorized error"
+//	@Failure		403		{object}	dto.ErrorResponse	"User is blocked or deleted"
 //	@Failure		404		{object}	dto.ErrorResponse	"Master profile not found"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/masters/profile [get]
@@ -199,8 +200,8 @@ func (h *Handler) FindMasterProfiles(ctx *gin.Context) {
 //	@Success		200			{object}	dto.MasterProfileOutput	"Found master profile"
 //	@Success		200			{object}	dto.OwnMasterProfileOutput	"Found own master profile"
 //	@Failure		401			{object}	dto.ErrorResponse	"Unauthorized error"
+//	@Failure		403			{object}	dto.ErrorResponse	"User is blocked or deleted"
 //	@Failure		404			{object}	dto.ErrorResponse	"Master profile not found"
-//	@Failure		404			{object}	dto.ErrorResponse	"User not found"
 //	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/masters/profile/{username} [get]
 func (h *Handler) GetMasterProfile(ctx *gin.Context) {
