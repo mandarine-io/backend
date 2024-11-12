@@ -24,8 +24,8 @@ type svc struct {
 	manager  cache.Manager
 }
 
-func NewService(provider geocoding.Provider, manager cache.Manager) service.GeocodingService {
-	return &svc{provider: provider, manager: manager}
+func NewService(providers []geocoding.Provider, manager cache.Manager) service.GeocodingService {
+	return &svc{provider: chained.NewProvider(providers...), manager: manager}
 }
 
 func (s *svc) Geocode(ctx context.Context, input dto.GeocodingInput, lang language.Tag) (dto.GeocodingOutput, error) {

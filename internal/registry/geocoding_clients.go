@@ -2,7 +2,6 @@ package registry
 
 import (
 	"github.com/mandarine-io/Backend/pkg/geocoding"
-	"github.com/mandarine-io/Backend/pkg/geocoding/chained"
 	"github.com/mandarine-io/Backend/pkg/geocoding/factory"
 	"github.com/rs/zerolog/log"
 )
@@ -24,6 +23,4 @@ func setupGeocodingClients(c *Container) {
 		c.GeocodingProviders[k] = provider
 		providers = append(providers, provider)
 	}
-
-	c.GeocodingChainedProvider = chained.NewProvider(providers...)
 }

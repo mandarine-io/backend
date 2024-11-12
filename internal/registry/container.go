@@ -23,17 +23,16 @@ import (
 )
 
 type Container struct {
-	Config                   *config.Config
-	Logger                   *zerolog.Logger
-	Bundle                   *i18n.Bundle
-	DB                       *gorm.DB
-	WebsocketPool            *websocket.Pool
-	HttpClient               *resty.Client
-	OauthProviders           map[string]oauth.Provider
-	GeocodingProviders       map[string]geocoding.Provider
-	GeocodingChainedProvider geocoding.Provider
-	SmtpSender               smtp.Sender
-	TemplateEngine           template.Engine
+	Config             *config.Config
+	Logger             *zerolog.Logger
+	Bundle             *i18n.Bundle
+	DB                 *gorm.DB
+	WebsocketPool      *websocket.Pool
+	HttpClient         *resty.Client
+	OauthProviders     map[string]oauth.Provider
+	GeocodingProviders map[string]geocoding.Provider
+	SmtpSender         smtp.Sender
+	TemplateEngine     template.Engine
 
 	Cache struct {
 		RDB     redis.UniversalClient
