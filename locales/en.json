@@ -10,9 +10,11 @@
       "uri": "Invalid URI",
       "lowercase": "Must be lowercase",
       "alphanum": "Must be alphanumeric",
-      "max": "Maximum {{.param}} characters",
+      "min": "Minimum {{.param}}",
+      "max": "Maximum {{.param}}",
       "numeric": "Must be numeric",
-      "point": "Invalid point (longitude,latitude)"
+      "point": "Invalid point (longitude,latitude)",
+      "username": "Invalid username"
     },
     "access_denied": "Access denied",
     "too_many_requests": "Too many requests",
