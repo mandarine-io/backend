@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
-	"strconv"
 )
 
 const (
@@ -51,7 +50,7 @@ func (s *svc) Geocode(ctx context.Context, input dto.GeocodingInput, lang langua
 	locs, err = s.provider.GeocodeWithContext(ctx, input.Address, geocoding.GeocodeConfig{Lang: lang, Limit: input.Limit})
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("failed to geocode address")
-		if errors.Is(err, chained.ErrGeocodeProvidersUnavailable) {
+		if errors.Is(err, geocoding.ErrGeocodeProvidersUnavailable) {
 			return dto.GeocodingOutput{}, service.ErrGeocodeProvidersUnavailable
 		}
 		return dto.GeocodingOutput{}, err
@@ -69,7 +68,7 @@ func (s *svc) Geocode(ctx context.Context, input dto.GeocodingInput, lang langua
 func (s *svc) ReverseGeocode(
 	ctx context.Context, input dto.ReverseGeocodingInput, lang language.Tag,
 ) (dto.ReverseGeocodingOutput, error) {
-	log.Info().Msgf("reverse geocode latitude: %f, longitude: %f", input.Latitude, input.Longitude)
+	log.Info().Msgf("reverse geocode point: %s", input.Point)
 
 	var (
 		addrs []*geocoding.Address
@@ -77,11 +76,7 @@ func (s *svc) ReverseGeocode(
 	)
 
 	// Get from cache
-	key := cache2.CreateCacheKey(
-		reverseGeocodeCache,
-		strconv.FormatFloat(input.Latitude, 'g', -1, 64),
-		strconv.FormatFloat(input.Longitude, 'g', -1, 64),
-	)
+	key := cache2.CreateCacheKey(reverseGeocodeCache, input.Point)
 	err = s.manager.Get(ctx, key, &addrs)
 	if err == nil {
 		return mapper.MapAddressesToGeocodingOutput(addrs), nil
@@ -93,12 +88,12 @@ func (s *svc) ReverseGeocode(
 	// Get from provider
 	addrs, err = s.provider.ReverseGeocodeWithContext(
 		ctx,
-		geocoding.Location{Lat: input.Latitude, Lng: input.Longitude},
+		mapper.MapPointStringToLocation(input.Point),
 		geocoding.ReverseGeocodeConfig{Lang: lang, Limit: input.Limit, Zoom: 18},
 	)
 	if err != nil {
 		log.Error().Stack().Err(err).Msg("failed to reverse geocode address")
-		if errors.Is(err, chained.ErrGeocodeProvidersUnavailable) {
+		if errors.Is(err, geocoding.ErrGeocodeProvidersUnavailable) {
 			return dto.ReverseGeocodingOutput{}, service.ErrGeocodeProvidersUnavailable
 		}
 		return dto.ReverseGeocodingOutput{}, err

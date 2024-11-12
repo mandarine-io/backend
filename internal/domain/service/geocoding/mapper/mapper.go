@@ -3,7 +3,24 @@ package mapper
 import (
 	"github.com/mandarine-io/Backend/internal/domain/dto"
 	"github.com/mandarine-io/Backend/pkg/geocoding"
+	"strconv"
+	"strings"
 )
+
+func MapPointStringToLocation(point string) geocoding.Location {
+	var (
+		latitude  float64
+		longitude float64
+	)
+
+	parts := strings.Split(point, ",")
+	if len(parts) >= 2 {
+		longitude, _ = strconv.ParseFloat(parts[0], 64)
+		latitude, _ = strconv.ParseFloat(parts[1], 64)
+	}
+
+	return geocoding.Location{Lat: latitude, Lng: longitude}
+}
 
 func MapAddressToAddressOutput(address *geocoding.Address) dto.AddressOutput {
 	return dto.AddressOutput{

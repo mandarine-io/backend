@@ -1,8 +1,8 @@
 package dto
 
 type GeocodingInput struct {
-	Address string `form:"address" validate:"required"`
-	Limit   int    `form:"limit,default=1" validate:"min=1"`
+	Address string `form:"address" binding:"required"`
+	Limit   int    `form:"limit,default=1" binding:"min=1"`
 }
 
 type GeocodingOutput struct {
@@ -11,9 +11,8 @@ type GeocodingOutput struct {
 }
 
 type ReverseGeocodingInput struct {
-	Latitude  float64 `form:"latitude" validate:"required"`
-	Longitude float64 `form:"longitude" validate:"required"`
-	Limit     int     `form:"limit,default=1" validate:"min=1"`
+	Point string `form:"point" format:"lng,lat" binding:"point"`
+	Limit int    `form:"limit,default=1" binding:"min=1"`
 }
 
 type AddressOutput struct {
