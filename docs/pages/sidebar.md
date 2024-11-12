@@ -16,6 +16,8 @@
         - [E2E test](home#e2e-testing)
         - [Load test](home#load-testing)
     - [License](home#license)
+- **Architecture**
+    - [Schema](architecture#main)
 - **Configuration**
     - [Server settings](config#server)
     - [Database provider settings](config#database-provider)
