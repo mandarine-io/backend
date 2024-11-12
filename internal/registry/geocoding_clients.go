@@ -9,7 +9,6 @@ import (
 func setupGeocodingClients(c *Container) {
 	log.Debug().Msg("setup geocoding providers")
 
-	providers := make([]geocoding.Provider, 0, len(c.Config.GeocodingClients))
 	c.GeocodingProviders = make(map[string]geocoding.Provider)
 
 	for k, v := range c.Config.GeocodingClients {
@@ -21,6 +20,5 @@ func setupGeocodingClients(c *Container) {
 		}
 
 		c.GeocodingProviders[k] = provider
-		providers = append(providers, provider)
 	}
 }
