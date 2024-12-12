@@ -28,53 +28,53 @@ func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.Rout
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.GetAccount,
+		h.getAccount,
 	)
 	router.PATCH(
 		"v0/account/username",
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.UpdateUsername)
+		h.updateUsername)
 	router.PATCH(
 		"v0/account/email",
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.UpdateEmail)
+		h.updateEmail)
 	router.POST(
 		"v0/account/email/verify",
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.VerifyEmail)
+		h.verifyEmail)
 	router.POST(
 		"v0/account/password",
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.SetPassword)
+		h.setPassword)
 	router.PATCH(
 		"v0/account/password",
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.UpdatePassword)
+		h.updatePassword)
 	router.DELETE(
 		"v0/account",
 		middlewares.Auth,
 		middlewares.BannedUser,
 		middlewares.DeletedUser,
-		h.DeleteAccount)
+		h.deleteAccount)
 	router.GET(
 		"v0/account/restore",
 		middlewares.Auth,
 		middlewares.BannedUser,
-		h.RestoreAccount,
+		h.restoreAccount,
 	)
 }
 
-// GetAccount godoc
+// getAccount godoc
 //
 //	@Id				GetAccount
 //	@Summary		Get service
@@ -89,7 +89,7 @@ func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.Rout
 //	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account [get]
-func (h *handler) GetAccount(ctx *gin.Context) {
+func (h *handler) getAccount(ctx *gin.Context) {
 	log.Debug().Msg("handle get service")
 	principal, err := middleware2.GetAuthUser(ctx)
 	if err != nil {
@@ -111,7 +111,7 @@ func (h *handler) GetAccount(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-// UpdateUsername godoc
+// updateUsername godoc
 //
 //	@Id				UpdateUsername
 //	@Summary		Update username
@@ -129,7 +129,7 @@ func (h *handler) GetAccount(ctx *gin.Context) {
 //	@Failure		409		{object}	dto.ErrorResponse	"Duplicate username"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/username [patch]
-func (h *handler) UpdateUsername(ctx *gin.Context) {
+func (h *handler) updateUsername(ctx *gin.Context) {
 	log.Debug().Msg("handle update username")
 
 	req := dto.UpdateUsernameInput{}
@@ -160,7 +160,7 @@ func (h *handler) UpdateUsername(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-// UpdateEmail godoc
+// updateEmail godoc
 //
 //	@Id				UpdateEmail
 //	@Summary		Update email
@@ -179,7 +179,7 @@ func (h *handler) UpdateUsername(ctx *gin.Context) {
 //	@Failure		409		{object}	dto.ErrorResponse	"Duplicate email"
 //	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/email [patch]
-func (h *handler) UpdateEmail(ctx *gin.Context) {
+func (h *handler) updateEmail(ctx *gin.Context) {
 	log.Debug().Msg("handle update email")
 
 	req := dto.UpdateEmailInput{}
@@ -219,7 +219,7 @@ func (h *handler) UpdateEmail(ctx *gin.Context) {
 	}
 }
 
-// VerifyEmail godoc
+// verifyEmail godoc
 //
 //	@Id				VerifyEmail
 //	@Summary		Verify email
@@ -236,7 +236,7 @@ func (h *handler) UpdateEmail(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/email/verify [post]
-func (h *handler) VerifyEmail(ctx *gin.Context) {
+func (h *handler) verifyEmail(ctx *gin.Context) {
 	log.Debug().Msg("handle verify email")
 
 	req := dto.VerifyEmailInput{}
@@ -266,7 +266,7 @@ func (h *handler) VerifyEmail(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-// SetPassword godoc
+// setPassword godoc
 //
 //	@Id				SetPassword
 //	@Summary		Set password
@@ -284,7 +284,7 @@ func (h *handler) VerifyEmail(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"Password is set"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/password [post]
-func (h *handler) SetPassword(ctx *gin.Context) {
+func (h *handler) setPassword(ctx *gin.Context) {
 	log.Debug().Msg("handle set password")
 
 	req := dto.SetPasswordInput{}
@@ -314,7 +314,7 @@ func (h *handler) SetPassword(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-// UpdatePassword godoc
+// updatePassword godoc
 //
 //	@Id				UpdatePassword
 //	@Summary		Update password
@@ -331,7 +331,7 @@ func (h *handler) SetPassword(ctx *gin.Context) {
 //	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/password [patch]
-func (h *handler) UpdatePassword(ctx *gin.Context) {
+func (h *handler) updatePassword(ctx *gin.Context) {
 	log.Debug().Msg("handle update password")
 
 	req := dto.UpdatePasswordInput{}
@@ -361,7 +361,7 @@ func (h *handler) UpdatePassword(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-// RestoreAccount godoc
+// restoreAccount godoc
 //
 //	@Id				RestoreAccount
 //	@Summary		Restore service
@@ -377,7 +377,7 @@ func (h *handler) UpdatePassword(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"User is not deleted"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account/restore [get]
-func (h *handler) RestoreAccount(ctx *gin.Context) {
+func (h *handler) restoreAccount(ctx *gin.Context) {
 	log.Debug().Msg("handle restore service")
 
 	principal, err := middleware2.GetAuthUser(ctx)
@@ -402,7 +402,7 @@ func (h *handler) RestoreAccount(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-// DeleteAccount godoc
+// deleteAccount godoc
 //
 //	@Id				DeleteAccount
 //	@Summary		Delete service
@@ -418,7 +418,7 @@ func (h *handler) RestoreAccount(ctx *gin.Context) {
 //	@Failure		409	{object}	dto.ErrorResponse	"User is deleted"
 //	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
 //	@Router			/v0/account [delete]
-func (h *handler) DeleteAccount(ctx *gin.Context) {
+func (h *handler) deleteAccount(ctx *gin.Context) {
 	log.Debug().Msg("handle delete service")
 
 	principal, err := middleware2.GetAuthUser(ctx)
