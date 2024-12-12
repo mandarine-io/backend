@@ -7,7 +7,6 @@ import (
 	"github.com/mandarine-io/Backend/pkg/smtp"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
-	checks2 "github.com/tavsec/gin-healthcheck/checks"
 	"gorm.io/gorm"
 )
 
@@ -30,27 +29,39 @@ func NewService(db *gorm.DB, cacheRdb redis.UniversalClient, pubSubRdb redis.Uni
 }
 
 func (s *svc) Health() []dto.HealthOutput {
-	checks := make([]checks2.Check, 0)
-	if s.db != nil {
-		checks = append(checks, check2.NewGormCheck(s.db))
-	}
-	if s.minio != nil {
-		checks = append(checks, check2.NewMinioCheck(s.minio))
-	}
-	if s.sender != nil {
-		checks = append(checks, check2.NewSmtpCheck(s.sender))
-	}
-	if s.cacheRdb != nil {
-		checks = append(checks, check2.NewRedisCheck(s.cacheRdb))
-	}
-	if s.pubSubRdb != nil {
-		checks = append(checks, check2.NewRedisCheck(s.pubSubRdb))
-	}
-
 	resp := make([]dto.HealthOutput, 0)
-	for _, check := range checks {
+	if s.db != nil {
+		check := check2.NewGormCheck(s.db)
 		resp = append(resp, dto.HealthOutput{
 			Name: check.Name(),
+			Pass: check.Pass(),
+		})
+	}
+	if s.minio != nil {
+		check := check2.NewMinioCheck(s.minio)
+		resp = append(resp, dto.HealthOutput{
+			Name: check.Name(),
+			Pass: check.Pass(),
+		})
+	}
+	if s.sender != nil {
+		check := check2.NewSmtpCheck(s.sender)
+		resp = append(resp, dto.HealthOutput{
+			Name: check.Name(),
+			Pass: check.Pass(),
+		})
+	}
+	if s.cacheRdb != nil {
+		check := check2.NewRedisCheck(s.cacheRdb)
+		resp = append(resp, dto.HealthOutput{
+			Name: "redis - cache",
+			Pass: check.Pass(),
+		})
+	}
+	if s.pubSubRdb != nil {
+		check := check2.NewRedisCheck(s.pubSubRdb)
+		resp = append(resp, dto.HealthOutput{
+			Name: "redis - pub/sub",
 			Pass: check.Pass(),
 		})
 	}

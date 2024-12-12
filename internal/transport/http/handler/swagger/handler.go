@@ -25,12 +25,12 @@ func NewHandler() apihandler.ApiHandler {
 func (h *handler) RegisterRoutes(router *gin.Engine, _ apihandler.RouteMiddlewares) {
 	log.Debug().Msg("register swagger routes")
 
-	router.GET("/swagger/api-docs.json", h.GetApiDocJson)
-	router.GET("/swagger/api-docs.yaml", h.GetApiDocYaml)
-	router.GET("/swagger/index.html", h.GetUI)
+	router.GET("/swagger/api-docs.json", h.getApiDocJson)
+	router.GET("/swagger/api-docs.yaml", h.getApiDocYaml)
+	router.GET("/swagger/index.html", h.getUI)
 }
 
-// GetUI godoc
+// getUI godoc
 //
 //	@Id				SwaggerUI
 //	@Summary		Swagger UI
@@ -39,35 +39,35 @@ func (h *handler) RegisterRoutes(router *gin.Engine, _ apihandler.RouteMiddlewar
 //	@Produce		text/html
 //	@Success		200	{object}	string
 //	@Router			/swagger/index.html [get]
-func (h *handler) GetUI(ctx *gin.Context) {
+func (h *handler) getUI(ctx *gin.Context) {
 	log.Debug().Msg("get swagger ui")
 	ctx.Data(http.StatusOK, "text/html", h.uiStatic)
 }
 
-// GetApiDocYaml godoc
+// getApiDocYaml godoc
 //
-//	@Id				Swagger API specification in YAML
+//	@Id				SwaggerYAML
 //	@Summary		Swagger YAML
 //	@Description	Request for getting swagger specification in YAML
 //	@Tags			Swagger API
 //	@Produce		text/plain
 //	@Success		200	{object}	string
 //	@Router			/swagger/api-docs.yaml [get]
-func (h *handler) GetApiDocYaml(ctx *gin.Context) {
+func (h *handler) getApiDocYaml(ctx *gin.Context) {
 	log.Debug().Msg("get swagger yaml")
 	ctx.Data(http.StatusOK, "text/plain", h.swaggerYaml)
 }
 
-// GetApiDocJson godoc
+// getApiDocJson godoc
 //
-//	@Id				Swagger API specification in JSON
+//	@Id				SwaggerJSON
 //	@Summary		Swagger JSON
 //	@Description	Request for getting swagger specification in JSON
 //	@Tags			Swagger API
 //	@Produce		text/plain
 //	@Success		200	{object}	string
 //	@Router			/swagger/api-docs.json [get]
-func (h *handler) GetApiDocJson(ctx *gin.Context) {
+func (h *handler) getApiDocJson(ctx *gin.Context) {
 	log.Debug().Msg("get swagger json")
 	ctx.Data(http.StatusOK, "text/plain", h.swaggerJson)
 }

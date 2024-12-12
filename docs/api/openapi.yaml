@@ -12,9 +12,8 @@ info:
 paths:
   /health:
     get:
-      description: Request for getting health status. In response will be status of
-        all check (database, minio, smtp, redis).
-      operationId: Health
+      description: Request for getting health. Alias healthReadiness
+      operationId: health
       responses:
         "200":
           description: OK
@@ -27,10 +26,37 @@ paths:
       summary: Health
       tags:
         - Metrics API
+  /health/liveness:
+    get:
+      description: Request for getting health liveness.
+      operationId: healthLiveness
+      responses:
+        "200":
+          description: OK
+      summary: Health liveness
+      tags:
+        - Metrics API
+  /health/readiness:
+    get:
+      description: Request for getting health readiness. In response will be status of
+        all check (database, s3, smtp, cache, pubsub).
+      operationId: healthReadiness
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/dto.HealthOutput"
+                type: array
+      summary: Health readiness
+      tags:
+        - Metrics API
   /swagger/api-docs.json:
     get:
       description: Request for getting swagger specification in JSON
-      operationId: Swagger API specification in JSON
+      operationId: SwaggerJSON
       responses:
         "200":
           description: OK
@@ -44,7 +70,7 @@ paths:
   /swagger/api-docs.yaml:
     get:
       description: Request for getting swagger specification in YAML
-      operationId: Swagger API specification in YAML
+      operationId: SwaggerYAML
       responses:
         "200":
           description: OK
@@ -656,13 +682,13 @@ paths:
     post:
       description: Request for creating new user. At the end will be sent confirmation
         email with code
-      operationId: RegisterClient
+      operationId: Register
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/dto.RegisterInput"
-        description: RegisterClient request body
+        description: Register request body
         required: true
       responses:
         "202":
@@ -685,7 +711,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
-      summary: RegisterClient
+      summary: Register
       tags:
         - Authentication and Authorization API
   /v0/auth/register/confirm:
@@ -697,7 +723,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/dto.RegisterConfirmInput"
-        description: RegisterClient confirm body
+        description: Register confirm body
         required: true
       responses:
         "200":
@@ -720,7 +746,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
-      summary: RegisterClient confirmation
+      summary: Register confirmation
       tags:
         - Authentication and Authorization API
   /v0/auth/reset-password:
