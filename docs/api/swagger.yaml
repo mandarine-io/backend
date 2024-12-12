@@ -366,9 +366,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Request for getting health status. In response will be status of
-        all check (database, minio, smtp, redis).
-      operationId: Health
+      description: Request for getting health. Alias healthReadiness
+      operationId: health
       produces:
       - application/json
       responses:
@@ -381,10 +380,43 @@ paths:
       summary: Health
       tags:
       - Metrics API
+  /health/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Request for getting health liveness.
+      operationId: healthLiveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Health liveness
+      tags:
+      - Metrics API
+  /health/readiness:
+    get:
+      consumes:
+      - application/json
+      description: Request for getting health readiness. In response will be status
+        of all check (database, s3, smtp, cache, pubsub).
+      operationId: healthReadiness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.HealthOutput'
+            type: array
+      summary: Health readiness
+      tags:
+      - Metrics API
   /swagger/api-docs.json:
     get:
       description: Request for getting swagger specification in JSON
-      operationId: Swagger API specification in JSON
+      operationId: SwaggerJSON
       produces:
       - text/plain
       responses:
@@ -398,7 +430,7 @@ paths:
   /swagger/api-docs.yaml:
     get:
       description: Request for getting swagger specification in YAML
-      operationId: Swagger API specification in YAML
+      operationId: SwaggerYAML
       produces:
       - text/plain
       responses:

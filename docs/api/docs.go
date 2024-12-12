@@ -30,7 +30,7 @@ const docTemplate = `{
     "paths": {
         "/health": {
             "get": {
-                "description": "Request for getting health status. In response will be status of all check (database, minio, smtp, redis).",
+                "description": "Request for getting health. Alias healthReadiness",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,7 +41,55 @@ const docTemplate = `{
                     "Metrics API"
                 ],
                 "summary": "Health",
-                "operationId": "Health",
+                "operationId": "health",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.HealthOutput"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health/liveness": {
+            "get": {
+                "description": "Request for getting health liveness.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Metrics API"
+                ],
+                "summary": "Health liveness",
+                "operationId": "healthLiveness",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/health/readiness": {
+            "get": {
+                "description": "Request for getting health readiness. In response will be status of all check (database, s3, smtp, cache, pubsub).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Metrics API"
+                ],
+                "summary": "Health readiness",
+                "operationId": "healthReadiness",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -65,7 +113,7 @@ const docTemplate = `{
                     "Swagger API"
                 ],
                 "summary": "Swagger JSON",
-                "operationId": "Swagger API specification in JSON",
+                "operationId": "SwaggerJSON",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -86,7 +134,7 @@ const docTemplate = `{
                     "Swagger API"
                 ],
                 "summary": "Swagger YAML",
-                "operationId": "Swagger API specification in YAML",
+                "operationId": "SwaggerYAML",
                 "responses": {
                     "200": {
                         "description": "OK",
