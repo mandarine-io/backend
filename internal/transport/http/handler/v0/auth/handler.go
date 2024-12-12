@@ -175,13 +175,13 @@ func (h *handler) Logout(c *gin.Context) {
 
 // Register godoc
 //
-//	@Id				RegisterClient
-//	@Summary		RegisterClient
+//	@Id				Register
+//	@Summary		Register
 //	@Description	Request for creating new user. At the end will be sent confirmation email with code
 //	@Tags			Authentication and Authorization API
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body	dto.RegisterInput	true	"RegisterClient request body"
+//	@Param			body	body	dto.RegisterInput	true	"Register request body"
 //	@Success		202
 //	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
 //	@Failure		409	{object}	dto.ErrorResponse	"User already exists"
@@ -217,12 +217,12 @@ func (h *handler) Register(ctx *gin.Context) {
 // RegisterConfirm godoc
 //
 //	@Id				RegisterConfirm
-//	@Summary		RegisterClient confirmation
+//	@Summary		Register confirmation
 //	@Description	Request for confirming registration. At the end will be created new user
 //	@Tags			Authentication and Authorization API
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body	dto.RegisterConfirmInput	true	"RegisterClient confirm body"
+//	@Param			body	body	dto.RegisterConfirmInput	true	"Register confirm body"
 //	@Success		200
 //	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
 //	@Failure		409	{object}	dto.ErrorResponse	"User already exists"
