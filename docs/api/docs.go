@@ -946,11 +946,11 @@ const docTemplate = `{
                 "tags": [
                     "Authentication and Authorization API"
                 ],
-                "summary": "RegisterClient",
-                "operationId": "RegisterClient",
+                "summary": "Register",
+                "operationId": "Register",
                 "parameters": [
                     {
-                        "description": "RegisterClient request body",
+                        "description": "Register request body",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -996,11 +996,11 @@ const docTemplate = `{
                 "tags": [
                     "Authentication and Authorization API"
                 ],
-                "summary": "RegisterClient confirmation",
+                "summary": "Register confirmation",
                 "operationId": "RegisterConfirm",
                 "parameters": [
                     {
-                        "description": "RegisterClient confirm body",
+                        "description": "Register confirm body",
                         "name": "body",
                         "in": "body",
                         "required": true,

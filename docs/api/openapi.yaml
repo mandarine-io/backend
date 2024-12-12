@@ -682,13 +682,13 @@ paths:
     post:
       description: Request for creating new user. At the end will be sent confirmation
         email with code
-      operationId: RegisterClient
+      operationId: Register
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/dto.RegisterInput"
-        description: RegisterClient request body
+        description: Register request body
         required: true
       responses:
         "202":
@@ -711,7 +711,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
-      summary: RegisterClient
+      summary: Register
       tags:
         - Authentication and Authorization API
   /v0/auth/register/confirm:
@@ -723,7 +723,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/dto.RegisterConfirmInput"
-        description: RegisterClient confirm body
+        description: Register confirm body
         required: true
       responses:
         "200":
@@ -746,7 +746,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/dto.ErrorResponse"
-      summary: RegisterClient confirmation
+      summary: Register confirmation
       tags:
         - Authentication and Authorization API
   /v0/auth/reset-password:

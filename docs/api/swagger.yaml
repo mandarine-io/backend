@@ -969,9 +969,9 @@ paths:
       - application/json
       description: Request for creating new user. At the end will be sent confirmation
         email with code
-      operationId: RegisterClient
+      operationId: Register
       parameters:
-      - description: RegisterClient request body
+      - description: Register request body
         in: body
         name: body
         required: true
@@ -994,7 +994,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: RegisterClient
+      summary: Register
       tags:
       - Authentication and Authorization API
   /v0/auth/register/confirm:
@@ -1005,7 +1005,7 @@ paths:
         new user
       operationId: RegisterConfirm
       parameters:
-      - description: RegisterClient confirm body
+      - description: Register confirm body
         in: body
         name: body
         required: true
@@ -1028,7 +1028,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: RegisterClient confirmation
+      summary: Register confirmation
       tags:
       - Authentication and Authorization API
   /v0/auth/reset-password:
