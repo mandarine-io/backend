@@ -8,11 +8,9 @@ inputs:
 outputs:
   changes:
     description: 'True if changes were found'
-    value: ${{ steps.check-changes.outputs.changes }}
+    value: ${{ steps.check-changes.outputs.changes-result }}
 runs:
   using: composite
-  outputs:
-    changes: ${{ steps.check-changes.outputs.changes }}
   steps:
     - name: Checkout
       id: checkout
@@ -23,7 +21,7 @@ runs:
       run: |
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ${{ inputs.directory }} | tee changed_files.txt
         if [ ! -s changed_files.txt ]; then
-          echo "changes=false" >> "$GITHUB_OUTPUT"
+          echo "changes-result=false" >> "$GITHUB_OUTPUT"
         else
-          echo "changes=true" >> "$GITHUB_OUTPUT"
+          echo "changes-result=true" >> "$GITHUB_OUTPUT"
         fi
