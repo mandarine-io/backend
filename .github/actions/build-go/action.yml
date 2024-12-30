@@ -1,6 +1,10 @@
 name: Build Golang
 description: Setup Golang environment, resolve dependencies and build Golang application
 inputs:
+  working-directory:
+    description: Path to working directory
+    required: true
+    type: string
   main-path:
     description: Path to main file
     required: false
@@ -15,7 +19,7 @@ runs:
       id: golang-with-cache
       uses: magnetikonline/action-golang-cache@v5
       with:
-        go-version-file: go.mod
+        go-version-file: ${{ inputs.working-directory }}/go.mod
     - name: Resolve dependencies
       id: go-dependencies
       shell: bash
@@ -23,7 +27,8 @@ runs:
     - name: Build Golang
       id: go-build
       shell: bash
-      run: go build -o build/app ${{ inputs.main-path }}
+      run: |
+        go build -o build/app ${{ inputs.working-directory }}/${{ inputs.main-path }}
     - name: Archive build artifacts
       id: archive
       uses: actions/upload-artifact@v4

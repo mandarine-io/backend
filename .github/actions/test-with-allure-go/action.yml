@@ -1,6 +1,10 @@
 name: Test with Allure Go
 description: Run tests with Allure Go
 inputs:
+  working-directory:
+    description: 'Working directory'
+    required: true
+    type: string
   test_dir:
     description: 'Directory with tests'
     required: true
@@ -22,13 +26,14 @@ runs:
       id: golang-with-cache
       uses: magnetikonline/action-golang-cache@v5
       with:
-        go-version-file: go.mod
+        go-version-file: ${{ inputs.working-directory }}/go.mod
     - name: Test
       id: go-test
       envs:
         ALLURE_OUTPUT_FOLDER: allure-results
       shell: bash
-      run: go test ${{ inputs.test_dir }} -v -shuffle on
+      run: |
+        go test ${{ inputs.working-directory }}/${{ inputs.test_dir }} -v -shuffle on
     - name: Load test report history
       id: load-history
       uses: actions/checkout@v3

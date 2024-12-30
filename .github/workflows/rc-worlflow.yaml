@@ -54,7 +54,8 @@ jobs:
         id: build
         uses: ./.github/actions/build-go
         with:
-          main-path: ${{ matrix.directory }}/cmd/api/main.go
+          working-directory: ${{ matrix.directory }}
+          main-path: cmd/api/main.go
   unit-tests:
     needs:
       - build
@@ -72,7 +73,8 @@ jobs:
         id: unit-tests
         uses: ./.github/actions/test-with-allure-go
         with:
-          test_dir: ${{ matrix.directory }}/tests/unit/...
+          working-directory: ${{ matrix.directory }}
+          test_dir: tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-rc
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
@@ -92,7 +94,8 @@ jobs:
         id: e2e-tests
         uses: ./.github/actions/test-with-allure-go
         with:
-          test_dir: ${{ matrix.directory }}/tests/e2e/...
+          working-directory: ${{ matrix.directory }}
+          test_dir: tests/e2e/...
           publish_branch: gh-e2e-tests-${{ matrix.directory }}-pages-rc
         env:
           APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml

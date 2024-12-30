@@ -15,7 +15,7 @@ runs:
       id: golang-with-cache
       uses: magnetikonline/action-golang-cache@v5
       with:
-        go-version-file: go.mod
+        go-version-file: ${{ inputs.working-directory }}/go.mod
     - name: Format
       id: format
       shell: bash

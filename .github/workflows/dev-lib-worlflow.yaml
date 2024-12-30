@@ -84,7 +84,8 @@ jobs:
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/build-go
         with:
-          main-path: ${{ matrix.directory }}/cmd/api/main.go
+          working-directory: ${{ matrix.directory }}
+          main-path: cmd/api/main.go
   unit-tests:
     needs:
       - build
@@ -102,7 +103,8 @@ jobs:
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/test-with-allure-go
         with:
-          test_dir: ${{ matrix.directory }}/tests/unit/...
+          working-directory: ${{ matrix.directory }}
+          test_dir: tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-dev
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
