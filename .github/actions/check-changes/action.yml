@@ -19,9 +19,13 @@ runs:
       id: check-changes
       shell: bash
       run: |
-        git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ${{ inputs.directory }} | tee changed_files.txt
-        if [ ! -s changed_files.txt ]; then
-          echo "changes-result=false" >> "$GITHUB_OUTPUT"
+        if git cat-file commit ${{ github.event.before }} >/dev/null 2>&1 && git cat-file commit ${{ github.sha }} >/dev/null 2>&1; then
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ${{ inputs.directory }} | tee changed_files.txt
+          if [ ! -s changed_files.txt ]; then
+            echo "changes-result=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes-result=true" >> "$GITHUB_OUTPUT"
+          fi
         else
-          echo "changes-result=true" >> "$GITHUB_OUTPUT"
+          echo "changes-result=false" >> "$GITHUB_OUTPUT"
         fi
