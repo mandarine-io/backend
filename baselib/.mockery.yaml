@@ -1,0 +1,35 @@
+with-expecter: true
+mockname: "{{.InterfaceName}}Mock"
+filename: "{{.InterfaceNameSnake}}.go"
+outpkg: "mock"
+dir: "{{.InterfaceDir}}/mock"
+issue-845-fix: True
+packages:
+  github.com/mandarine-io/baselib/pkg/geocoding:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/baselib/pkg/oauth:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/baselib/pkg/transport/pubsub:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/baselib/pkg/smtp:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/baselib/pkg/storage/cache:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/baselib/pkg/storage/s3:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/baselib/pkg/template:
+    config:
+      include-regex: ".*"
+      filename: "{{.InterfaceNameSnake}}.go"
