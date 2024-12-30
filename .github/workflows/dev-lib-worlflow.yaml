@@ -37,6 +37,10 @@ jobs:
       - name: Check out repository
         id: checkout
         uses: actions/checkout@v4
+      - name: Print changed files
+        id: print-changed-files
+        run: |
+          echo "Changed files: ${{ needs.check-changes.outputs.changes }}"
       - name: Format service
         id: format
         if: needs.check-changes.outputs.changes == 'true'
