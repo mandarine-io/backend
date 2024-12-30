@@ -98,5 +98,5 @@ jobs:
         with:
           test_dir: ${{ matrix.directory }}/tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-dev
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

@@ -74,7 +74,7 @@ jobs:
         with:
           test_dir: ${{ matrix.directory }}/tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-rc
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   e2e-tests:
     needs:
@@ -91,12 +91,11 @@ jobs:
       - name: E2E tests
         id: e2e-tests
         uses: ./.github/actions/test-with-allure-go
-        env:
-          APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml
         with:
           test_dir: ${{ matrix.directory }}/tests/e2e/...
           publish_branch: gh-e2e-tests-${{ matrix.directory }}-pages-rc
-        secrets:
+        env:
+          APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   publish-docker:
     needs:
@@ -119,7 +118,7 @@ jobs:
           tag: ${{ github.ref_name }}
           context: ${{ matrix.directory }}
           image_name: ${{ matrix.directory }}
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   release:
     needs:
@@ -134,7 +133,7 @@ jobs:
         uses: ./.github/actions/release
         with:
           tag: ${{ github.ref_name }}
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   deploy-rc:
     needs:
@@ -151,7 +150,7 @@ jobs:
           docker_compose_file: deploy/docker/docker-compose.rc.yml
           additional_deploy_files: deploy/config/nginx/nginx.conf
           target_path: deploy-rc
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           ENV_FILE_CONTENT: ${{ secrets.RC_ENV_FILE_CONTENT }}
           SSH_PRIVATE_KEY: ${{ secrets.RC_SSH_PRIVATE_KEY }}
