@@ -5,6 +5,7 @@ on:
         - 'v[0-9]+.[0-9]+.[0-9]+'
 jobs:
   format:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -17,10 +18,12 @@ jobs:
       - name: Format
         id: format
         uses: ./.github/actions/format-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   lint:
     needs:
       - format
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -33,10 +36,12 @@ jobs:
       - name: Lint
         id: lint
         uses: ./.github/actions/lint-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   build:
     needs:
       - lint
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -48,12 +53,13 @@ jobs:
       - name: Build
         id: build
         uses: ./.github/actions/build-go
-        working-directory: ${{ matrix.directory }}
         with:
+          working-directory: ${{ matrix.directory }}
           main-path: cmd/api/main.go
   unit-tests:
     needs:
       - build
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -66,15 +72,16 @@ jobs:
       - name: Unit tests
         id: unit-tests
         uses: ./.github/actions/test-with-allure-go
-        working-directory: ${{ matrix.directory }}
         with:
+          working-directory: ${{ matrix.directory }}
           test_dir: tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   e2e-tests:
     needs:
       - build
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -86,18 +93,18 @@ jobs:
       - name: E2E tests
         id: e2e-tests
         uses: ./.github/actions/test-with-allure-go
-        working-directory: ${{ matrix.directory }}
-        env:
-          APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml
         with:
+          working-directory: ${{ matrix.directory }}
           test_dir: tests/e2e/...
           publish_branch: gh-e2e-tests-${{ matrix.directory }}-pages
-        secrets:
+        env:
+          APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   publish-docker:
     needs:
       - unit-tests
       - e2e-tests
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -110,16 +117,16 @@ jobs:
       - name: Publish Docker image
         id: publish-docker
         uses: ./.github/actions/publish-docker
-        working-directory: ${{ matrix.directory }}
         with:
           tag: ${{ github.ref_name }}
-          context: .
+          context: ${{ matrix.directory }}
           image_name: ${{ matrix.directory }}
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   release:
     needs:
       - publish-docker
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         id: checkout
@@ -129,11 +136,12 @@ jobs:
         uses: ./.github/actions/release
         with:
           tag: ${{ github.ref_name }}
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   deploy-prod:
     needs:
       - release
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         id: checkout
@@ -145,7 +153,7 @@ jobs:
           docker_compose_file: deploy/docker/docker-compose.prod.yml
           additional_deploy_files: deploy/config/nginx/nginx.conf
           target_path: deploy-rc
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           ENV_FILE_CONTENT: ${{ secrets.PROD_ENV_FILE_CONTENT }}
           SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}

@@ -1,5 +1,10 @@
 name: Lint Golang
 description: Setup Golang environment and lint Golang application
+inputs:
+  working-directory:
+    description: 'Working directory'
+    required: true
+    type: string
 runs:
   using: composite
   steps:
@@ -10,18 +15,21 @@ runs:
       id: golang-with-cache
       uses: magnetikonline/action-golang-cache@v5
       with:
-        go-version-file: go.mod
+        go-version-file: ${{ inputs.working-directory }}/go.mod
     - name: Install dependencies
       id: install
+      shell: bash
       run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
     - name: Lint
       id: lint
+      shell: bash
       run: |
-        golangci-lint run --config golangci.yaml --timeout 10m0s --out-format checkstyle:report.xml &
-        golangci-lint run --config golangci.yaml --timeout 10m0s --out-format github-actions
+        cd ${{ inputs.working-directory }}
+        golangci-lint run --config golangci.yaml --timeout 10m0s --out-format colored-line-number,checkstyle:report.xml
     - name: Archive lint artifacts
       id: archive
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: lint
-        path: report.xml
+        path: ${{ inputs.working-directory }}/report.xml

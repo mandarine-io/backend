@@ -8,22 +8,21 @@ inputs:
 outputs:
   changes:
     description: 'True if changes were found'
-    required: true
-    type: boolean
+    value: ${{ steps.changed-files.outputs.any_changed }}
 runs:
   using: composite
-  outputs:
-    changes: ${{ steps.check-changes.outputs.changes }}
   steps:
     - name: Checkout
       id: checkout
       uses: actions/checkout@v2
-    - name: Check for changes in ${{ inputs.directory }}
-      id: check-changes
+    - name: Get all changed files in ${{ matrix.directory }}
+      id: changed-files
+      uses: tj-actions/changed-files@v45
+      with:
+        files: |
+          ${{ inputs.directory }}/**
+    - name: Print output
+      shell: bash
       run: |
-        git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ${{ inputs.directory }} | tee changed_files.txt
-        if [ ! -s changed_files.txt ]; then
-          echo "changes=false" >> "$GITHUB_OUTPUT"
-        else
-          echo "changes=true" >> "$GITHUB_OUTPUT"
-        fi
+        echo "Any changed: ${{ steps.changed-files.outputs.any_changed }}"
+        echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"

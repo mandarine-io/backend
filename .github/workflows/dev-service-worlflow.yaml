@@ -1,20 +1,22 @@
-name: Development workflow
+name: Development service workflow
 on:
   push:
     branches:
-      - '!develop'
-      - '!master'
-      - '!main'
-    paths:
-      - 'service/**'
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'docs/**'
   pull_request:
   workflow_dispatch:
 jobs:
   check-changes:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
           - service
+    outputs:
+      changes: ${{ steps.check-changes.outputs.changes }}
     steps:
       - name: Check out repository
         id: checkout
@@ -27,6 +29,7 @@ jobs:
   format:
     needs:
       - check-changes
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -39,10 +42,13 @@ jobs:
         id: format
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/format-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   lint:
     needs:
+      - check-changes
       - format
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -55,10 +61,13 @@ jobs:
         id: lint
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/lint-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   build:
     needs:
+      - check-changes
       - lint
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -71,12 +80,14 @@ jobs:
         id: build
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/build-go
-        working-directory: ${{ matrix.directory }}
         with:
+          working-directory: ${{ matrix.directory }}
           main-path: cmd/api/main.go
   unit-tests:
     needs:
+      - check-changes
       - build
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -89,9 +100,9 @@ jobs:
         id: unit-tests
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/test-with-allure-go
-        working-directory: ${{ matrix.directory }}
         with:
+          working-directory: ${{ matrix.directory }}
           test_dir: tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-dev
-        secrets:
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

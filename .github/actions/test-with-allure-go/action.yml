@@ -1,6 +1,10 @@
 name: Test with Allure Go
 description: Run tests with Allure Go
 inputs:
+  working-directory:
+    description: 'Working directory'
+    required: true
+    type: string
   test_dir:
     description: 'Directory with tests'
     required: true
@@ -22,14 +26,17 @@ runs:
       id: golang-with-cache
       uses: magnetikonline/action-golang-cache@v5
       with:
-        go-version-file: go.mod
-    - name: E2E test
+        go-version-file: ${{ inputs.working-directory }}/go.mod
+    - name: Test
       id: go-test
       envs:
         ALLURE_OUTPUT_FOLDER: allure-results
-      run: go test ${{ inputs.test_dir }} -v -shuffle on
+      shell: bash
+      run: |
+        go test ${{ inputs.working-directory }}/${{ inputs.test_dir }} -v -shuffle on
     - name: Load test report history
       id: load-history
+      if: always()
       uses: actions/checkout@v3
       continue-on-error: true
       with:
@@ -37,6 +44,7 @@ runs:
         path: gh-pages
     - name: Build test report
       id: build-report
+      if: always()
       uses: simple-elf/allure-report-action@v1.7
       with:
         gh_pages: gh-pages
@@ -44,6 +52,7 @@ runs:
         allure_results: allure-results
     - name: Publish test report
       id: gh-pages
+      if: always()
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.ACCESS_TOKEN }}
