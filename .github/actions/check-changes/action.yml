@@ -1,0 +1,29 @@
+name: Check changes
+description: Check for changes in a directory
+inputs:
+  directory:
+    description: 'Directory to check for changes'
+    required: true
+    type: boolean
+outputs:
+  changes:
+    description: 'True if changes were found'
+    required: true
+    type: boolean
+runs:
+  using: composite
+  outputs:
+    changes: ${{ steps.check-changes.outputs.changes }}
+  steps:
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v2
+    - name: Check for changes in ${{ inputs.directory }}
+      id: check-changes
+      run: |
+        git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ${{ inputs.directory }} | tee changed_files.txt
+        if [ ! -s changed_files.txt ]; then
+          echo "changes=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "changes=true" >> "$GITHUB_OUTPUT"
+        fi

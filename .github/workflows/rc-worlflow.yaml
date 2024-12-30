@@ -1,0 +1,153 @@
+name: Release candidate workflow
+on:
+  push:
+    tags:
+        - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+jobs:
+  format:
+    strategy:
+      matrix:
+        directory:
+          - baselib
+          - iam-service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Format
+        id: format
+        uses: ./.github/actions/format-go
+        working-directory: ${{ matrix.directory }}
+  lint:
+    needs:
+      - format
+    strategy:
+      matrix:
+        directory:
+          - baselib
+          - iam-service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Lint
+        id: lint
+        uses: ./.github/actions/lint-go
+        working-directory: ${{ matrix.directory }}
+  build:
+    needs:
+      - lint
+    strategy:
+      matrix:
+        directory:
+          - iam-service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Build
+        id: build
+        uses: ./.github/actions/build-go
+        working-directory: ${{ matrix.directory }}
+        with:
+          main-path: cmd/api/main.go
+  unit-tests:
+    needs:
+      - build
+    strategy:
+      matrix:
+        directory:
+          - baselib
+          - iam-service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Unit tests
+        id: unit-tests
+        uses: ./.github/actions/test-with-allure-go
+        working-directory: ${{ matrix.directory }}
+        with:
+          test_dir: tests/unit/...
+          publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-rc
+        secrets:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+  e2e-tests:
+    needs:
+      - build
+    strategy:
+      matrix:
+        directory:
+          - iam-service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: E2E tests
+        id: e2e-tests
+        uses: ./.github/actions/test-with-allure-go
+        working-directory: ${{ matrix.directory }}
+        env:
+          APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml
+        with:
+          test_dir: tests/e2e/...
+          publish_branch: gh-e2e-tests-${{ matrix.directory }}-pages-rc
+        secrets:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+  publish-docker:
+    needs:
+      - unit-tests
+      - e2e-tests
+    strategy:
+      matrix:
+        directory:
+          - baselib
+          - iam-service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Publish Docker image
+        id: publish-docker
+        uses: ./.github/actions/publish-docker
+        working-directory: ${{ matrix.directory }}
+        with:
+          tag: ${{ github.ref_name }}
+          context: .
+          image_name: ${{ matrix.directory }}
+        secrets:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+  release:
+    needs:
+      - publish-docker
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Release
+        id: release
+        uses: ./.github/actions/release
+        with:
+          tag: ${{ github.ref_name }}
+        secrets:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+  deploy-rc:
+    needs:
+      - release
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Deploy
+        id: deploy
+        uses: ./.github/actions/deploy
+        with:
+          docker_compose_file: deploy/docker/docker-compose.rc.yml
+          additional_deploy_files: deploy/config/nginx/nginx.conf
+          target_path: deploy-rc
+        secrets:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ENV_FILE_CONTENT: ${{ secrets.RC_ENV_FILE_CONTENT }}
+          SSH_PRIVATE_KEY: ${{ secrets.RC_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.RC_SSH_HOST }}
+          SSH_USER: ${{ secrets.RC_SSH_USER }}

@@ -78,7 +78,10 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 ### dotenv template
-.env
+*/**/.env
+*/**/.env.dev
+*/**/.env.prod
+*/**/.env.test
 
 ### Linux template
 *~
