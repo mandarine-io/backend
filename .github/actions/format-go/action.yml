@@ -18,6 +18,7 @@ runs:
         go-version-file: go.mod
     - name: Format
       id: format
+      shell: bash
       run: |
         echo 1 > code
         (gofmt -w ${{ inputs.working-directory }}; (echo $? > code)) | tee format.log

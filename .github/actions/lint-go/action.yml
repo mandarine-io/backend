@@ -18,9 +18,11 @@ runs:
         go-version-file: go.mod
     - name: Install dependencies
       id: install
+      shell: bash
       run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
     - name: Lint
       id: lint
+      shell: bash
       run: |
         cd ${{ inputs.working-directory }}
         golangci-lint run --config golangci.yaml --timeout 10m0s --out-format checkstyle:report.xml &

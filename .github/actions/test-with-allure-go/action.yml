@@ -23,10 +23,11 @@ runs:
       uses: magnetikonline/action-golang-cache@v5
       with:
         go-version-file: go.mod
-    - name: E2E test
+    - name: Test
       id: go-test
       envs:
         ALLURE_OUTPUT_FOLDER: allure-results
+      shell: bash
       run: go test ${{ inputs.test_dir }} -v -shuffle on
     - name: Load test report history
       id: load-history

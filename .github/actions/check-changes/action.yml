@@ -8,8 +8,7 @@ inputs:
 outputs:
   changes:
     description: 'True if changes were found'
-    required: true
-    type: boolean
+    value: ${{ steps.check-changes.outputs.changes }}
 runs:
   using: composite
   outputs:
@@ -20,6 +19,7 @@ runs:
       uses: actions/checkout@v2
     - name: Check for changes in ${{ inputs.directory }}
       id: check-changes
+      shell: bash
       run: |
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ${{ inputs.directory }} | tee changed_files.txt
         if [ ! -s changed_files.txt ]; then

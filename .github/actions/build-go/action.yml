@@ -18,9 +18,11 @@ runs:
         go-version-file: go.mod
     - name: Resolve dependencies
       id: go-dependencies
+      shell: bash
       run: go mod tidy
     - name: Build Golang
       id: go-build
+      shell: bash
       run: go build -o build/app ${{ inputs.main-path }}
     - name: Archive build artifacts
       id: archive

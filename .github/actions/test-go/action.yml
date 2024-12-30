@@ -16,6 +16,7 @@ runs:
       uses: magnetikonline/action-golang-cache@v5
       with:
         go-version-file: go.mod
-    - name: E2E test
+    - name: Test
       id: go-test
+      shell: bash
       run: go test ${{ inputs.test_dir }} -v -shuffle on
