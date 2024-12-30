@@ -11,6 +11,7 @@ on:
   workflow_dispatch:
 jobs:
   check-changes:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -27,6 +28,7 @@ jobs:
   format:
     needs:
       - check-changes
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -43,6 +45,7 @@ jobs:
   lint:
     needs:
       - format
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -59,6 +62,7 @@ jobs:
   build:
     needs:
       - lint
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
@@ -77,6 +81,7 @@ jobs:
   unit-tests:
     needs:
       - build
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         directory:
