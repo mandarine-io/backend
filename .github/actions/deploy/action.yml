@@ -1,0 +1,77 @@
+name: Deploy
+description: Deploy application via SSH
+inputs:
+  docker_compose_file:
+    description: 'Docker compose file'
+    required: true
+    type: string
+  additional_deploy_files:
+    description: 'Additional files for deploy'
+    required: true
+    type: string
+  target_path:
+    description: 'Target path'
+    required: true
+    type: string
+secrets:
+  ACCESS_TOKEN:
+    required: true
+  ENV_FILE_CONTENT:
+    description: 'Environment file content'
+    required: true
+  SSH_USER:
+    description: 'SSH user'
+    required: true
+  SSH_HOST:
+    description: 'SSH host'
+    required: true
+  SSH_PRIVATE_KEY:
+    description: 'SSH private key'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      id: checkout
+      uses: actions/checkout@main
+    - name: Create env file
+      id: create-env
+      uses: mobiledevops/secret-to-file-action@v1
+      with:
+        base64-encoded-secret: ${{ secrets.ENV_FILE_CONTENT }}
+        filename: ".env"
+        working-directory: .
+    - name: Copy env and docker compose file via scp
+      id: copy-files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        port: 22
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        overwrite: true
+        source: ".env,${{ inputs.docker_compose_file }},${{ inputs.additional_deploy_files }}"
+        target: ${{ inputs.target_path }}
+    - name: Pull and restart services via ssh
+      id: pull-and-restart
+      uses: appleboy/ssh-action@v1.1.0
+      env:
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        USERNAME: ${{ github.repository_owner }}
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        port: 22
+        key: ${{ secrets.SSH_DEV_KEY }}
+        envs: ACCESS_TOKEN,USERNAME
+        script: |
+          echo $ACCESS_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
+          mkdir -p ${{ inputs.target_path }}
+          cd ${{ inputs.target_path }}
+          echo "Stopping and removing containers"
+          docker compose -f ${{ inputs.docker_compose_file }} stop
+          docker compose -f ${{ inputs.docker_compose_file }} rm -f
+          echo "Pulling images"
+          docker compose --env-file .env -f ${{ inputs.docker_compose_file }} pull
+          echo "Starting containers"
+          docker compose --env-file .env -f ${{ inputs.docker_compose_file }} up -d
