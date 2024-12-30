@@ -21,3 +21,8 @@ runs:
       with:
         files: |
           ${{ inputs.directory }}/**
+    - name: Print output
+      shell: bash
+      run: |
+        echo "Any changed: ${{ steps.changed-files.outputs.any_changed }}"
+        echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
