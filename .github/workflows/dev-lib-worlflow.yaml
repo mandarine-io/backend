@@ -16,6 +16,8 @@ jobs:
       matrix:
         directory:
           - baselib
+    outputs:
+      changes: ${{ steps.check-changes.outputs.changes }}
     steps:
       - name: Check out repository
         id: checkout
