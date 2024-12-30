@@ -1,0 +1,51 @@
+name: Test with Allure Go
+description: Run tests with Allure Go
+inputs:
+  test_dir:
+    description: 'Directory with tests'
+    required: true
+    type: string
+  publish_branch:
+    description: 'Branch with test results for Github Pages'
+    required: true
+    type: string
+secrets:
+  ACCESS_TOKEN:
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: go.mod
+    - name: E2E test
+      id: go-test
+      envs:
+        ALLURE_OUTPUT_FOLDER: allure-results
+      run: go test ${{ inputs.test_dir }} -v -shuffle on
+    - name: Load test report history
+      id: load-history
+      uses: actions/checkout@v3
+      continue-on-error: true
+      with:
+        ref: ${{ inputs.publish_branch }}
+        path: gh-pages
+    - name: Build test report
+      id: build-report
+      uses: simple-elf/allure-report-action@v1.7
+      with:
+        gh_pages: gh-pages
+        allure_history: allure-history
+        allure_results: allure-results
+    - name: Publish test report
+      id: gh-pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.ACCESS_TOKEN }}
+        publish_branch: ${{ inputs.publish_branch }}
+        publish_dir: allure-history

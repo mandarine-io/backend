@@ -1,0 +1,97 @@
+name: Development workflow
+on:
+  push:
+    branches:
+      - '!develop'
+      - '!master'
+      - '!main'
+    paths:
+      - 'service/**'
+  pull_request:
+  workflow_dispatch:
+jobs:
+  check-changes:
+    strategy:
+      matrix:
+        directory:
+          - service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Check for changes in ${{ matrix.directory }}
+        id: check-changes
+        uses: ./.github/actions/check-changes
+        with:
+          directory: ${{ matrix.directory }}
+  format:
+    needs:
+      - check-changes
+    strategy:
+      matrix:
+        directory:
+          - service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Format service
+        id: format
+        if: needs.check-changes.outputs.changes == 'true'
+        uses: ./.github/actions/format-go
+        working-directory: ${{ matrix.directory }}
+  lint:
+    needs:
+      - format
+    strategy:
+      matrix:
+        directory:
+          - service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Lint service
+        id: lint
+        if: needs.check-changes.outputs.changes == 'true'
+        uses: ./.github/actions/lint-go
+        working-directory: ${{ matrix.directory }}
+  build:
+    needs:
+      - lint
+    strategy:
+      matrix:
+        directory:
+          - service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Build service
+        id: build
+        if: needs.check-changes.outputs.changes == 'true'
+        uses: ./.github/actions/build-go
+        working-directory: ${{ matrix.directory }}
+        with:
+          main-path: cmd/api/main.go
+  unit-tests:
+    needs:
+      - build
+    strategy:
+      matrix:
+        directory:
+          - service
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Unit tests
+        id: unit-tests
+        if: needs.check-changes.outputs.changes == 'true'
+        uses: ./.github/actions/test-with-allure-go
+        working-directory: ${{ matrix.directory }}
+        with:
+          test_dir: tests/unit/...
+          publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-dev
+        secrets:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

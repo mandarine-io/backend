@@ -1,0 +1,25 @@
+name: Format Golang
+description: Setup Golang environment and format Golang application
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: go.mod
+    - name: Format
+      id: format
+      run: |
+        echo 1 > code
+        (gofmt -w .; (echo $? > code)) | tee format.log
+        exit $(cat code)
+    - name: Archive formatting artifacts
+      id: archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: format
+        path: format.log

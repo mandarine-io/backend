@@ -1,0 +1,21 @@
+name: Test
+description: Run tests with Golang
+inputs:
+  test_dir:
+    description: 'Directory with tests'
+    required: true
+    type: string
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: go.mod
+    - name: E2E test
+      id: go-test
+      run: go test ${{ inputs.test_dir }} -v -shuffle on

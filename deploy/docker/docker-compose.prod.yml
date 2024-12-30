@@ -1,0 +1,87 @@
+version: '3.8'
+
+networks:
+  mandarine-prod-net:
+
+volumes:
+  mandarine-prod-postgres-data:
+  mandarine-prod-redis-data:
+  mandarine-prod-minio-data:
+
+services:
+  ################################
+  ########## PostgreSQL ##########
+  ################################
+  postgres:
+    image: postgis/postgis:17-3.4-alpine
+    container_name: mandarine-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    volumes:
+      - mandarine-prod-postgres-data:/var/lib/postgresql/data
+    networks:
+      - mandarine-prod-net
+
+  ###########################
+  ########## Redis ##########
+  ###########################
+  redis:
+    image: redis/redis-stack:7.4.0-v0
+    container_name: mandarine-prod-redis
+    restart: unless-stopped
+    environment:
+      REDIS_USER: ${REDIS_USER}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_ARGS: '--requirepass ${REDIS_PASSWORD} --user ${REDIS_USER} on >${REDIS_PASSWORD} ~* allcommands'
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+    ports:
+      - ${REDIS_UI_PORT}:8001
+    volumes:
+      - mandarine-prod-redis-data:/data
+    networks:
+      - mandarine-prod-net
+
+  ###########################
+  ########## Minio ##########
+  ###########################
+  minio:
+    image: bitnami/minio:2024.8.3
+    container_name: mandarine-prod-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_DEFAULT_BUCKETS: ${MINIO_BUCKETS}
+    healthcheck:
+      test: [ "CMD-SHELL", "mc ready local" ]
+    ports:
+      - ${MINIO_UI_PORT}:9001
+    volumes:
+      - mandarine-prod-minio-data:/bitnami/minio/data
+    networks:
+      - mandarine-prod-net
+
+  #################################
+  ######### Reverse Proxy #########
+  #################################
+  reverse-proxy:
+    image: nginx:1.27.2-alpine3.20-slim
+    container_name: mandarine-prod-reverse-proxy
+    restart: unless-stopped
+    volumes:
+      - ../config/nginx/nginx.conf:/etc/nginx/nginx.conf
+    healthcheck:
+      test: [ 'CMD-SHELL', 'nc -z localhost 80 || exit 1' ]
+    ports:
+      - ${NGINX_PORT}:80
+    networks:
+      - mandarine-prod-net
