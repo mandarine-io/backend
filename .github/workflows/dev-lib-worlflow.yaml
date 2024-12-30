@@ -39,10 +39,6 @@ jobs:
       - name: Check out repository
         id: checkout
         uses: actions/checkout@v4
-      - name: Print changed files
-        id: print-changed-files
-        run: |
-          echo "Changed files: ${{ needs.check-changes.outputs.changes }}"
       - name: Format service
         id: format
         if: needs.check-changes.outputs.changes == 'true'
@@ -51,6 +47,7 @@ jobs:
           working-directory: ${{ matrix.directory }}
   lint:
     needs:
+      - check-changes
       - format
     runs-on: ubuntu-latest
     strategy:
@@ -67,28 +64,10 @@ jobs:
         uses: ./.github/actions/lint-go
         with:
           working-directory: ${{ matrix.directory }}
-  build:
-    needs:
-      - lint
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        directory:
-          - baselib
-    steps:
-      - name: Check out repository
-        id: checkout
-        uses: actions/checkout@v4
-      - name: Build service
-        id: build
-        if: needs.check-changes.outputs.changes == 'true'
-        uses: ./.github/actions/build-go
-        with:
-          working-directory: ${{ matrix.directory }}
-          main-path: cmd/api/main.go
   unit-tests:
     needs:
-      - build
+      - check-changes
+      - lint
     runs-on: ubuntu-latest
     strategy:
       matrix:

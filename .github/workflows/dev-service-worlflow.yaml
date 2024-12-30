@@ -47,6 +47,7 @@ jobs:
           working-directory: ${{ matrix.directory }}
   lint:
     needs:
+      - check-changes
       - format
     runs-on: ubuntu-latest
     strategy:
@@ -65,6 +66,7 @@ jobs:
           working-directory: ${{ matrix.directory }}
   build:
     needs:
+      - check-changes
       - lint
     runs-on: ubuntu-latest
     strategy:
@@ -84,6 +86,7 @@ jobs:
           main-path: cmd/api/main.go
   unit-tests:
     needs:
+      - check-changes
       - build
     runs-on: ubuntu-latest
     strategy:
