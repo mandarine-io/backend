@@ -41,7 +41,8 @@ jobs:
         id: format
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/format-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   lint:
     needs:
       - format
@@ -58,7 +59,8 @@ jobs:
         id: lint
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/lint-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   build:
     needs:
       - lint
@@ -75,9 +77,8 @@ jobs:
         id: build
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/build-go
-        working-directory: ${{ matrix.directory }}
         with:
-          main-path: cmd/api/main.go
+          main-path: ${{ matrix.directory }}/cmd/api/main.go
   unit-tests:
     needs:
       - build
@@ -94,9 +95,8 @@ jobs:
         id: unit-tests
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/test-with-allure-go
-        working-directory: ${{ matrix.directory }}
         with:
-          test_dir: tests/unit/...
+          test_dir: ${{ matrix.directory }}/tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages-dev
         secrets:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

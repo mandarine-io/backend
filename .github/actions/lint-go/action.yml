@@ -1,5 +1,10 @@
 name: Lint Golang
 description: Setup Golang environment and lint Golang application
+inputs:
+  working-directory:
+    description: 'Working directory'
+    required: true
+    type: string
 runs:
   using: composite
   steps:
@@ -17,6 +22,7 @@ runs:
     - name: Lint
       id: lint
       run: |
+        cd ${{ inputs.working-directory }}
         golangci-lint run --config golangci.yaml --timeout 10m0s --out-format checkstyle:report.xml &
         golangci-lint run --config golangci.yaml --timeout 10m0s --out-format github-actions
     - name: Archive lint artifacts

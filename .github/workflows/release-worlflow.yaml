@@ -18,7 +18,8 @@ jobs:
       - name: Format
         id: format
         uses: ./.github/actions/format-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   lint:
     needs:
       - format
@@ -35,7 +36,8 @@ jobs:
       - name: Lint
         id: lint
         uses: ./.github/actions/lint-go
-        working-directory: ${{ matrix.directory }}
+        with:
+          working-directory: ${{ matrix.directory }}
   build:
     needs:
       - lint
@@ -51,9 +53,8 @@ jobs:
       - name: Build
         id: build
         uses: ./.github/actions/build-go
-        working-directory: ${{ matrix.directory }}
         with:
-          main-path: cmd/api/main.go
+          main-path: ${{ matrix.directory }}/cmd/api/main.go
   unit-tests:
     needs:
       - build
@@ -70,9 +71,8 @@ jobs:
       - name: Unit tests
         id: unit-tests
         uses: ./.github/actions/test-with-allure-go
-        working-directory: ${{ matrix.directory }}
         with:
-          test_dir: tests/unit/...
+          test_dir: ${{ matrix.directory }}/tests/unit/...
           publish_branch: gh-unit-tests-${{ matrix.directory }}-pages
         secrets:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
@@ -91,11 +91,10 @@ jobs:
       - name: E2E tests
         id: e2e-tests
         uses: ./.github/actions/test-with-allure-go
-        working-directory: ${{ matrix.directory }}
         env:
           APP_TEST_DOCKER_COMPOSE_PATH: ${{ matrix.directory }}/docker-compose.test.yml
         with:
-          test_dir: tests/e2e/...
+          test_dir: ${{ matrix.directory }}/tests/e2e/...
           publish_branch: gh-e2e-tests-${{ matrix.directory }}-pages
         secrets:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
@@ -116,10 +115,9 @@ jobs:
       - name: Publish Docker image
         id: publish-docker
         uses: ./.github/actions/publish-docker
-        working-directory: ${{ matrix.directory }}
         with:
           tag: ${{ github.ref_name }}
-          context: .
+          context: ${{ matrix.directory }}
           image_name: ${{ matrix.directory }}
         secrets:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

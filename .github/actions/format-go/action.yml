@@ -1,5 +1,10 @@
 name: Format Golang
 description: Setup Golang environment and format Golang application
+inputs:
+  working-directory:
+    description: Path to working directory
+    required: false
+    type: string
 runs:
   using: composite
   steps:
@@ -15,7 +20,7 @@ runs:
       id: format
       run: |
         echo 1 > code
-        (gofmt -w .; (echo $? > code)) | tee format.log
+        (gofmt -w ${{ inputs.working-directory }}; (echo $? > code)) | tee format.log
         exit $(cat code)
     - name: Archive formatting artifacts
       id: archive
