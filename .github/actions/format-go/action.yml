@@ -25,6 +25,7 @@ runs:
         exit $(cat code)
     - name: Archive formatting artifacts
       id: archive
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: format

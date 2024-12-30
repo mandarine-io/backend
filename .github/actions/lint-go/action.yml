@@ -25,10 +25,10 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.working-directory }}
-        golangci-lint run --config golangci.yaml --timeout 10m0s --out-format colored-line-number
-        golangci-lint run --config golangci.yaml --timeout 10m0s --out-format checkstyle:report.xml
+        golangci-lint run --config golangci.yaml --timeout 10m0s --out-format colored-line-number,checkstyle:report.xml
     - name: Archive lint artifacts
       id: archive
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: lint
