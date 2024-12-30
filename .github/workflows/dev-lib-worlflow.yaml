@@ -2,11 +2,10 @@ name: Development library workflow
 on:
   push:
     branches:
-      - '!develop'
-      - '!master'
-      - '!main'
-    paths:
-      - 'baselib/**'
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'docs/**'
   pull_request:
   workflow_dispatch:
 jobs:
@@ -39,7 +38,7 @@ jobs:
       - name: Check out repository
         id: checkout
         uses: actions/checkout@v4
-      - name: Format service
+      - name: Format library
         id: format
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/format-go
@@ -58,7 +57,7 @@ jobs:
       - name: Check out repository
         id: checkout
         uses: actions/checkout@v4
-      - name: Lint service
+      - name: Lint library
         id: lint
         if: needs.check-changes.outputs.changes == 'true'
         uses: ./.github/actions/lint-go

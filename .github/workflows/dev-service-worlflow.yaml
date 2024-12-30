@@ -2,11 +2,10 @@ name: Development service workflow
 on:
   push:
     branches:
-      - '!develop'
-      - '!master'
-      - '!main'
-    paths:
-      - 'service/**'
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'docs/**'
   pull_request:
   workflow_dispatch:
 jobs:
