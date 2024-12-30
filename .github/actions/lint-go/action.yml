@@ -32,4 +32,4 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: lint
-        path: report.xml
+        path: ${{ inputs.working-directory }}/report.xml
