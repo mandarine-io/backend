@@ -9,6 +9,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/text/language"
 )
@@ -26,7 +27,10 @@ func (s *GeocodeSuite) Test_Success_CacheHit(t provider.T) {
 
 	input := v0.GeocodingInput{Address: "address"}
 	locs := []*geocoding2.Location{
-		{Lat: 1.0, Lng: 1.0},
+		{
+			Lat: decimal.NewFromFloat(1),
+			Lng: decimal.NewFromFloat(1),
+		},
 	}
 	lang := language.English
 
@@ -53,7 +57,10 @@ func (s *GeocodeSuite) Test_Success_CacheMiss(t provider.T) {
 
 	input := v0.GeocodingInput{Address: "address"}
 	locs := []*geocoding2.Location{
-		{Lat: 1.0, Lng: 1.0},
+		{
+			Lat: decimal.NewFromFloat(1),
+			Lng: decimal.NewFromFloat(1),
+		},
 	}
 	lang := language.English
 

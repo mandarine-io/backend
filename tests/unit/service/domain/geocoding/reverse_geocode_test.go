@@ -9,6 +9,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/text/language"
 )
@@ -24,7 +25,10 @@ func (s *ReverseGeocodeSuite) Test_Success_CacheHit(t provider.T) {
 	t.Feature("ReverseGeocode")
 	t.Tags("Positive")
 
-	input := v0.ReverseGeocodingInput{Point: "1.0,1.0"}
+	input := v0.ReverseGeocodingInput{
+		Lat: decimal.NewFromFloat(1),
+		Lng: decimal.NewFromFloat(1),
+	}
 	addrs := []*geocoding2.Address{
 		{FormattedAddress: "address"},
 	}
@@ -50,7 +54,10 @@ func (s *ReverseGeocodeSuite) Test_Success_CacheMiss(t provider.T) {
 	t.Feature("ReverseGeocode")
 	t.Tags("Positive")
 
-	input := v0.ReverseGeocodingInput{Point: "1.0,1.0"}
+	input := v0.ReverseGeocodingInput{
+		Lat: decimal.NewFromFloat(1),
+		Lng: decimal.NewFromFloat(1),
+	}
 	addrs := []*geocoding2.Address{
 		{FormattedAddress: "address"},
 	}
@@ -74,7 +81,10 @@ func (s *ReverseGeocodeSuite) Test_ErrServicesUnavailable(t provider.T) {
 	t.Feature("ReverseGeocode")
 	t.Tags("Negative")
 
-	input := v0.ReverseGeocodingInput{Point: "1.0,1.0"}
+	input := v0.ReverseGeocodingInput{
+		Lat: decimal.NewFromFloat(1),
+		Lng: decimal.NewFromFloat(1),
+	}
 	lang := language.English
 
 	cacheManagerMock.On("Get", ctx, mock.Anything, mock.Anything).Return(cache.ErrCacheEntryNotFound).Once()
@@ -94,7 +104,10 @@ func (s *ReverseGeocodeSuite) Test_UnexpectedErr(t provider.T) {
 	t.Feature("ReverseGeocode")
 	t.Tags("Negative")
 
-	input := v0.ReverseGeocodingInput{Point: "1.0,1.0"}
+	input := v0.ReverseGeocodingInput{
+		Lat: decimal.NewFromFloat(1),
+		Lng: decimal.NewFromFloat(1),
+	}
 	lang := language.English
 
 	expectedErr := errors.New("unexpected error")
