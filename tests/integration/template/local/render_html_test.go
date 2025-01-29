@@ -18,7 +18,7 @@ type RenderHTMLSuite struct {
 	suite.Suite
 }
 
-func (s *RenderHTMLSuite) BeforeEach(t provider.T) {
+func (s *RenderHTMLSuite) BeforeAll(t provider.T) {
 	t.Title("Render - before each")
 	t.Feature("Local template")
 
@@ -41,7 +41,7 @@ func (s *RenderHTMLSuite) BeforeEach(t provider.T) {
 	t.Require().NoError(err)
 }
 
-func (s *RenderHTMLSuite) AfterEach(t provider.T) {
+func (s *RenderHTMLSuite) AfterAll(t provider.T) {
 	t.Title("Render - after each")
 	t.Feature("Local template")
 
