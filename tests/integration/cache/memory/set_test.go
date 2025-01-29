@@ -29,6 +29,8 @@ func (s *SetSuite) Test_Success(t provider.T) {
 	err := manager.Set(ctx, "set_key", "\"value\"")
 	t.Require().NoError(err)
 
+	time.Sleep(50 * time.Millisecond)
+
 	var value string
 	err = manager.Get(ctx, "set_key", &value)
 	t.Require().NoError(err)

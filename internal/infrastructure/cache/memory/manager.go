@@ -139,7 +139,7 @@ func (m *manager) cleanExpiredEntry() {
 
 	now := time.Now().Unix()
 	for key, entry := range m.storage {
-		if entry.expiration <= now {
+		if entry.expiration < now {
 			delete(m.storage, key)
 		}
 	}
