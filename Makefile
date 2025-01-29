@@ -55,8 +55,6 @@ swagger.gen:
 	sed -i '' 's/github_com_mandarine-io_backend_pkg_model_//g' $(.SWAGGER_MODEL_DIR)/docs.go
 	sed -i '' 's/github_com_mandarine-io_backend_pkg_model_//g' $(.SWAGGER_MODEL_DIR)/swagger.yaml
 	sed -i '' 's/github_com_mandarine-io_backend_pkg_model_//g' $(.SWAGGER_MODEL_DIR)/swagger.json
-	$(.NPM) i -g swagger2openapi
-	$(.SWAG2OAPI) --yaml --outfile $(.API_DOCS_DIR)/openapi.yaml $(.SWAGGER_MODEL_DIR)/swagger.yaml
 
 .PHONY: mock.gen
 mock.gen:

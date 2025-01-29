@@ -10,5 +10,5 @@
 </span>
 
 [Начать](get-started/overview)
-[Swagger](api/index.html)
+[Swagger](https://dev.mandarine-app.ru/api/swagger/index.html)
 [Github](https://github.com/mandarine-io/backend)

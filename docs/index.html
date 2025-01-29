@@ -19,6 +19,7 @@
         </div>
     </div>
 </div>
+
 <script>
     window.$docsify = {
         name:
@@ -30,7 +31,7 @@
                 '</a>',
         coverpage: true,
         subMaxLevel: 3,
-        sidebarDisplayLevel: 0,
+        sidebarDisplayLevel: 1,
         loadSidebar: true,
         loadFooter: true,
         formatUpdated: "{MM}/{DD} {HH}:{mm}",
@@ -41,7 +42,6 @@
         auto2top: true,
         notFoundPage: true,
         themeColor: '#FE870C',
-        routerMode: 'history',
         repo: 'https://github.com/mandarine-io/backend',
         pagination: {
             previousText: 'ПРЕДЫДУЩИЙ',
@@ -89,15 +89,6 @@
         },
     }
 </script>
-<script>
-    window.navigation.addEventListener('navigate', (event) => {
-        const url = event.destination.url
-        if (url.endsWith('index.html')) {
-            window.open(url, '_blank');
-            window.location.href = window.location.href
-        }
-    });
-</script>
 <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@sujaykumarh/docsify-plugin-footer@1.x/dist/plugin.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
@@ -116,7 +107,6 @@
 <script src="https://cdn.jsdelivr.net/npm/docsify-progress@latest/dist/progress.min.js"></script>
 <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-
     mermaid.initialize({startOnLoad: true});
     window.mermaid = mermaid;
 </script>
