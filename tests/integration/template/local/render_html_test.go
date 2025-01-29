@@ -10,8 +10,7 @@ import (
 )
 
 var (
-	renderHTMLEngine      template.Engine
-	renderHTMLTemplateDir string
+	renderHTMLEngine template.Engine
 )
 
 type RenderHTMLSuite struct {
@@ -23,10 +22,10 @@ func (s *RenderHTMLSuite) BeforeAll(t provider.T) {
 	t.Feature("Local template")
 
 	var err error
-	renderHTMLTemplateDir, err = os.MkdirTemp("", "local_template_engine_RenderHTML_*")
+	err = os.Mkdir("local_template_engine_RenderHTML", os.ModePerm)
 	t.Require().NoError(err)
 
-	file, err := os.Create(renderHTMLTemplateDir + "/template.html")
+	file, err := os.Create("local_template_engine_RenderHTML/template.html")
 	t.Require().NoError(err)
 
 	defer func(file *os.File) {
@@ -37,7 +36,7 @@ func (s *RenderHTMLSuite) BeforeAll(t provider.T) {
 	_, err = file.WriteString("<h1>Timestamp: {{.Timestamp}}</h1>")
 	t.Require().NoError(err)
 
-	renderHTMLEngine, err = local.NewEngine(renderHTMLTemplateDir)
+	renderHTMLEngine, err = local.NewEngine("local_template_engine_RenderHTML")
 	t.Require().NoError(err)
 }
 
@@ -45,7 +44,7 @@ func (s *RenderHTMLSuite) AfterAll(t provider.T) {
 	t.Title("Render - after each")
 	t.Feature("Local template")
 
-	err := os.RemoveAll(renderHTMLTemplateDir)
+	err := os.RemoveAll("local_template_engine_RenderHTML")
 	t.Require().NoError(err)
 }
 
