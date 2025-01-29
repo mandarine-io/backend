@@ -1,0 +1,79 @@
+name: Deploy
+description: Deploy application via SSH
+inputs:
+  docker-compose-file:
+    description: 'Docker compose file'
+    required: true
+  additional-deploy-files:
+    description: 'Additional files for deploy'
+    required: true
+  target-path:
+    description: 'Target path'
+    required: true
+  github-token:
+    description: 'Github token'
+    required: true
+    default: ''
+  env-file-content:
+    description: 'Environment file content'
+    required: true
+    default: ''
+  ssh-user:
+    description: 'SSH user'
+    required: true
+    default: ''
+  ssh-host:
+    description: 'SSH host'
+    required: true
+    default: ''
+  ssh-private-key:
+    description: 'SSH private key'
+    required: true
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Create env file
+      id: create-env
+      uses: mobiledevops/secret-to-file-action@v1
+      with:
+        base64-encoded-secret: ${{ inputs.env-file-content }}
+        filename: ".env"
+        working-directory: .
+    - name: Copy env and docker compose file via scp
+      id: copy-files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ inputs.ssh-host }}
+        username: ${{ inputs.ssh-user }}
+        port: 22
+        key: ${{ inputs.ssh-private-key }}
+        overwrite: true
+        source: ".env,${{ inputs.docker-compose-file }},${{ inputs.additional-deploy-files }}"
+        target: ${{ inputs.target-path }}
+    - name: Pull and restart services via ssh
+      id: pull-and-restart
+      uses: appleboy/ssh-action@v1.1.0
+      env:
+        PASSWORD: ${{ inputs.github-token }}
+        USERNAME: ${{ github.repository_owner }}
+      with:
+        host: ${{ inputs.ssh-host }}
+        username: ${{ inputs.ssh-user }}
+        port: 22
+        key: ${{ inputs.ssh-private-key }}
+        envs: PASSWORD,USERNAME
+        script: |
+          echo $PASSWORD | docker login ghcr.io -u $USERNAME --password-stdin
+          mkdir -p ${{ inputs.target-path }}
+          cd ${{ inputs.target-path }}
+          echo "Stopping and removing containers"
+          docker compose -f ${{ inputs.docker-compose-file }} stop
+          docker compose -f ${{ inputs.docker-compose-file }} rm -f
+          echo "Pulling images"
+          docker compose --env-file .env -f ${{ inputs.docker-compose-file }} pull
+          echo "Starting containers"
+          docker compose --env-file .env -f ${{ inputs.docker-compose-file }} up -d

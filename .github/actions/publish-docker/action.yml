@@ -1,0 +1,65 @@
+name: Publish Docker image
+description: Publish Docker image to GitHub Container Registry
+inputs:
+  tag:
+    description: 'Docker image tag'
+    required: true
+  context:
+    description: 'Docker build context'
+    required: false
+    default: '.'
+  dockerfile:
+    description: 'Dockerfile path'
+    required: true
+    default: 'Dockerfile'
+  image-name:
+    description: 'Docker image name'
+    required: true
+  github-token:
+    description: 'GitHub token'
+    required: true
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Login to GitHub Container Registry
+      id: docker-login
+      uses: docker/login-action@v3.3.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ inputs.github-token }}
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5.6.1
+      with:
+        images: ghcr.io/mandarine-io/${{ inputs.image-name }}
+    - name: Delete old image if exists
+      id: cleanup-package
+      uses: chipkent/action-cleanup-package@v1.0.3
+      continue-on-error: true
+      with:
+        github-org: mandarine-io
+        package-name: ${{ inputs.image-name }}
+        tag: ${{ inputs.tag }}
+        github-token: ${{ inputs.github-token }}
+    - name: Build and Publish Docker image
+      id: docker-build
+      uses: docker/build-push-action@v6.10.0
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        platforms:
+          - linux
+          - windows
+          - darwin
+        push: true
+        tags:
+          - ghcr.io/mandarine-io/${{ inputs.image-name }}:${{ inputs.tag }}
+          - ghcr.io/mandarine-io/${{ inputs.image-name }}:latest
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

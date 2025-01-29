@@ -1,0 +1,2057 @@
+consumes:
+- application/json
+definitions:
+  health.HealthOutput:
+    properties:
+      name:
+        type: string
+      pass:
+        type: boolean
+    required:
+    - name
+    - pass
+    type: object
+  v0.AccountOutput:
+    properties:
+      email:
+        format: email
+        type: string
+      isDeleted:
+        type: boolean
+      isEmailVerified:
+        type: boolean
+      isEnabled:
+        type: boolean
+      isPasswordTemp:
+        type: boolean
+      username:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - email
+    - isDeleted
+    - isEmailVerified
+    - isEnabled
+    - isPasswordTemp
+    - username
+    type: object
+  v0.AddressOutput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      countryCode:
+        type: string
+      county:
+        type: string
+      formattedAddress:
+        type: string
+      houseNumber:
+        type: string
+      postcode:
+        type: string
+      state:
+        type: string
+      stateCode:
+        type: string
+      stateDistrict:
+        type: string
+      street:
+        type: string
+      suburb:
+        type: string
+    type: object
+  v0.CreateMasterProfileInput:
+    properties:
+      address:
+        type: string
+      avatarId:
+        type: string
+      description:
+        type: string
+      displayName:
+        type: string
+      job:
+        type: string
+      latitude:
+        format: decimal
+        type: number
+      longitude:
+        format: decimal
+        type: number
+    required:
+    - displayName
+    - job
+    - latitude
+    - longitude
+    type: object
+  v0.CreateMasterServiceInput:
+    properties:
+      avatarId:
+        type: string
+      description:
+        type: string
+      maxInterval:
+        format: hh:mm:ss
+        type: string
+      maxPrice:
+        type: number
+      minInterval:
+        format: hh:mm:ss
+        type: string
+      minPrice:
+        type: number
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  v0.ErrorOutput:
+    properties:
+      message:
+        type: string
+      path:
+        example: /api/v0/example
+        format: url_path
+        type: string
+      status:
+        maximum: 599
+        minimum: 400
+        type: integer
+      timestamp:
+        type: string
+    required:
+    - message
+    - path
+    - status
+    - timestamp
+    type: object
+  v0.GeocodingOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/v0.PointOutput'
+        type: array
+    type: object
+  v0.JwtTokensOutput:
+    properties:
+      accessToken:
+        format: jwt
+        type: string
+      refreshToken:
+        format: jwt
+        type: string
+    required:
+    - accessToken
+    - refreshToken
+    type: object
+  v0.LoginInput:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  v0.MasterProfileOutput:
+    properties:
+      address:
+        type: string
+      avatarId:
+        type: string
+      description:
+        type: string
+      displayName:
+        type: string
+      isEnabled:
+        type: boolean
+      job:
+        type: string
+      point:
+        $ref: '#/definitions/v0.PointOutput'
+    required:
+    - displayName
+    - job
+    - point
+    type: object
+  v0.MasterProfilesOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/v0.MasterProfileOutput'
+        type: array
+    required:
+    - count
+    - data
+    type: object
+  v0.MasterServiceOutput:
+    properties:
+      avatarId:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      maxInterval:
+        type: string
+      maxPrice:
+        type: number
+      minInterval:
+        type: string
+      minPrice:
+        type: number
+      name:
+        type: string
+    type: object
+  v0.MasterServicesOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/v0.MasterServiceOutput'
+        type: array
+    type: object
+  v0.PointOutput:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  v0.RecoveryPasswordInput:
+    properties:
+      email:
+        format: email
+        type: string
+    required:
+    - email
+    type: object
+  v0.RefreshTokensInput:
+    properties:
+      refreshToken:
+        format: jwt
+        type: string
+    required:
+    - refreshToken
+    type: object
+  v0.RegisterConfirmInput:
+    properties:
+      email:
+        format: email
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  v0.RegisterInput:
+    properties:
+      email:
+        format: email
+        type: string
+      password:
+        format: zxcvbn
+        type: string
+      username:
+        format: username
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  v0.ResetPasswordInput:
+    properties:
+      email:
+        format: email
+        type: string
+      otp:
+        type: string
+      password:
+        format: zxcvbn
+        type: string
+    required:
+    - email
+    - otp
+    - password
+    type: object
+  v0.ReverseGeocodingOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/v0.AddressOutput'
+        type: array
+    type: object
+  v0.SetPasswordInput:
+    properties:
+      password:
+        format: zxcvbn
+        type: string
+    required:
+    - password
+    type: object
+  v0.SocialLoginCallbackInput:
+    properties:
+      code:
+        type: string
+      state:
+        type: string
+    required:
+    - code
+    - state
+    type: object
+  v0.UpdateEmailInput:
+    properties:
+      email:
+        format: email
+        type: string
+    required:
+    - email
+    type: object
+  v0.UpdateMasterProfileInput:
+    properties:
+      address:
+        type: string
+      avatarId:
+        type: string
+      description:
+        type: string
+      displayName:
+        type: string
+      job:
+        type: string
+      latitude:
+        format: decimal
+        type: number
+      longitude:
+        format: decimal
+        type: number
+    required:
+    - displayName
+    - job
+    - latitude
+    - longitude
+    type: object
+  v0.UpdateMasterServiceInput:
+    properties:
+      avatarId:
+        type: string
+      description:
+        type: string
+      maxInterval:
+        format: hh:mm:ss
+        type: string
+      maxPrice:
+        type: number
+      minInterval:
+        format: hh:mm:ss
+        type: string
+      minPrice:
+        type: number
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  v0.UpdatePasswordInput:
+    properties:
+      newPassword:
+        format: zxcvbn
+        type: string
+      oldPassword:
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  v0.UpdateUsernameInput:
+    properties:
+      username:
+        format: username
+        type: string
+    required:
+    - username
+    type: object
+  v0.UploadResourceOutput:
+    properties:
+      object_id:
+        type: string
+    type: object
+  v0.UploadResourcesOutput:
+    properties:
+      count:
+        type: integer
+      data:
+        additionalProperties:
+          $ref: '#/definitions/v0.UploadResourceOutput'
+        type: object
+    type: object
+  v0.VerifyEmailInput:
+    properties:
+      email:
+        format: email
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  v0.VerifyRecoveryCodeInput:
+    properties:
+      email:
+        format: email
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: mandarine.app@yandex.ru
+    name: Mandarine Support
+  description: API for web and mobile application Mandarine
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Mandarine API
+  version: 0.0.0
+paths:
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Request for getting health. Alias healthReadiness
+      operationId: health
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/health.HealthOutput'
+            type: array
+      summary: Health
+      tags:
+      - Metrics API
+  /health/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Request for getting health liveness.
+      operationId: healthLiveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Health liveness
+      tags:
+      - Metrics API
+  /health/readiness:
+    get:
+      consumes:
+      - application/json
+      description: Request for getting health readiness. In response will be status
+        of all check (database, s3, smtp, cache, pubsub).
+      operationId: healthReadiness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/health.HealthOutput'
+            type: array
+        "503":
+          description: Service Unavailable
+          schema:
+            items:
+              $ref: '#/definitions/v0.ErrorOutput'
+            type: array
+      summary: Health readiness
+      tags:
+      - Metrics API
+  /metrics/prometheus:
+    get:
+      description: Request for getting Prometheus metrics
+      operationId: metrics
+      produces:
+      - text/plain; charset=utf-8
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Metrics in Prometheus format
+      tags:
+      - Metrics API
+  /swagger/api-docs.json:
+    get:
+      description: Request for getting swagger specification in JSON
+      operationId: SwaggerJSON
+      produces:
+      - application/json; charset=utf-8
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger JSON
+      tags:
+      - Swagger API
+  /swagger/api-docs.yaml:
+    get:
+      description: Request for getting swagger specification in YAML
+      operationId: SwaggerYAML
+      produces:
+      - application/yaml; charset=utf-8
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger YAML
+      tags:
+      - Swagger API
+  /swagger/index.html:
+    get:
+      description: Request for getting swagger UI
+      operationId: SwaggerUI
+      produces:
+      - text/html; charset=utf-8
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger UI
+      tags:
+      - Swagger API
+  /v0/account:
+    delete:
+      consumes:
+      - application/json
+      description: Request for deleting domain. User must be logged in. User must
+        not be deleted.
+      operationId: DeleteAccount
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: User is deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Delete service
+      tags:
+      - Account API
+    get:
+      consumes:
+      - application/json
+      description: Request for receiving own domain. User must be logged in. In response
+        will be returned own service info.
+      operationId: GetAccount
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account info
+          schema:
+            $ref: '#/definitions/v0.AccountOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Get service
+      tags:
+      - Account API
+  /v0/account/email:
+    patch:
+      consumes:
+      - application/json
+      description: Request for updating email. User must be logged in. In process
+        will be sent verification email. In response will be returned updated service
+        info.
+      operationId: UpdateEmail
+      parameters:
+      - description: Update email request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.UpdateEmailInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account info (email is verified)
+          schema:
+            $ref: '#/definitions/v0.AccountOutput'
+        "202":
+          description: Account info (email is not verified)
+          schema:
+            $ref: '#/definitions/v0.AccountOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: Duplicate email
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Update email
+      tags:
+      - Account API
+  /v0/account/email/verify:
+    post:
+      consumes:
+      - application/json
+      description: Request for verify email. User must be logged in.
+      operationId: VerifyEmail
+      parameters:
+      - description: Verify email request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.VerifyEmailInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Verify email
+      tags:
+      - Account API
+  /v0/account/password:
+    patch:
+      consumes:
+      - application/json
+      description: Request for updating password. User must be logged in.
+      operationId: UpdatePassword
+      parameters:
+      - description: Update password request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.UpdatePasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Update password
+      tags:
+      - Account API
+    post:
+      consumes:
+      - application/json
+      description: Request for setting password. User must be logged in.
+      operationId: SetPassword
+      parameters:
+      - description: Set password request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.SetPasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: Password is set
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Set password
+      tags:
+      - Account API
+  /v0/account/restore:
+    get:
+      consumes:
+      - application/json
+      description: Request for restoring domain. User must be logged in. User must
+        be deleted. In response will be returned restored service info.
+      operationId: RestoreAccount
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account info
+          schema:
+            $ref: '#/definitions/v0.AccountOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: User is not deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Restore service
+      tags:
+      - Account API
+  /v0/account/username:
+    patch:
+      consumes:
+      - application/json
+      description: Request for updating username. User must be logged in. In response
+        will be returned updated service info.
+      operationId: UpdateUsername
+      parameters:
+      - description: Update username request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.UpdateUsernameInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account info
+          schema:
+            $ref: '#/definitions/v0.AccountOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Not found user
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: Duplicate username
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Update username
+      tags:
+      - Account API
+  /v0/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Request for serviceentication. In response will be new access token
+        in body and new refresh tokens in http-only cookie.
+      operationId: Login
+      parameters:
+      - description: Login request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT tokens
+          schema:
+            $ref: '#/definitions/v0.JwtTokensOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Sign in
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/logout:
+    get:
+      consumes:
+      - application/json
+      description: Request for logout. User must be logged in.
+      operationId: Logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/recovery-password:
+    post:
+      consumes:
+      - application/json
+      description: Request for recovery password. At the end will be sent email with
+        code
+      operationId: RecoveryPassword
+      parameters:
+      - description: Recovery password body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.RecoveryPasswordInput'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Recovery password
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/recovery-password/verify:
+    post:
+      consumes:
+      - application/json
+      description: Request for verify recovery code. If code is correct will be sent
+        status 200
+      operationId: VerifyRecoveryCode
+      parameters:
+      - description: Verify recovery code body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.VerifyRecoveryCodeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Verify recovery code
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Request for refreshing tokens. In response will be new access token
+        in body and new refresh tokens in http-only cookie.
+      operationId: RefreshTokens
+      parameters:
+      - description: Refresh token body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.RefreshTokensInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT tokens
+          schema:
+            $ref: '#/definitions/v0.JwtTokensOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Refresh tokens
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Request for creating new user. At the end will be sent confirmation
+        email with code
+      operationId: Register
+      parameters:
+      - description: Register request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: User already exists
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Register
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/register/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Request for confirming registration. At the end will be created
+        new user
+      operationId: RegisterConfirm
+      parameters:
+      - description: Register confirm body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.RegisterConfirmInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: User already exists
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Register confirmation
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Request for reset password. If code is correct will be updated
+        password
+      operationId: ResetPassword
+      parameters:
+      - description: Reset password body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.ResetPasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Reset password
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/social/{provider}:
+    get:
+      consumes:
+      - application/json
+      description: Request for redirecting to OAuth consent page. After serviceorization,
+        it will redirect to redirectURL with serviceorization code and state
+      operationId: SocialLogin
+      parameters:
+      - description: Social login provider (yandex, google, mailru)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Redirect URL
+        in: query
+        name: redirectURL
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Found
+        "404":
+          description: Provider not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Social login
+      tags:
+      - Authentication and Authorization API
+  /v0/auth/social/{provider}/callback:
+    post:
+      consumes:
+      - application/json
+      description: Request for exchanging serviceorization code to token pairs. In
+        process, it will exchange code to user info and register new user or login
+        existing user. In response will be new access token in body and new refresh
+        tokens in http-only cookie.
+      operationId: SocialLoginCallback
+      parameters:
+      - description: Social login provider (yandex, google, mailru)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Social login callback request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.SocialLoginCallbackInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT tokens
+          schema:
+            $ref: '#/definitions/v0.JwtTokensOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User already exists
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Social login callback
+      tags:
+      - Authentication and Authorization API
+  /v0/geocode/forward:
+    get:
+      consumes:
+      - application/json
+      description: Request for geocoding. User must be logged in. In response will
+        be returned coordinates.
+      operationId: Geocode
+      parameters:
+      - in: query
+        name: address
+        required: true
+        type: string
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Geocoded coordinates
+          schema:
+            $ref: '#/definitions/v0.GeocodingOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "503":
+          description: Geocoding service is unavailable
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Geocode
+      tags:
+      - Geocoding API
+  /v0/geocode/reverse:
+    get:
+      consumes:
+      - application/json
+      description: Request for reverse geocoding. User must be logged in. In response
+        will be returned address.
+      operationId: ReverseGeocode
+      parameters:
+      - format: decimal
+        in: query
+        name: lat
+        required: true
+        type: number
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - format: decimal
+        in: query
+        name: lng
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reverse geocoded address
+          schema:
+            $ref: '#/definitions/v0.ReverseGeocodingOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "503":
+          description: Geocoding service is unavailable
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Reverse geocode
+      tags:
+      - Geocoding API
+  /v0/masters/profiles:
+    get:
+      consumes:
+      - application/json
+      description: Request for finding master profiles. User must be logged in. In
+        response will be returned found master profiles.
+      operationId: FindMasterProfiles
+      parameters:
+      - in: query
+        name: displayName
+        type: string
+      - in: query
+        name: field
+        type: string
+      - in: query
+        name: job
+        type: string
+      - format: decimal
+        in: query
+        name: lat
+        type: number
+      - format: decimal
+        in: query
+        name: lng
+        type: number
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      - in: query
+        minimum: 0
+        name: page
+        type: integer
+      - in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      - format: decimal
+        in: query
+        name: radius
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Found master profiles
+          schema:
+            $ref: '#/definitions/v0.MasterProfilesOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Find master profiles
+      tags:
+      - Master Profile API
+    patch:
+      consumes:
+      - application/json
+      description: Request for updating master profile. User must be logged in. In
+        response will be returned updated master profile.
+      operationId: UpdateMasterProfile
+      parameters:
+      - description: Update master profile request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.UpdateMasterProfileInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated master profile
+          schema:
+            $ref: '#/definitions/v0.MasterProfileOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Update master profile
+      tags:
+      - Master Profile API
+    post:
+      consumes:
+      - application/json
+      description: Request for creating master profile. User must be logged in. In
+        response will be returned created master profile.
+      operationId: CreateMasterProfile
+      parameters:
+      - description: Create master profile request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.CreateMasterProfileInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created master profile
+          schema:
+            $ref: '#/definitions/v0.MasterProfileOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "409":
+          description: Master profile already exists
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Create master profile
+      tags:
+      - Master Profile API
+  /v0/masters/profiles/-/services:
+    get:
+      consumes:
+      - application/json
+      description: Request for finding master services. User must be logged in. In
+        response will be returned found master services.
+      operationId: FindMasterServices
+      parameters:
+      - in: query
+        name: field
+        type: string
+      - in: query
+        name: maxInterval
+        type: string
+      - in: query
+        name: maxPrice
+        type: number
+      - in: query
+        name: minInterval
+        type: string
+      - in: query
+        name: minPrice
+        type: number
+      - in: query
+        name: name
+        type: string
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      - in: query
+        minimum: 0
+        name: page
+        type: integer
+      - in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Found master services
+          schema:
+            $ref: '#/definitions/v0.MasterServicesOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Find master services
+      tags:
+      - Master Service API
+  /v0/masters/profiles/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Request for getting master profile. User must be logged in. In
+        response will be returned found master profile.
+      operationId: GetMasterProfile
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Found master profile
+          schema:
+            $ref: '#/definitions/v0.MasterProfileOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted; Own master profile is disabled
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Get master profile
+      tags:
+      - Master Profile API
+  /v0/masters/profiles/{username}/services:
+    get:
+      consumes:
+      - application/json
+      description: Request for finding master services by username. User must be logged
+        in. In response will be returned found master services.
+      operationId: FindMasterServicesByUsername
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - in: query
+        name: field
+        type: string
+      - in: query
+        name: maxInterval
+        type: string
+      - in: query
+        name: maxPrice
+        type: number
+      - in: query
+        name: minInterval
+        type: string
+      - in: query
+        name: minPrice
+        type: number
+      - in: query
+        name: name
+        type: string
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      - in: query
+        minimum: 0
+        name: page
+        type: integer
+      - in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Found master services
+          schema:
+            $ref: '#/definitions/v0.MasterServicesOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted; Master profile is disabled
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Find master services by username
+      tags:
+      - Master Service API
+    post:
+      consumes:
+      - application/json
+      description: Request for creating master service. User must be logged in. In
+        response will be returned created master service.
+      operationId: CreateMasterService
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Create master service request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.CreateMasterServiceInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created master service
+          schema:
+            $ref: '#/definitions/v0.MasterServiceOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted; Master profile is disabled; Cannot
+            create master service for another master profile
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master service not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Create master service
+      tags:
+      - Master Service API
+  /v0/masters/profiles/{username}/services/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Request for deleting master service. User must be logged in.
+      operationId: DeleteMasterService
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Master service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted; Master profile is disabled; Cannot
+            delete master service for another master profile
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master service not found; Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Delete master service
+      tags:
+      - Master Service API
+    get:
+      consumes:
+      - application/json
+      description: Request for getting master service. User must be logged in. In
+        response will be returned found master service.
+      operationId: GetMasterServiceByUsername
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Master profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Found master service
+          schema:
+            $ref: '#/definitions/v0.MasterServiceOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted; Master profile is disabled
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master service not found; Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Get master service
+      tags:
+      - Master Service API
+    patch:
+      consumes:
+      - application/json
+      description: Request for updating master service. User must be logged in. In
+        response will be returned updated master service.
+      operationId: UpdateMasterService
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Master service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update master service request body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/v0.UpdateMasterServiceInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated master service
+          schema:
+            $ref: '#/definitions/v0.MasterServiceOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted; Master profile is disabled; Cannot
+            update master service for another master profile
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "404":
+          description: Master service not found; Master profile not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Update master service
+      tags:
+      - Master Service API
+  /v0/resources/{objectID}:
+    get:
+      description: Request for getting resource. Return the resource in S3 storage.
+      operationId: DownloadResource
+      parameters:
+      - description: Object id
+        in: path
+        name: objectID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Resource not found
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      summary: Download resource
+      tags:
+      - Resource API
+  /v0/resources/many:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Request for uploading resources. Return the array of object ids
+        in S3 storage for successful uploaded files.
+      operationId: UploadResources
+      parameters:
+      - collectionFormat: multi
+        description: Files to upload
+        in: formData
+        items:
+          type: string
+        name: resources
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Uploaded resources
+          schema:
+            $ref: '#/definitions/v0.UploadResourcesOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Upload resources
+      tags:
+      - Resource API
+  /v0/resources/one:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Request for uploading resource. Return the object id in S3 storage.
+      operationId: UploadResource
+      parameters:
+      - description: File to upload
+        in: formData
+        name: resource
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Uploaded resource
+          schema:
+            $ref: '#/definitions/v0.UploadResourceOutput'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "403":
+          description: User is blocked or deleted
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Upload resource
+      tags:
+      - Resource API
+  /v0/ws:
+    get:
+      description: Request for connect to websocket server. If pool is not full, a
+        new websocket connection is created.
+      operationId: WsConnect
+      responses:
+        "101":
+          description: Switching Protocols
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/v0.ErrorOutput'
+      security:
+      - BearerAuth: []
+      summary: Connect to websocket server
+      tags:
+      - Websocket API
+produces:
+- application/json
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: API for account management
+  name: Account API
+- description: API for authentication and authorization
+  name: Authentication and Authorization API
+- description: API for geocoding
+  name: Geocoding API
+- description: API for master profile management
+  name: Master Profile API
+- description: API for master service management
+  name: Master Service API
+- description: API for getting metrics and healthcheck
+  name: Metrics API
+- description: API for download and upload files
+  name: Resource API
+- description: API for getting swagger documentation
+  name: Swagger API
+- description: API for establishing websocket connection
+  name: Websocket API

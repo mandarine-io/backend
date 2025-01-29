@@ -1,0 +1,68 @@
+cache:
+  address:
+  dbindex: 0
+  password:
+  username: default
+  ttl: 86400
+database:
+  address:
+  dbname:
+  password:
+  username:
+locale:
+  language: ru
+  path: locales
+logger:
+  level: info
+  console:
+    enable: true
+    encoding: text
+  file:
+    dirpath: logs
+    enable: false
+    maxage:
+    maxsize:
+migrations:
+  path: migrations
+oauthclients:
+  - name: mock
+    clientid: mock
+    clientsecret: mock
+geocodingclients:
+  - name: mock
+    apikey: mock
+pubsub:
+  address:
+  dbindex: 0
+  password:
+  username: default
+s3:
+  address:
+  accesskey:
+  bucket:
+  secretkey:
+security:
+  jwt:
+    accesstokenttl: 3600
+    refreshtokenttl: 86400
+    secret:
+  otp:
+    length: 6
+    ttl: 300
+server:
+  externalorigin: http://localhost:8000
+  mode: local
+  name: server
+  port: 8080
+  version: 0.0.0
+smtp:
+  from: 'Mandarine <mandarine.app@yandex.ru>'
+  host:
+  port:
+  ssl:
+  username:
+  password:
+template:
+  path: templates
+websocket:
+  poolsize: 1024

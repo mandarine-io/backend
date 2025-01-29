@@ -34,7 +34,7 @@ community looks forward to your contributions. 🎉
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the
-[Mandarine Code of Conduct](https://github.com/ptrvsrg/finance-flowblob/master/CODE_OF_CONDUCT.md).
+[Mandarine Code of Conduct](https://github.com/mandarine-io/backendblob/master/CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior
 to <>.
 
@@ -42,13 +42,13 @@ to <>.
 
 > If you want to ask a question, we assume that you have read the available [Documentation]().
 
-Before you ask a question, it is best to search for existing [Issues](https://github.com/ptrvsrg/finance-flow/issues)
+Before you ask a question, it is best to search for existing [Issues](https://github.com/mandarine-io/backend/issues)
 that might help you. In case you have found a suitable issue and still need clarification, you can write your question
 in this issue. It is also advisable to search the internet for answers first.
 
 If you then still feel the need to ask a question and need clarification, we recommend the following:
 
-- Open an [Issue](https://github.com/ptrvsrg/finance-flow/issues/new).
+- Open an [Issue](https://github.com/mandarine-io/backend/issues/new).
 - Provide as much context as you can about what you're running into.
 - Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
 
@@ -91,7 +91,7 @@ following steps in advance to help us fix any potential bug as fast as possible.
   want to check [this section](#i-have-a-question)).
 - To see if other users have experienced (and potentially already solved) the same issue you are having, check if there
   is not already a bug report existing for your bug or error in
-  the [bug tracker](https://github.com/ptrvsrg/finance-flowissues?q=label%3Abug).
+  the [bug tracker](https://github.com/mandarine-io/backendissues?q=label%3Abug).
 - Also make sure to search the internet (including Stack Overflow) to see if users outside of the GitHub community have
   discussed the issue.
 - Collect information about the bug:
@@ -111,7 +111,7 @@ following steps in advance to help us fix any potential bug as fast as possible.
 
 We use GitHub issues to track bugs and errors. If you run into an issue with the project:
 
-- Open an [Issue](https://github.com/ptrvsrg/finance-flow/issues/new). (Since we can't be sure at this point whether it
+- Open an [Issue](https://github.com/mandarine-io/backend/issues/new). (Since we can't be sure at this point whether it
   is a bug or not, we ask you not to talk about a bug yet and not to label the issue.)
 - Explain the behavior you would expect and the actual behavior.
 - Please provide as much context as possible and describe the *reproduction steps* that someone else can follow to
@@ -143,7 +143,7 @@ to understand your suggestion and find related suggestions.
 - Make sure that you are using the latest version.
 - Read the [documentation]() carefully and find out if the functionality is already covered, maybe by an individual
   configuration.
-- Perform a [search](https://github.com/ptrvsrg/finance-flow/issues) to see if the enhancement has already been
+- Perform a [search](https://github.com/mandarine-io/backend/issues) to see if the enhancement has already been
   suggested. If it has, add a comment to the existing issue instead of opening a new one.
 - Find out whether your idea fits with the scope and aims of the project. It's up to you to make a strong case to
   convince the project's developers of the merits of this feature. Keep in mind that we want features that will be
@@ -154,7 +154,7 @@ to understand your suggestion and find related suggestions.
 
 #### How Do I Submit a Good Enhancement Suggestion?
 
-Enhancement suggestions are tracked as [GitHub issues](https://github.com/ptrvsrg/finance-flow/issues).
+Enhancement suggestions are tracked as [GitHub issues](https://github.com/mandarine-io/backend/issues).
 
 - Use a **clear and descriptive title** for the issue to identify the suggestion.
 - Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
@@ -195,14 +195,14 @@ The commit contains the following structural elements, to communicate intent to 
 1) `fix:` a commit of the type fix patches a bug in your codebase.
 2) `feat:` a commit of the type feat introduces a new feature to the codebase.
 3) `BREAKING CHANGE:` a commit that has a footer `BREAKING CHANGE:`, or appends a `!` after the type/scope, introduces a
-    breaking API change. A BREAKING CHANGE can be part of commits of any type.
+   breaking API change. A BREAKING CHANGE can be part of commits of any type.
 4) types other than `fix:` and `feat:` are allowed, for
-    example [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional) (
-    based on
-    the [Angular convention](https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#-commit-message-guidelines))
-    recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
+   example [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional) (
+   based on
+   the [Angular convention](https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#-commit-message-guidelines))
+   recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
 5) footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar
-    to [git trailer format](https://git-scm.com/docs/git-interpret-trailers).
+   to [git trailer format](https://git-scm.com/docs/git-interpret-trailers).
 
 Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic
 Versioning (unless they include a BREAKING CHANGE). A scope may be provided to a commit’s type, to provide additional

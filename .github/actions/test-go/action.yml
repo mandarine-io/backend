@@ -1,0 +1,33 @@
+name: Test
+description: Run tests with Golang
+inputs:
+  working-directory:
+    description: 'Working directory'
+    required: false
+    default: '.'
+  test-dir:
+    description: 'Directory with tests'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: ${{ inputs.working-directory }}/go.mod
+    - name: Test
+      id: go-test
+      shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        if [[ -d ${{ inputs.test-dir }} ]]; then
+           echo "Running tests in ${{ inputs.test-dir }}"
+           go test ${{ inputs.test-dir }}/... -v -shuffle on -timeout 30m
+        else 
+          echo "Test directory ${{ inputs.test-dir }} does not exist"
+          exit 0
+        fi

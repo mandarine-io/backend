@@ -1,0 +1,32 @@
+name: Format Golang
+description: Setup Golang environment and format Golang application
+inputs:
+  working-directory:
+    description: Path to working directory
+    required: false
+    default: '.'
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: ${{ inputs.working-directory }}/go.mod
+    - name: Format
+      id: format
+      shell: bash
+      run: |
+        echo 1 > code
+        (gofmt -w ${{ inputs.working-directory }}; (echo $? > code)) | tee format.log
+        exit $(cat code)
+    - name: Archive formatting artifacts
+      id: archive
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: format
+        path: format.log

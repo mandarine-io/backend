@@ -1,0 +1,168 @@
+name: Release workflow
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Format
+        id: format
+        uses: ./.github/actions/format-go
+        with:
+          working-directory: ./
+  lint:
+    needs:
+      - format
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Lint
+        id: lint
+        uses: ./.github/actions/lint-go
+        with:
+          working-directory: ./
+  build:
+    needs:
+      - lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Build
+        id: build
+        uses: ./.github/actions/build-go
+        with:
+          working-directory: ./
+          main-path: ./cmd/api/main.go
+  unit-test:
+    needs:
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Unit tests
+        id: unit-tests
+        uses: ./.github/actions/test-allure-go
+        with:
+          working-directory: ./
+          test-dir: ./tests/unit
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          report_url: unit-tests.mandarine-app.ru
+  integration-test:
+    needs:
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Docker compose up
+        id: docker-compose-up
+        run: docker compose -f docker-compose.integration-test.yml up -d
+      - name: Integration tests
+        id: integration-tests
+        uses: ./.github/actions/test-allure-go
+        with:
+          working-directory: ./
+          test-dir: ./tests/integration
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          report_url: integration-tests.mandarine-app.ru
+      - name: Docker compose down
+        id: docker-compose-down
+        run: docker compose -f docker-compose.integration-test.yml down
+  e2e-test:
+    needs:
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Docker compose up
+        id: docker-compose-up
+        run: docker compose -f docker-compose.e2e-test.yml up -d
+      - name: E2E tests
+        id: e2e-tests
+        uses: ./.github/actions/test-allure-go
+        with:
+          working-directory: ./
+          test-dir: ./tests/e2e
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          report_url: e2e-tests.mandarine-app.ru
+      - name: Docker compose down
+        id: docker-compose-down
+        run: docker compose -f docker-compose.e2e-test.yml down
+  publish:
+    needs:
+      - unit-test
+      - integration-test
+      - e2e-test
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        directory:
+          - iam-service
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Publish Docker image
+        id: publish-docker
+        uses: ./.github/actions/publish-docker
+        with:
+          tag: ${{ github.ref_name }}
+          context: .
+          dockerfile: .//Dockerfile
+          image-name: ./
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+  release:
+    needs:
+      - publish
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Release
+        id: release
+        uses: ./.github/actions/release
+        with:
+          tag: ${{ github.ref_name }}
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+  deploy-dev:
+    needs:
+      - release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Deploy
+        id: deploy
+        uses: ./.github/actions/deploy
+        with:
+          docker-compose-file: docker-compose.dev.yml
+          additional-deploy-files: deploy/config/nginx/nginx.conf
+          target-path: deploy-dev
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          env-file-content: ${{ secrets.DEV_ENV_FILE_CONTENT }}
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          ssh-host: ${{ secrets.DEV_SSH_HOST }}
+          ssh-user: ${{ secrets.DEV_SSH_USER }}

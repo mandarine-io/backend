@@ -1,0 +1,107 @@
+:root {
+    --cover-background-color: #FAFAFA;
+}
+
+img[alt="gopher-mandarine-art"] {
+    height: 300px;
+}
+
+img[alt="swagger-screen"] {
+    width: 100%;
+}
+
+img[alt="architecture"] {
+    width: 100%;
+}
+
+img[alt="server-modules"] {
+    height: 300px;
+}
+
+img[alt="gopher-postgres-art"] {
+    height: 300px;
+}
+
+img[alt="gopher-redis-art"] {
+    height: 300px;
+}
+
+img[alt="gopher-s3-art"] {
+    height: 300px;
+}
+
+img[alt="gopher-traefik-art"] {
+    height: 300px;
+}
+
+img[alt="gopher-docker-art"] {
+    height: 300px;
+}
+
+img[alt="gopher-oidc-art"] {
+    height: 300px;
+}
+
+img[alt="gopher-geocoding-art"] {
+    height: 300px;
+}
+
+@keyframes loading {
+    0%, 100% {
+        animation-timing-function: cubic-bezier(0.45, 0, 0.9, 0.55)
+    }
+    0% {
+        transform: translate(0, 0)
+    }
+    50% {
+        transform: translate(0, 108px);
+        animation-timing-function: cubic-bezier(0, 0.45, 0.55, 0.9);
+    }
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+.loading-spinner-ball {
+    width: 100vw;
+    height: calc(100vh - 50px);
+    display: inline-block;
+    overflow: hidden;
+    background: transparent;
+}
+
+.loading {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform: translateZ(0) scale(1);
+    backface-visibility: hidden;
+    transform-origin: 0 0; /* see note above */
+    overflow: hidden;
+}
+
+.loading div {
+    box-sizing: content-box;
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-image: url("_assets/logo.svg");
+    left: 50%;
+    top: 30%;
+    animation: loading 1s linear infinite;
+}
+
+.rotation {
+    animation: 5s ease 0s normal none infinite running rotation;
+    width: 100px;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

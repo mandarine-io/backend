@@ -1,0 +1,40 @@
+name: Build Golang
+description: Setup Golang environment, resolve dependencies and build Golang application
+inputs:
+  working-directory:
+    description: Path to working directory
+    required: false
+    default: .
+  main-path:
+    description: Path to main file
+    required: false
+    default: main.go
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: ${{ inputs.working-directory }}/go.mod
+    - name: Download dependencies
+      id: go-dependencies
+      shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        GO111MODULE=on go mod download
+    - name: Build Golang
+      id: go-build
+      shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        CGO_ENABLED=0  go build -o ./build/app ${{ inputs.main-path }}
+    - name: Archive build artifacts
+      id: archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: build

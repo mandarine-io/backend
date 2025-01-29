@@ -2,29 +2,52 @@ package gorm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/Backend/internal/persistence/model"
-	"github.com/mandarine-io/Backend/internal/persistence/repo"
-	"github.com/mandarine-io/Backend/internal/persistence/repo/util"
-	gormtype "github.com/mandarine-io/Backend/internal/persistence/type"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/mandarine-io/backend/internal/persistence/entity"
+	"github.com/mandarine-io/backend/internal/persistence/repo"
+	"github.com/mandarine-io/backend/internal/persistence/repo/gorm/util"
+	"github.com/mandarine-io/backend/internal/persistence/types"
+	"github.com/rs/zerolog"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type masterProfileRepo struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger zerolog.Logger
 }
 
-func NewMasterProfileRepository(db *gorm.DB) repo.MasterProfileRepository {
-	return &masterProfileRepo{db}
+type MasterProfileRepoOption func(*masterProfileRepo)
+
+func WithMasterProfileRepoLogger(logger zerolog.Logger) MasterProfileRepoOption {
+	return func(r *masterProfileRepo) {
+		r.logger = logger
+	}
 }
 
-func (m *masterProfileRepo) CreateMasterProfile(ctx context.Context, masterProfile *model.MasterProfileEntity) (*model.MasterProfileEntity, error) {
-	log.Debug().Msg("create master profile")
-	tx := m.db.WithContext(ctx).Create(masterProfile)
+func NewMasterProfileRepository(db *gorm.DB, opts ...MasterProfileRepoOption) repo.MasterProfileRepository {
+	r := &masterProfileRepo{
+		db:     db,
+		logger: zerolog.Nop(),
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	return r
+}
+
+func (r *masterProfileRepo) CreateMasterProfile(
+	ctx context.Context,
+	masterProfile *entity.MasterProfile,
+) (*entity.MasterProfile, error) {
+	r.logger.Debug().Msg("create master profile")
+
+	tx := r.db.WithContext(ctx).Create(masterProfile)
 
 	err := tx.Error
 	if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -37,59 +60,68 @@ func (m *masterProfileRepo) CreateMasterProfile(ctx context.Context, masterProfi
 	return masterProfile, err
 }
 
-func (m *masterProfileRepo) UpdateMasterProfile(ctx context.Context, masterProfile *model.MasterProfileEntity) (*model.MasterProfileEntity, error) {
-	log.Debug().Msg("update master profile")
-	tx := m.db.WithContext(ctx).Save(masterProfile)
+func (r *masterProfileRepo) UpdateMasterProfile(
+	ctx context.Context,
+	masterProfile *entity.MasterProfile,
+) (*entity.MasterProfile, error) {
+	r.logger.Debug().Msg("update master profile")
+
+	tx := r.db.WithContext(ctx).Save(masterProfile)
+
 	return masterProfile, tx.Error
 }
 
-func (m *masterProfileRepo) FindMasterProfiles(
-	ctx context.Context,
-	filter map[model.MasterProfileFilter]interface{},
-	pagination *model.Pagination,
-	sort []*model.Sort,
-) ([]*model.MasterProfileEntity, error) {
-	log.Debug().Msg("find master profiles")
-	var masterProfiles []*model.MasterProfileEntity
+func (r *masterProfileRepo) FindMasterProfiles(ctx context.Context, scopes ...repo.Scope) (
+	[]*entity.MasterProfile,
+	error,
+) {
+	r.logger.Debug().Msg("find master profiles")
 
-	tx := m.db.
-		WithContext(ctx).
-		Scopes(util.PaginationScope(pagination)).
-		Scopes(filterScope(filter)).
-		Scopes(sortScope(filter, sort))
+	tx := r.db.WithContext(ctx)
 
+	for _, scope := range scopes {
+		tx.Scopes(scope)
+	}
+
+	var masterProfiles []*entity.MasterProfile
 	err := tx.Find(&masterProfiles).Error
+
 	if masterProfiles == nil {
-		masterProfiles = make([]*model.MasterProfileEntity, 0)
+		masterProfiles = make([]*entity.MasterProfile, 0)
 	}
 
 	return masterProfiles, err
 }
 
-func (m *masterProfileRepo) CountMasterProfiles(
-	ctx context.Context,
-	filter map[model.MasterProfileFilter]interface{},
-) (int64, error) {
-	log.Debug().Msg("count master profiles")
-	var count int64
+func (r *masterProfileRepo) CountMasterProfiles(ctx context.Context, scopes ...repo.Scope) (int64, error) {
+	r.logger.Debug().Msg("count master profiles")
 
-	err := m.db.
-		Model(&model.MasterProfileEntity{}).
-		WithContext(ctx).
-		Scopes(filterScope(filter)).
+	tx := r.db.WithContext(ctx)
+
+	for _, scope := range scopes {
+		tx.Scopes(scope)
+	}
+
+	var count int64
+	err := tx.
+		Model(&entity.MasterProfile{}).
 		Select("count(*)").
 		Find(&count).
 		Error
+
 	return count, err
 }
 
-func (m *masterProfileRepo) FindMasterProfileByUserId(ctx context.Context, userId uuid.UUID) (*model.MasterProfileEntity, error) {
-	log.Debug().Msg("find master profile by user id")
-	masterProfile := &model.MasterProfileEntity{}
+func (r *masterProfileRepo) FindMasterProfileByUserID(ctx context.Context, userID uuid.UUID) (
+	*entity.MasterProfile,
+	error,
+) {
+	r.logger.Debug().Msg("find master profile by user id")
 
-	tx := m.db.
+	masterProfile := &entity.MasterProfile{}
+	tx := r.db.
 		WithContext(ctx).
-		Where("user_id = ?", userId).
+		Where("user_id = ?", userID).
 		First(masterProfile)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -98,11 +130,34 @@ func (m *masterProfileRepo) FindMasterProfileByUserId(ctx context.Context, userI
 	return masterProfile, tx.Error
 }
 
-func (m *masterProfileRepo) FindEnabledMasterProfileByUsername(ctx context.Context, username string) (*model.MasterProfileEntity, error) {
-	log.Debug().Msg("find master profile by username")
-	masterProfile := &model.MasterProfileEntity{}
+func (r *masterProfileRepo) FindMasterProfileByUsername(ctx context.Context, username string) (
+	*entity.MasterProfile,
+	error,
+) {
+	r.logger.Debug().Msg("find master profile by username")
 
-	tx := m.db.
+	masterProfile := &entity.MasterProfile{}
+	tx := r.db.
+		WithContext(ctx).
+		Joins("join users on users.id = master_profiles.user_id").
+		Where("users.username = ?", username).
+		First(masterProfile)
+
+	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	return masterProfile, tx.Error
+}
+
+func (r *masterProfileRepo) FindEnabledMasterProfileByUsername(
+	ctx context.Context,
+	username string,
+) (*entity.MasterProfile, error) {
+	r.logger.Debug().Msg("find enabled master profile by username")
+
+	masterProfile := &entity.MasterProfile{}
+	tx := r.db.
 		WithContext(ctx).
 		Joins("join users on users.id = master_profiles.user_id").
 		Where("users.username = ?", username).
@@ -115,133 +170,90 @@ func (m *masterProfileRepo) FindEnabledMasterProfileByUsername(ctx context.Conte
 	return masterProfile, tx.Error
 }
 
-func (m *masterProfileRepo) ExistsMasterProfileByUserId(ctx context.Context, id uuid.UUID) (bool, error) {
-	log.Debug().Msg("exists master profile by user id")
+func (r *masterProfileRepo) ExistsMasterProfileByUserID(ctx context.Context, id uuid.UUID) (bool, error) {
+	r.logger.Debug().Msg("exists master profile by user id")
+
 	var exists bool
-	tx := m.db.WithContext(ctx).
-		Model(&model.MasterProfileEntity{}).
+	tx := r.db.WithContext(ctx).
+		Model(&entity.MasterProfile{}).
 		Select("count(*) > 0").
 		Where("user_id = ?", id).
 		Find(&exists)
+
 	return exists, tx.Error
 }
 
-func filterScope(filter map[model.MasterProfileFilter]interface{}) func(db *gorm.DB) *gorm.DB {
-	return func(tx *gorm.DB) *gorm.DB {
-		for key, value := range filter {
-			switch key {
-			case model.MasterProfileFilterDisplayName:
-				value, ok := value.(string)
-				if !ok {
-					continue
-				}
-				tx.Or("master_profiles.display_name ILIKE ?", fmt.Sprintf("%%%s%%", value))
-			case model.MasterProfileFilterJob:
-				value, ok := value.(string)
-				if !ok {
-					continue
-				}
-				tx.Or("master_profiles.job ILIKE ?", fmt.Sprintf("%%%s%%", value))
-			case model.MasterProfileFilterAddress:
-				value, ok := value.(string)
-				if !ok {
-					continue
-				}
-				tx.Or("master_profiles.address ILIKE ?", fmt.Sprintf("%%%s%%", value))
-			case model.MasterProfileFilterPoint:
-				value, ok := value.(model.MasterProfileFilterPointValue)
-				if !ok {
-					continue
-				}
-				center := gormtype.NewPoint(value.Latitude, value.Longitude)
-				tx.Or("st_dwithin(point, ?, ?)", center, value.Radius)
-			}
-		}
+func (r *masterProfileRepo) ExistsMasterProfileByUsername(ctx context.Context, username string) (bool, error) {
+	r.logger.Debug().Msg("exists master profile by user id")
 
-		return tx
-	}
+	var exists bool
+	tx := r.db.
+		WithContext(ctx).
+		Model(&entity.MasterProfile{}).
+		Joins("join users on users.id = master_profiles.user_id").
+		Select("count(*) > 0").
+		Where("users.username = ?", username).
+		Find(&exists)
+
+	return exists, tx.Error
 }
 
-func sortScope(filter map[model.MasterProfileFilter]interface{}, sorts []*model.Sort) func(tx *gorm.DB) *gorm.DB {
-	return func(tx *gorm.DB) *gorm.DB {
-		for _, s := range sorts {
-			if s == nil {
-				continue
-			}
-
-			desc := s.Order == model.SortOrderDesc
-
-			switch model.MasterProfileFilter(s.Field) {
-			case model.MasterProfileFilterDisplayName:
-				tx.Scopes(displayNameSortScope(desc))
-			case model.MasterProfileFilterJob:
-				tx.Scopes(jobSortScope(desc))
-			case model.MasterProfileFilterAddress:
-				tx.Scopes(addressSortScope(desc))
-			case model.MasterProfileFilterPoint:
-				value, ok := filter[model.MasterProfileFilter(s.Field)]
-				if !ok {
-					continue
-				}
-				tx.Scopes(pointSortScope(value, desc))
-			}
-		}
-
-		return tx
-	}
+func (r *masterProfileRepo) WithPagination(page, pageSize int) repo.Scope {
+	return util.PaginationScope(page, pageSize)
 }
 
-func displayNameSortScope(desc bool) func(tx *gorm.DB) *gorm.DB {
-	return func(tx *gorm.DB) *gorm.DB {
-		return tx.
-			Order(clause.OrderByColumn{
-				Column: clause.Column{Name: "master_profiles.display_name"},
-				Desc:   desc,
-			})
-	}
+func (r *masterProfileRepo) WithColumnSort(field string, asc bool) repo.Scope {
+	return util.ColumnSortScope(field, asc)
 }
 
-func jobSortScope(desc bool) func(tx *gorm.DB) *gorm.DB {
+func (r *masterProfileRepo) WithPointSort(latitude, longitude decimal.Decimal, asc bool) repo.Scope {
 	return func(tx *gorm.DB) *gorm.DB {
-		return tx.
-			Order(clause.OrderByColumn{
-				Column: clause.Column{Name: "master_profiles.job"},
-				Desc:   desc,
-			})
-	}
-}
-
-func addressSortScope(desc bool) func(tx *gorm.DB) *gorm.DB {
-	return func(tx *gorm.DB) *gorm.DB {
-		return tx.
-			Order(clause.OrderByColumn{
-				Column: clause.Column{Name: "master_profiles.address"},
-				Desc:   desc,
-			})
-	}
-}
-
-func pointSortScope(value interface{}, desc bool) func(tx *gorm.DB) *gorm.DB {
-	return func(tx *gorm.DB) *gorm.DB {
-		point, ok := value.(model.MasterProfileFilterPointValue)
-		if !ok {
-			return tx
-		}
-		center := gormtype.NewPoint(point.Latitude, point.Longitude)
+		center := types.NewPoint(latitude, longitude)
 
 		orderStr := ""
-		if desc {
+		if !asc {
 			orderStr = " DESC"
 		}
 
 		return tx.
 			Group("user_id").
-			Order(clause.OrderBy{
-				Expression: clause.Expr{
-					SQL:                "st_distance(point, ?)" + orderStr,
-					Vars:               []interface{}{center},
-					WithoutParentheses: true,
+			Order(
+				clause.OrderBy{
+					Expression: clause.Expr{
+						SQL:                "st_distance(master_services.point, ?)" + orderStr,
+						Vars:               []any{center},
+						WithoutParentheses: true,
+					},
 				},
-			})
+			)
+	}
+}
+
+func (r *masterProfileRepo) WithDisplayNameFilter(displayName string) repo.Scope {
+	return func(tx *gorm.DB) *gorm.DB {
+		tx.Or("master_services.name ILIKE ?", fmt.Sprintf("%%%s%%", displayName))
+		return tx
+	}
+}
+
+func (r *masterProfileRepo) WithJobFilter(job string) repo.Scope {
+	return func(tx *gorm.DB) *gorm.DB {
+		tx.Or("master_services.name ILIKE ?", fmt.Sprintf("%%%s%%", job))
+		return tx
+	}
+}
+
+func (r *masterProfileRepo) WithPointFilter(latitude, longitude decimal.Decimal, radius decimal.Decimal) repo.Scope {
+	return func(tx *gorm.DB) *gorm.DB {
+		center := types.NewPoint(latitude, longitude)
+		tx.Or("ST_DWithin(master_services.point::GEOGRAPHY, ?::GEOGRAPHY, ?)", center, radius)
+		return tx
+	}
+}
+
+func (r *masterProfileRepo) WithAddressFilter(address string) repo.Scope {
+	return func(tx *gorm.DB) *gorm.DB {
+		tx.Or("master_services.name ILIKE ?", fmt.Sprintf("%%%s%%", address))
+		return tx
 	}
 }

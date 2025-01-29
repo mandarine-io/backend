@@ -1,0 +1,28 @@
+name: Release
+description: Create release
+inputs:
+  tag:
+    description: 'Release tag'
+    required: true
+  github-token:
+    description: 'Github token'
+    required: true
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v6
+      with:
+        version: 'latest'
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+    - name: Upload assets
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-assets
+        path: dist/*

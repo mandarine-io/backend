@@ -1,0 +1,63 @@
+name: Test Allure
+description: Run tests with Golang and Allure
+inputs:
+  report_url:
+    description: 'Report URL'
+    required: true
+  working-directory:
+    description: 'Working directory'
+    required: false
+    default: '.'
+  test-dir:
+    description: 'Directory with tests'
+    required: true
+  github-token:
+    description: 'Github token'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check out
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Setup Golang with cache
+      id: golang-with-cache
+      uses: magnetikonline/action-golang-cache@v5
+      with:
+        go-version-file: ${{ inputs.working-directory }}/go.mod
+    - name: Test
+      id: go-test
+      shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        if [[ -d ${{ inputs.test-dir }} ]]; then
+           echo "Running tests in ${{ inputs.test-dir }}"
+           export ALLURE_OUTPUT_PATH=test_results
+           go test ${{ inputs.test-dir }}/... -v -shuffle on -timeout 30m
+        else 
+          echo "Test directory ${{ inputs.test-dir }} does not exist"
+          exit 0
+        fi
+    - name: Load test report history
+      uses: actions/checkout@v3
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages
+        path: ${{ inputs.test-dir }}
+    - name: Build test report
+      uses: simple-elf/allure-report-action@v1.7
+      if: always()
+      with:
+        gh_pages: tests/${{ inputs.test-dir }}
+        allure_history: allure-history
+        allure_results: test_results
+        report_url: ${{ inputs.report_url }}
+    - name: Publish test report
+      uses: peaceiris/actions-gh-pages@v3
+      if: always()
+      with:
+        github_token: ${{ inputs.github-token }}
+        publish_branch: gh-pages
+        publish_dir: allure-history
+        destination_dir: ${{ inputs.test-dir }}
