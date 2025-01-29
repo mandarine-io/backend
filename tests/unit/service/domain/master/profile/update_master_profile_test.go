@@ -3,7 +3,6 @@ package masterprofile
 import (
 	"errors"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/backend/internal/converter"
 	"github.com/mandarine-io/backend/internal/persistence/entity"
 	gormType "github.com/mandarine-io/backend/internal/persistence/types"
 	"github.com/mandarine-io/backend/internal/service/domain"
@@ -12,6 +11,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -23,8 +23,8 @@ var (
 					p.Job == input.Job &&
 					p.Description == input.Description &&
 					p.Address == input.Address &&
-					p.Point.Lat == converter.MapPointStringToPoint(input.Point).Lat &&
-					p.Point.Lng == converter.MapPointStringToPoint(input.Point).Lng &&
+					p.Point.Lat == input.Latitude &&
+					p.Point.Lng == input.Longitude &&
 					p.AvatarID == input.AvatarID
 			},
 		)
@@ -47,7 +47,7 @@ func (s *UpdateMasterProfileSuite) Test_Success(t provider.T) {
 		UserID:      userID,
 		DisplayName: "test",
 		Job:         "test",
-		Point:       *gormType.NewPoint(0, 0),
+		Point:       *gormType.NewPoint(decimal.NewFromFloat(0), decimal.NewFromFloat(0)),
 		Address:     lo.ToPtr("test"),
 		Description: lo.ToPtr("test"),
 		AvatarID:    lo.ToPtr("test"),
@@ -56,7 +56,8 @@ func (s *UpdateMasterProfileSuite) Test_Success(t provider.T) {
 	input := v0.UpdateMasterProfileInput{
 		DisplayName: "test1",
 		Job:         "test1",
-		Point:       "1,1",
+		Longitude:   decimal.NewFromFloat(0),
+		Latitude:    decimal.NewFromFloat(0),
 		Address:     lo.ToPtr("test1"),
 		Description: lo.ToPtr("test1"),
 		AvatarID:    lo.ToPtr("test1"),
@@ -65,7 +66,7 @@ func (s *UpdateMasterProfileSuite) Test_Success(t provider.T) {
 		UserID:      userID,
 		DisplayName: "test1",
 		Job:         "test1",
-		Point:       *gormType.NewPoint(1, 1),
+		Point:       *gormType.NewPoint(decimal.NewFromFloat(1), decimal.NewFromFloat(1)),
 		Address:     lo.ToPtr("test1"),
 		Description: lo.ToPtr("test1"),
 		AvatarID:    lo.ToPtr("test1"),

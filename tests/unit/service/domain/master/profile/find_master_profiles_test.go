@@ -12,6 +12,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 )
@@ -34,8 +35,9 @@ func (s *FindMasterProfilesSuite) Test_Success(t provider.T) {
 	filter := v0.FindMasterProfilesFilterInput{
 		DisplayName: lo.ToPtr("test"),
 		Job:         lo.ToPtr("test"),
-		Point:       lo.ToPtr("1.1,2.2"),
-		Radius:      lo.ToPtr("10.1"),
+		Lng:         lo.ToPtr(decimal.NewFromFloat(0)),
+		Lat:         lo.ToPtr(decimal.NewFromFloat(0)),
+		Radius:      lo.ToPtr(decimal.NewFromFloat(0)),
 	}
 	sorts := v0.SortInput{
 		Field: "display_name",
@@ -52,7 +54,7 @@ func (s *FindMasterProfilesSuite) Test_Success(t provider.T) {
 			UserID:      uuid.New(),
 			DisplayName: "test",
 			Job:         "test",
-			Point:       *gormType.NewPoint(0, 0),
+			Point:       *gormType.NewPoint(decimal.NewFromFloat(0), decimal.NewFromFloat(0)),
 			Address:     lo.ToPtr("test"),
 			Description: lo.ToPtr("test"),
 			AvatarID:    lo.ToPtr("test"),

@@ -12,6 +12,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -31,7 +32,7 @@ func (s *CreateMasterProfileSuite) Test_Success(t provider.T) {
 		UserID:      userID,
 		DisplayName: "test",
 		Job:         "test",
-		Point:       *gormType.NewPoint(0, 0),
+		Point:       *gormType.NewPoint(decimal.NewFromFloat(0), decimal.NewFromFloat(0)),
 		Address:     lo.ToPtr("test"),
 		Description: lo.ToPtr("test"),
 		AvatarID:    lo.ToPtr("test"),
