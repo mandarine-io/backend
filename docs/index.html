@@ -2,66 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mandarine (Backend)</title>
+    <title>Mandarine</title>
     <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible"/>
     <meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0" name="viewport">
-    <link href="pages/assets/logo.svg" rel="icon" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css" rel="stylesheet">
-    <style type="text/css">
-        @keyframes ldio-yzaezf3dcmj {
-            0%, 100% {
-                animation-timing-function: cubic-bezier(0.45, 0, 0.9, 0.55)
-            }
-            0% {
-                transform: translate(0, 0)
-            }
-            50% {
-                transform: translate(0, 108px);
-                animation-timing-function: cubic-bezier(0, 0.45, 0.55, 0.9);
-            }
-            100% {
-                transform: translate(0, 0);
-            }
-        }
-
-        .ldio-yzaezf3dcmj div {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-image: url("pages/assets/logo.svg");
-            left: 50%;
-            top: 30%;
-            animation: ldio-yzaezf3dcmj 1s linear infinite;
-        }
-
-        .loadingio-spinner-ball-2by998twmg8 {
-            width: 100vw;
-            height: 100vh;
-            display: inline-block;
-            overflow: hidden;
-            background: transparent;
-        }
-
-        .ldio-yzaezf3dcmj {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform: translateZ(0) scale(1);
-            backface-visibility: hidden;
-            transform-origin: 0 0; /* see note above */
-            overflow: hidden;
-        }
-
-        .ldio-yzaezf3dcmj div {
-            box-sizing: content-box;
-        }
-    </style>
+    <link href="/_assets/logo.svg" rel="icon" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@sujaykumarh/docsify-plugin-footer@1.x/dist/plugin.min.css"
+          rel="stylesheet">
+    <link href="/styles.css" rel="stylesheet">
 </head>
 <body>
 <div id="app">
-    <div class="loadingio-spinner-ball-2by998twmg8">
-        <div class="ldio-yzaezf3dcmj">
+    <div class="loading-spinner-ball">
+        <div class="loading">
             <div></div>
         </div>
     </div>
@@ -69,35 +22,104 @@
 <script>
     window.$docsify = {
         name:
-            '<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">' +
-            '<img alt="" src="pages/assets/logo.svg" width="30" />' +
-            '<span style="font-weight: bold; font-size: 32px">Mandarine</span>' +
-            '</div>',
-        nameLink: '/',
-        basePath: '/pages',
-        homepage: 'home.md',
-        loadSidebar: 'sidebar.md',
-        coverpage: 'cover.md',
+                '<a href="/" style="text-decoration: none; color: inherit">' +
+                '<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">' +
+                '<img alt="" src="/_assets/logo.svg" width="30" />' +
+                '<span style="font-weight: bold; font-size: 32px">Mandarine</span>' +
+                '</div>' +
+                '</a>',
+        coverpage: true,
+        subMaxLevel: 3,
+        sidebarDisplayLevel: 0,
+        loadSidebar: true,
+        loadFooter: true,
+        formatUpdated: "{MM}/{DD} {HH}:{mm}",
+        executeScript: true,
         autoHeader: true,
         onlyCover: true,
         mergeNavbar: true,
         auto2top: true,
+        notFoundPage: true,
         themeColor: '#FE870C',
         routerMode: 'history',
-        relativePath: true,
+        repo: 'https://github.com/mandarine-io/backend',
+        pagination: {
+            previousText: 'ПРЕДЫДУЩИЙ',
+            nextText: 'СЛЕДУЮЩИЙ',
+            crossChapter: true,
+            crossChapterText: true,
+        },
+        mermaidConfig: {
+            querySelector: ".mermaid"
+        },
+        search: {
+            maxAge: 86400000,
+            noData: 'Никаких результатов!',
+            paths: 'auto',
+            placeholder: 'Поиск',
+            depth: 6,
+        },
+        'flexible-alerts': {
+            style: 'callout',
+            note: {
+                label: "Примечание"
+            },
+            tip: {
+                label: "Совет"
+            },
+            warning: {
+                label: "Предупреждение"
+            },
+            attention: {
+                label: "Внимание"
+            }
+        },
+        progress: {
+            position: "top",
+            color: "var(--theme-color,#FE870C)",
+            height: "3px",
+        },
+        customPageFooter: {
+            showPoweredBy: true,
+            copyrightYear: '2025',
+            showCopyright: true,
+            copyrightOwnerName: 'Mandarine.io',
+            copyrightOwnerLink: 'https://github.com/mandarine-io',
+            useLocalStorage: false,
+        },
     }
 </script>
 <script>
     window.navigation.addEventListener('navigate', (event) => {
         const url = event.destination.url
-        if (url.endsWith('redoc.html')) {
+        if (url.endsWith('index.html')) {
             window.open(url, '_blank');
             window.location.href = window.location.href
         }
     });
 </script>
-<script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-<script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sujaykumarh/docsify-plugin-footer@1.x/dist/plugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+<script src="https://unpkg.com/@h-hg/docsify-image-caption/dist/docsify-image-caption.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+<script src="https://unpkg.com/docsify/lib/plugins/search.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-go.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-docker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-yaml.min.js"></script>
+<script src="https://unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://unpkg.com/docsify-mermaid-zoom/dist/docsify-mermaid-zoom.js"></script>
+<script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify-progress@latest/dist/progress.min.js"></script>
+<script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({startOnLoad: true});
+    window.mermaid = mermaid;
+</script>
+<script src="https://unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
 </body>
 </html>

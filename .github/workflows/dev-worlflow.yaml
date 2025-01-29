@@ -1,0 +1,87 @@
+name: Dev workflow
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'docs/**'
+  pull_request:
+  workflow_dispatch:
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Format service
+        id: format
+        uses: ./.github/actions/format-go
+        with:
+          working-directory: ./
+  lint:
+    needs:
+      - format
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Lint service
+        id: lint
+        uses: ./.github/actions/lint-go
+        with:
+          working-directory: ./
+  build:
+    needs:
+      - lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Build service
+        id: build
+        uses: ./.github/actions/build-go
+        with:
+          working-directory: ./
+          main-path: ./cmd/api/main.go
+  unit-test:
+    needs:
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Unit tests
+        id: unit-tests
+        uses: ./.github/actions/test-allure-go
+        with:
+          working-directory: ./
+          test-dir: ./tests/unit
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          report_url: unit-tests.dev.mandarine-app.ru
+  integration-test:
+    needs:
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Docker compose up
+        id: docker-compose-up
+        run: docker compose -f docker-compose.integration-test.yml up -d
+      - name: Integration tests
+        id: integration-tests
+        uses: ./.github/actions/test-allure-go
+        with:
+          working-directory: ./
+          test-dir: ./tests/integration
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          report_url: integration-tests.dev.mandarine-app.ru
+      - name: Docker compose down
+        id: docker-compose-down
+        run: docker compose -f docker-compose.integration-test.yml down

@@ -1,2 +1,2 @@
-FROM debian:stable-20241016-slim
-RUN apt update && apt install -y postgresql-client
+FROM alpine:3.21.2
+RUN apk update && apk add --no-cache postgresql-client bash

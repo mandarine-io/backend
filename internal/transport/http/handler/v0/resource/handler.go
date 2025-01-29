@@ -1,46 +1,69 @@
 package resource
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
-	dto2 "github.com/mandarine-io/Backend/internal/domain/dto"
-	"github.com/mandarine-io/Backend/internal/domain/service"
-	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
-	"github.com/mandarine-io/Backend/pkg/storage/s3"
-	"github.com/mandarine-io/Backend/pkg/transport/http/dto"
-	"github.com/pkg/errors"
+	"github.com/mandarine-io/backend/internal/infrastructure/s3"
+	"github.com/mandarine-io/backend/internal/service/domain"
+	apihandler "github.com/mandarine-io/backend/internal/transport/http/handler"
+	"github.com/mandarine-io/backend/internal/transport/http/middleware"
+	"github.com/mandarine-io/backend/internal/transport/http/util"
+	"github.com/mandarine-io/backend/pkg/model/v0"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"net/url"
+	"strings"
+	"unicode"
 )
 
 var (
-	ErrResourceNotUploaded = dto.NewI18nError("resource not uploaded", "errors.resource_not_uploaded")
+	ErrResourceNotUploaded = v0.NewI18nError("resource not uploaded", "errors.resource_not_uploaded")
 )
 
 type handler struct {
-	svc service.ResourceService
+	svc    domain.ResourceService
+	logger zerolog.Logger
 }
 
-func NewHandler(svc service.ResourceService) apihandler.ApiHandler {
-	return &handler{svc: svc}
+type Option func(*handler)
+
+func WithLogger(logger zerolog.Logger) Option {
+	return func(h *handler) {
+		h.logger = logger
+	}
 }
 
-func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
+func NewHandler(svc domain.ResourceService, opts ...Option) apihandler.APIHandler {
+	h := &handler{
+		svc:    svc,
+		logger: zerolog.Nop(),
+	}
+
+	for _, opt := range opts {
+		opt(h)
+	}
+
+	return h
+}
+
+func (h *handler) RegisterRoutes(router *gin.Engine) {
 	log.Debug().Msg("register resource routes")
 
-	router.GET("v0/resources/:objectId", h.DownloadResource)
+	router.GET("v0/resources/:objectID", h.DownloadResource)
 
 	router.POST(
 		"v0/resources/one",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
+		middleware.Registry.Auth,
+		middleware.Registry.BannedUser,
+		middleware.Registry.DeletedUser,
 		h.UploadResource,
 	)
 	router.POST(
 		"v0/resources/many",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
+		middleware.Registry.Auth,
+		middleware.Registry.BannedUser,
+		middleware.Registry.DeletedUser,
 		h.UploadResources,
 	)
 }
@@ -53,30 +76,30 @@ func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.Rout
 //	@Tags			Resource API
 //	@Security		BearerAuth
 //	@Accept			multipart/form-data
-//	@Produce		json
-//	@Param			resource	formData	file	true	"File to upload"
-//	@Success		201			{object}	dto.UploadResourceOutput	"Uploaded resource"
-//	@Failure		400			{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401			{object}	dto.ErrorResponse	"Unauthorized error"
-//	@Failure		403			{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
+//	@Produce		application/json
+//	@Param			resource	formData	string						true	"File to upload"
+//	@Success		201			{object}	v0.UploadResourceOutput	"Uploaded resource"
+//	@Failure		400			{object}	v0.ErrorOutput			"Validation error"
+//	@Failure		401			{object}	v0.ErrorOutput			"Unauthorized error"
+//	@Failure		403			{object}	v0.ErrorOutput			"User is blocked or deleted"
+//	@Failure		500			{object}	v0.ErrorOutput			"Internal server error"
 //	@Router			/v0/resources/one [post]
 func (h *handler) UploadResource(ctx *gin.Context) {
 	log.Debug().Msg("handle upload resource")
 
-	var req dto2.UploadResourceInput
-	if err := ctx.ShouldBind(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, ErrResourceNotUploaded)
+	var input v0.UploadResourceInput
+	if err := ctx.ShouldBind(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, ErrResourceNotUploaded)
 		return
 	}
 
-	res, err := h.svc.UploadResource(ctx, &req)
+	res, err := h.svc.UploadResource(ctx, &input)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrResourceNotUploaded):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrResourceNotUploaded):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -92,26 +115,26 @@ func (h *handler) UploadResource(ctx *gin.Context) {
 //	@Tags			Resource API
 //	@Security		BearerAuth
 //	@Accept			multipart/form-data
-//	@Produce		json
-//	@Param			resources	formData	[]file	true	"Files to upload"
-//	@Success		201			{object}	dto.UploadResourcesOutput	"Uploaded resources"
-//	@Failure		400			{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401			{object}	dto.ErrorResponse	"Unauthorized error"
-//	@Failure		403			{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
+//	@Produce		application/json
+//	@Param			resources	formData	[]string						true	"Files to upload"
+//	@Success		201			{object}	v0.UploadResourcesOutput	"Uploaded resources"
+//	@Failure		400			{object}	v0.ErrorOutput			"Validation error"
+//	@Failure		401			{object}	v0.ErrorOutput			"Unauthorized error"
+//	@Failure		403			{object}	v0.ErrorOutput			"User is blocked or deleted"
+//	@Failure		500			{object}	v0.ErrorOutput			"Internal server error"
 //	@Router			/v0/resources/many [post]
 func (h *handler) UploadResources(ctx *gin.Context) {
 	log.Debug().Msg("handle upload resources")
 
-	var req dto2.UploadResourcesInput
-	if err := ctx.ShouldBind(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, ErrResourceNotUploaded)
+	var input v0.UploadResourcesInput
+	if err := ctx.ShouldBind(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, ErrResourceNotUploaded)
 		return
 	}
 
-	res, err := h.svc.UploadResources(ctx, &req)
+	res, err := h.svc.UploadResources(ctx, &input)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -124,18 +147,17 @@ func (h *handler) UploadResources(ctx *gin.Context) {
 //	@Summary		Download resource
 //	@Description	Request for getting resource. Return the resource in S3 storage.
 //	@Tags			Resource API
-//	@Produce		*/*
-//	@Param			objectId	path	string	true	"Object id"
+//	@Param			objectID	path	string	true	"Object id"
 //	@Success		200
-//	@Failure		404	{object}	dto.ErrorResponse	"Resource not found"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
-//	@Router			/v0/resources/{objectId} [get]
+//	@Failure		404	{object}	v0.ErrorOutput	"Resource not found"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
+//	@Router			/v0/resources/{objectID} [get]
 func (h *handler) DownloadResource(ctx *gin.Context) {
 	log.Debug().Msg("handle download resource")
 
-	objectId := ctx.Param("objectId")
+	objectID := ctx.Param("objectID")
 
-	data, err := h.svc.DownloadResource(ctx, objectId)
+	data, err := h.svc.DownloadResource(ctx, objectID)
 	defer func() {
 		if data == nil {
 			return
@@ -148,15 +170,35 @@ func (h *handler) DownloadResource(ctx *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, s3.ErrObjectNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
 
+	if isASCII(data.ID) {
+		ctx.Writer.Header().Set("Content-Disposition", `attachment; filename="`+escapeQuotes(data.ID)+`"`)
+	} else {
+		ctx.Writer.Header().Set("Content-Disposition", `attachment; filename*=UTF-8''`+url.QueryEscape(data.ID))
+	}
+
 	ctx.DataFromReader(
 		http.StatusOK, data.Size, data.ContentType, data.Reader,
-		map[string]string{"Content-Dispositon": "attachment; filename=" + data.ID},
+		map[string]string{},
 	)
+}
+
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
+}
+
+func escapeQuotes(s string) string {
+	quoteEscaper := strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+	return quoteEscaper.Replace(s)
 }

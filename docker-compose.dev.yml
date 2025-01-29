@@ -1,0 +1,113 @@
+version: '3.8'
+
+networks:
+  mandarine-dev-net:
+
+volumes:
+  mandarine-dev-postgres-data:
+  mandarine-dev-redis-data:
+  mandarine-dev-minio-data:
+
+services:
+  ################################
+  ########## PostgreSQL ##########
+  ################################
+  postgres:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: mandarine-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${APP_DEV_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${APP_DEV_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${APP_DEV_POSTGRES_DB}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+    volumes:
+      - mandarine-dev-postgres-data:/var/lib/postgresql/data
+    networks:
+      - mandarine-dev-net
+
+  ###########################
+  ########## Redis ##########
+  ###########################
+  redis:
+    image: redis/redis-stack:7.4.0-v2
+    container_name: mandarine-dev-redis
+    restart: unless-stopped
+    environment:
+      REDIS_USER: ${APP_DEV_REDIS_USER}
+      REDIS_PASSWORD: ${APP_DEV_REDIS_PASSWORD}
+      REDIS_ARGS: |
+        --requirepass $$REDIS_PASSWORD --user $$REDIS_USER on >$$REDIS_PASSWORD ~* allcommands
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+    volumes:
+      - mandarine-dev-redis-data:/data
+    networks:
+      - mandarine-dev-net
+
+  ###########################
+  ########## Minio ##########
+  ###########################
+  minio:
+    image: bitnami/minio:2024.12.18
+    container_name: mandarine-dev-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${APP_DEV_MINIO_ACCESSKEY}
+      MINIO_ROOT_PASSWORD: ${APP_DEV_MINIO_SECRETKEY}
+      MINIO_DEFAULT_BUCKETS: ${APP_DEV_MINIO_BUCKET}
+    healthcheck:
+      test: [ "CMD-SHELL", "mc ready local" ]
+    volumes:
+      - mandarine-dev-minio-data:/bitnami/minio/data
+    networks:
+      - mandarine-dev-net
+
+  ##########################
+  ######### Server #########
+  ##########################
+  server:
+    image: ghcr.io/mandarine-io/backend:${APP_DEV_SERVER_VERSION?}
+    container_name: mandarine-dev-server
+    restart: unless-stopped
+    environment:
+      APP_SERVER_VERSION: ${APP_DEV_SERVER_VERSION}
+      APP_SERVER_PORT: ${APP_DEV_SERVER_PORT}
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -T5 -qO- http://localhost:8080/health || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - '${APP_DEV_SERVER_PORT}:8080'
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml
+    networks:
+      - mandarine-dev-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  #################################
+  ######### Reverse Proxy #########
+  #################################
+  reverse-proxy:
+    image: nginx:1.27.3-alpine3.20
+    container_name: mandarine-dev-reverse-proxy
+    restart: unless-stopped
+    volumes:
+      - ./config/dev/nginx/nginx.conf:/etc/nginx/nginx.conf
+    healthcheck:
+      test: [ 'CMD-SHELL', 'nc -z localhost 80 || exit 1' ]
+    ports:
+      - 8000:80
+    networks:
+      - mandarine-dev-net
+    depends_on:
+      backend:
+        condition: service_started

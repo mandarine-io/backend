@@ -1,23 +1,30 @@
 package http
 
 import (
-	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
-	docs "github.com/mandarine-io/Backend/docs/api"
-	"github.com/mandarine-io/Backend/internal/config"
-	httphelper "github.com/mandarine-io/Backend/internal/helper/http"
-	"github.com/mandarine-io/Backend/internal/registry"
-	"github.com/mandarine-io/Backend/internal/transport/http/handler"
-	"github.com/mandarine-io/Backend/pkg/transport/http/dto"
-	middleware2 "github.com/mandarine-io/Backend/pkg/transport/http/middleware"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/mandarine-io/backend/internal/di"
+	"github.com/mandarine-io/backend/internal/transport/http/middleware"
+	"github.com/mandarine-io/backend/internal/transport/http/util"
+	validator2 "github.com/mandarine-io/backend/internal/transport/http/validator"
+	"github.com/mandarine-io/backend/pkg/model/swagger"
+	"github.com/mandarine-io/backend/pkg/model/v0"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"sort"
 )
 
 var (
-	ErrMethodNotAllowed = dto.NewI18nError("method not allowed", "errors.method_not_allowed")
-	ErrRouteNotFound    = dto.NewI18nError("route not found", "errors.route_not_found")
+	ErrMethodNotAllowed = v0.NewI18nError("method not allowed", "errors.method_not_allowed")
+	ErrRouteNotFound    = v0.NewI18nError("route not found", "errors.route_not_found")
+
+	ignorePathRegexps = []string{
+		"/metrics.*",
+		"/health.*",
+		"/swagger.*",
+	}
 )
 
 type RequireRoleMiddlewareFactory func(...string) gin.HandlerFunc
@@ -28,6 +35,7 @@ type RequireRoleMiddlewareFactory func(...string) gin.HandlerFunc
 //	@version					0.0.0
 //	@description				API for web and mobile application Mandarine
 //	@host						localhost:8080
+//	@query.collection.format	multi
 //	@accept						json
 //	@produce					json
 //	@tag.name					Account API
@@ -38,74 +46,65 @@ type RequireRoleMiddlewareFactory func(...string) gin.HandlerFunc
 //	@tag.description			API for geocoding
 //	@tag.name					Master Profile API
 //	@tag.description			API for master profile management
-//	@tag.name					Resource API
-//	@tag.description			API for resource management
-//	@tag.name					Websocket API
-//	@tag.description			API for websocket connection
+//	@tag.name					Master Service API
+//	@tag.description			API for master service management
 //	@tag.name					Metrics API
-//	@tag.description			API for getting metrics
+//	@tag.description			API for getting metrics and healthcheck
+//	@tag.name					Resource API
+//	@tag.description			API for download and upload files
 //	@tag.name					Swagger API
 //	@tag.description			API for getting swagger documentation
+//	@tag.name					Websocket API
+//	@tag.description			API for establishing websocket connection
 //	@contact.name				Mandarine Support
 //	@contact.email				mandarine.app@yandex.ru
 //	@license.name				Apache 2.0
-//	@license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//	@license.url				https://www.apache.org/licenses/LICENSE-2.0.html
 //	@securityDefinitions.apikey	BearerAuth
 //	@in							header
 //	@name						Authorization
 //	@externalDocs.description	OpenAPI
 //	@externalDocs.url			https://swagger.io/resources/open-api/
-func SetupRouter(container *registry.Container) *gin.Engine {
-	docs.SwaggerInfo.Version = container.Config.Server.Version
+func SetupRouter(container *di.Container) *gin.Engine {
+	// Setup Swagger spec
+	swagger.SwaggerInfo.Version = container.Config.Server.Version
+	swagger.SwaggerInfo.Host = container.Config.Server.ExternalURL
 
 	// Create router
 	log.Debug().Msg("create router")
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
+	// Setup validators
+	log.Debug().Msg("setup validators")
+	decimal.MarshalJSONWithoutQuotes = true
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		_ = v.RegisterValidation("pastdate", validator2.PastDateValidator)
+		_ = v.RegisterValidation("duration", validator2.DurationValidator)
+		_ = v.RegisterValidation("zxcvbn", validator2.ZxcvbnPasswordValidator)
+		_ = v.RegisterValidation("username", validator2.UsernameValidator)
+		_ = v.RegisterValidation("point", validator2.PointValidator)
+	}
+
 	// Setup method not allowed and route not found
 	log.Debug().Msg("setup method not allowed and route not found")
 	router.HandleMethodNotAllowed = true
-	router.NoMethod(func(ctx *gin.Context) {
-		log.Debug().Msg("handle method not allowed")
-		_ = ctx.AbortWithError(http.StatusMethodNotAllowed, ErrMethodNotAllowed)
-	})
-	router.NoRoute(func(ctx *gin.Context) {
-		log.Debug().Msg("handle route not found")
-		_ = ctx.AbortWithError(http.StatusNotFound, ErrRouteNotFound)
-	})
+	router.NoMethod(handleNoMethod)
+	router.NoRoute(handleNoRoute)
 
 	// Setup middlewares
 	log.Debug().Msg("setup middlewares")
-	router.Use(middleware2.LoggerMiddleware())
-	router.Use(middleware2.LocaleMiddleware(container.Bundle))
-	router.Use(middleware2.RecoveryMiddleware())
-	router.Use(middleware2.CorsMiddleware())
-	router.Use(limits.RequestSizeLimiter(int64(container.Config.Server.MaxRequestSize)))
+	router.Use(middleware.ObservabilityMiddleware(container.Metrics, ignorePathRegexps...))
+	router.Use(middleware.LoggerMiddleware(ignorePathRegexps...))
+	router.Use(middleware.LocaleMiddleware(container.Infrastructure.LocaleBundle))
+	router.Use(middleware.RecoveryMiddleware())
+	router.Use(middleware.ErrorMiddleware())
+	middleware.InitRegistry(container.InfrastructureSVCs.JWT)
 
-	switch container.Config.Cache.Type {
-	case config.RedisCacheType, config.RedisClusterCacheType:
-		router.Use(middleware2.RedisRateLimitMiddleware(container.Cache.RDB, container.Config.Server.RPS))
-	default:
-		router.Use(middleware2.MemoryRateLimitMiddleware(container.Config.Server.RPS))
-	}
-
-	router.Use(middleware2.ErrorMiddleware())
-
-	if container.Config.Server.ExternalOrigin != "" && httphelper.IsPublicOrigin(container.Config.Server.ExternalOrigin) {
-		router.Use(middleware2.SecurityHeadersMiddleware())
-	}
-
-	// RegisterClient routes
+	// Register routes
 	log.Debug().Msg("register routes")
-	middlewares := handler.RouteMiddlewares{
-		Auth:        middleware2.JWTMiddleware(container.Config.Security.JWT, container.Repos.BannedToken),
-		RoleFactory: middleware2.RoleMiddleware,
-		BannedUser:  middleware2.BannedUserMiddleware(),
-		DeletedUser: middleware2.DeletedUserMiddleware(),
-	}
 	for _, apiHandler := range container.Handlers {
-		apiHandler.RegisterRoutes(router, middlewares)
+		apiHandler.RegisterRoutes(router)
 	}
 
 	// Log routes
@@ -120,4 +119,14 @@ func SetupRouter(container *registry.Container) *gin.Engine {
 	}
 
 	return router
+}
+
+func handleNoMethod(ctx *gin.Context) {
+	log.Debug().Msg("handle method not allowed")
+	_ = util.ErrorWithStatus(ctx, http.StatusMethodNotAllowed, ErrMethodNotAllowed)
+}
+
+func handleNoRoute(ctx *gin.Context) {
+	log.Debug().Msg("handle route not found")
+	_ = util.ErrorWithStatus(ctx, http.StatusNotFound, ErrRouteNotFound)
 }

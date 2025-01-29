@@ -2,29 +2,50 @@ package ws
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mandarine-io/Backend/internal/domain/service"
-	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
-	"github.com/mandarine-io/Backend/pkg/transport/http/middleware"
+	"github.com/mandarine-io/backend/internal/service/domain"
+	apihandler "github.com/mandarine-io/backend/internal/transport/http/handler"
+	"github.com/mandarine-io/backend/internal/transport/http/middleware"
+	"github.com/mandarine-io/backend/internal/transport/http/util"
+	_ "github.com/mandarine-io/backend/pkg/model/v0"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
 type handler struct {
-	svc service.WebsocketService
+	svc    domain.WebsocketService
+	logger zerolog.Logger
 }
 
-func NewHandler(svc service.WebsocketService) apihandler.ApiHandler {
-	return &handler{svc: svc}
+type Option func(*handler)
+
+func WithLogger(logger zerolog.Logger) Option {
+	return func(h *handler) {
+		h.logger = logger
+	}
 }
 
-func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
+func NewHandler(svc domain.WebsocketService, opts ...Option) apihandler.APIHandler {
+	h := &handler{
+		svc:    svc,
+		logger: zerolog.Nop(),
+	}
+
+	for _, opt := range opts {
+		opt(h)
+	}
+
+	return h
+}
+
+func (h *handler) RegisterRoutes(router *gin.Engine) {
 	log.Debug().Msg("register websocket routes")
 
 	router.GET(
 		"v0/ws",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
+		middleware.Registry.Auth,
+		middleware.Registry.BannedUser,
+		middleware.Registry.DeletedUser,
 		h.Connect,
 	)
 }
@@ -37,19 +58,20 @@ func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.Rout
 //	@Tags			Websocket API
 //	@Security		BearerAuth
 //	@Success		101
-//	@Failure		400	{object}	dto.ErrorResponse
-//	@Failure		401	{object}	dto.ErrorResponse
-//	@Failure		503	{object}	dto.ErrorResponse
+//	@Failure		400	{object}	v0.ErrorOutput
+//	@Failure		401	{object}	v0.ErrorOutput
+//	@Failure		503	{object}	v0.ErrorOutput
 //	@Router			/v0/ws [get]
 func (h *handler) Connect(ctx *gin.Context) {
 	log.Debug().Msg("handle connect")
 
 	authUser, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
 	// RegisterClient client in pool
+	ctx.Writer.Header().Set("Content-Type", "application/json")
 	_ = h.svc.RegisterClient(authUser.ID, ctx.Request, ctx.Writer)
 }

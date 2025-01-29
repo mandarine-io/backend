@@ -1,42 +1,62 @@
 with-expecter: true
+issue-845-fix: true
+resolve-type-alias: false
 mockname: "{{.InterfaceName}}Mock"
 filename: "{{.InterfaceNameSnake}}.go"
 outpkg: "mock"
 dir: "{{.InterfaceDir}}/mock"
 packages:
-  github.com/mandarine-io/Backend/internal/persistence/repo:
+  github.com/mandarine-io/backend/internal/infrastructure/cache:
+    config:
+      include-regex: ".*"
+      exclude-regex: ".*Option"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/backend/internal/infrastructure/locale:
+    config:
+      include-regex: ".*"
+      exclude-regex: ".*Option"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/backend/internal/infrastructure/pubsub:
+    config:
+      include-regex: ".*"
+      exclude-regex: ".*Option"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/backend/internal/infrastructure/s3:
+    config:
+      include-regex: ".*"
+      exclude-regex: ".*Option"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/backend/internal/infrastructure/smtp:
+    config:
+      include-regex: ".*"
+      exclude-regex: ".*Option"
+      filename: "{{.InterfaceNameSnake}}.go"
+  github.com/mandarine-io/backend/internal/infrastructure/template:
     config:
       include-regex: ".*"
       filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/internal/domain/service:
+  github.com/mandarine-io/backend/internal/persistence/repo:
     config:
       include-regex: ".*"
+      exclude-regex: ".*Option"
       filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/geocoding:
+  github.com/mandarine-io/backend/internal/service/domain:
     config:
       include-regex: ".*"
+      exclude-regex: ".*Option"
       filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/oauth:
+  github.com/mandarine-io/backend/internal/service/infrastructure:
     config:
       include-regex: ".*"
+      exclude-regex: ".*Option"
       filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/pubsub:
+  github.com/mandarine-io/backend/third_party/geocoding:
     config:
       include-regex: ".*"
+      exclude-regex: ".*Option"
       filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/smtp:
+  github.com/mandarine-io/backend/third_party/oauth:
     config:
       include-regex: ".*"
-      filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/storage/cache:
-    config:
-      include-regex: ".*"
-      filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/storage/s3:
-    config:
-      include-regex: ".*"
-      filename: "{{.InterfaceNameSnake}}.go"
-  github.com/mandarine-io/Backend/pkg/template:
-    config:
-      include-regex: ".*"
+      exclude-regex: ".*Option"
       filename: "{{.InterfaceNameSnake}}.go"

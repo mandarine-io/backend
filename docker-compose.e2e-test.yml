@@ -1,0 +1,129 @@
+version: '3.8'
+
+networks:
+  mandarine-e2e-test-net:
+
+services:
+  ################################
+  ########## PostgreSQL ##########
+  ################################
+  postgres:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: mandarine-e2e-test-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${APP_TEST_POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${APP_TEST_POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${APP_TEST_POSTGRES_DB:-mandarine}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - '${APP_TEST_POSTGRES_PORT:-35432}:5432'
+    networks:
+      - mandarine-e2e-test-net
+
+  ###########################
+  ########## Redis ##########
+  ###########################
+  redis:
+    image: redis/redis-stack:7.4.0-v2
+    container_name: mandarine-e2e-test-redis
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${APP_TEST_REDIS_PASSWORD:-password}
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - '${APP_TEST_REDIS_PORT:-36379}:6379'
+    networks:
+      - mandarine-e2e-test-net
+
+  ###########################
+  ########## Minio ##########
+  ###########################
+  minio:
+    image: bitnami/minio:2024.12.18
+    container_name: mandarine-e2e-test-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${APP_TEST_MINIO_ACCESSKEY:-admin}
+      MINIO_ROOT_PASSWORD: ${APP_TEST_MINIO_SECRETKEY:-Password_10}
+      MINIO_DEFAULT_BUCKETS: ${APP_TEST_MINIO_BUCKET:-mandarine}
+    healthcheck:
+      test: [ "CMD-SHELL", "mc ready local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - '${APP_TEST_MINIO_PORT:-39000}:9000'
+    networks:
+      - mandarine-e2e-test-net
+
+  #############################
+  ########## Mailhog ##########
+  #############################
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mandarine-e2e-test-mailhog
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -T5 -qO- http://localhost:8025 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - '${APP_TEST_MAILHOG_SMTPPORT:-31025}:1025'
+      - '${APP_TEST_MAILHOG_APIPORT:-38025}:8025'
+    networks:
+      - mandarine-e2e-test-net
+
+  ############################
+  ########## Server ##########
+  ############################
+  server:
+    build:
+      context: .
+    image: mandarine-io/server:e2e
+    container_name: mandarine-e2e-test-server
+    restart: unless-stopped
+    environment:
+      APP_CACHE_ADDRESS: redis:6379
+      APP_CACHE_PASSWORD: ${APP_TEST_REDIS_PASSWORD:-password}
+      APP_DATABASE_ADDRESS: postgres:5432
+      APP_DATABASE_USERNAME: ${APP_TEST_POSTGRES_USER:-admin}
+      APP_DATABASE_PASSWORD: ${APP_TEST_POSTGRES_PASSWORD:-password}
+      APP_DATABASE_DBNAME: ${APP_TEST_POSTGRES_DB:-mandarine}
+      APP_PUBSUB_ADDRESS: redis:6379
+      APP_PUBSUB_PASSWORD: ${APP_TEST_REDIS_PASSWORD:-password}
+      APP_S3_ADDRESS: minio:9000
+      APP_S3_ACCESSKEY: ${APP_TEST_MINIO_ACCESSKEY:-admin}
+      APP_S3_SECRETKEY: ${APP_TEST_MINIO_SECRETKEY:-Password_10}
+      APP_S3_BUCKET: ${APP_TEST_MINIO_BUCKET:-mandarine}
+      APP_SECURITY_JWT_SECRET: ${APP_TEST_SERVER_JWTSECRET:-9bd8b3e960d752f050950dcec783aaae1e0437baa2f29310d556116448b9471c}
+      APP_SMTP_HOST: mailhog
+      APP_SMTP_PORT: 1025
+      APP_WEBSOCKET_POOLSIZE: 5
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -T5 -qO- http://localhost:8080/health || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+    ports:
+      - '${APP_TEST_SERVER:-38080}:8080'
+    networks:
+      - mandarine-e2e-test-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy

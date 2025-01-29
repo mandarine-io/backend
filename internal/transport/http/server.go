@@ -2,10 +2,7 @@ package http
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
-	"github.com/mandarine-io/Backend/internal/registry"
-	validator3 "github.com/mandarine-io/Backend/pkg/transport/http/validator"
+	"github.com/mandarine-io/backend/internal/di"
 	"github.com/rs/zerolog/log"
 	slogzerolog "github.com/samber/slog-zerolog/v2"
 	"log/slog"
@@ -18,16 +15,7 @@ const (
 	serverIdleTimeout = 30 * time.Second
 )
 
-func NewServer(container *registry.Container) *http.Server {
-	// Setup validators
-	log.Debug().Msg("setup validators")
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		_ = v.RegisterValidation("pastdate", validator3.PastDateValidator)
-		_ = v.RegisterValidation("zxcvbn", validator3.ZxcvbnPasswordValidator)
-		_ = v.RegisterValidation("username", validator3.UsernameValidator)
-		_ = v.RegisterValidation("point", validator3.PointValidator)
-	}
-
+func NewServer(container *di.Container) *http.Server {
 	// Create server
 	log.Debug().Msg("create server")
 	return &http.Server{

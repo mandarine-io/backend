@@ -1,161 +1,82 @@
-<h1 id="home" align="center" style="font-weight: bold;">Mandarine (Backend)</h1>
+<h1 align="center">Backend</h1>
+<p align="center">
+  <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/mandarine-io/backend?color=3fbc11&style=flat">
+  <img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/mandarine-io/backend?color=3fbc11&style=flat">
+  <img alt="License" src="https://img.shields.io/github/license/mandarine-io/backend?color=3fbc11&style=flat">
+  <img alt="Github issues" src="https://img.shields.io/github/issues/mandarine-io/backend?color=3fbc11&style=flat" />
+  <img alt="Github forks" src="https://img.shields.io/github/forks/mandarine-io/backend?color=3fbc11&style=flat" />
+  <img alt="Github stars" src="https://img.shields.io/github/stars/mandarine-io/backend?color=3fbc11&style=flat" />
+</p>
 
-<h2 id="technologies">Technologies</h2>
+**Mandarine** - это платформа для записи на услуги красоты и ухода, объединяющая клиентов и мастеров. Здесь мы изучим
+один из ее компонентов - *сервер*.
 
-- [Golang](https://go.dev/)
-- [Gin Gonic](https://gin-gonic.com/)
-- [GORM](https://gorm.io/index.html)
-- [gocron](https://github.com/go-co-op/gocron)
-- [gorilla/websocket](https://github.com/gorilla/websocket)
-- OAuth2
-  providers ([Google](https://developers.google.com/identity/protocols/oauth2?hl=ru), [Yandex](https://yandex.ru/dev/id/doc/ru/concepts/ya-oauth-intro), [Mail.ru](https://help.mail.ru/developers/oauth))
-- Geocoding
-  providers ([Graphhoper](https://docs.graphhopper.com/), [Here](https://developer.here.com/develop/rest-apis), [LocationIQ](https://docs.locationiq.com/reference/search), [OpenStreetMap (Nominatim)](https://nominatim.org/release-docs/latest/api/Overview/), [Yandex](https://yandex.ru/dev/geocode/doc/ru/))
-- [PostgreSQL (PostGIS, gin)](https://www.postgresql.org/)
-- [Redis](https://redis.io/)
-- [MinIO](https://min.io/)
-- [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
-- [Nginx](https://nginx.org/)
-- [Mailhog](https://github.com/mailhog/MailHog)
-- [Testcontainers](https://testcontainers.com/)
-- [K6](https://k6.io/)
-- [Docker](https://www.docker.com/)
-- [Git](https://git-scm.com/)
-- [Make](https://www.gnu.org/software/make/)
-- [EditorConfig](https://editorconfig.org/)
+Mandarine имеет клиент-серверную архитектуру, поэтому сервер инкапсулирует достаточно много функционала:
 
-<h2 id="getting-started">Getting started</h2>
++ **Регистрация и авторизация**
++ **Управление аккаунтами**
++ **Профиль, услуги, портфолио мастеров**
++ **Формирование расписаний и запись на услуги**
++ **Поиск мастеров**
++ **Отзывы о мастерах и их рейтинг**
++ **Уведомления**
++ **И много другого**
 
-Here you describe how to run project locally
+## Быстрый старт
 
-<h3 id="prerequisites">Prerequisites</h3>
+Для того чтобы запустить проект локально и ознакомиться с его основными функциями, вам нужно:
 
-To launch a project, you need:
+### Предварительные условия
+
+Подготовить следующие инструменты:
 
 - [Golang](https://go.dev/)
 - [Git](https://git-scm.com/)
 - [Docker](https://www.docker.com/)
-- [Make](https://www.gnu.org/software/make/)
-- [NPM](https://www.npmjs.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [Make](https://www.gnu.org/software/make/) (опционально)
 
-<h3 id="cloning">Cloning</h3>
+### Клонирование проекта
 
-Сlone this project:
+Склонировать репозиторий сервера:
 
 ```bash
-git clone https://github.com/mandarine-io/Backend
+git clone https://github.com/mandarine-io/backend
 ```
 
-<h3 id="config">Configuration</h3>
+### Среда выполнения
 
-<h4 id="yaml-file">YAML file</h4>
-
-YAML configuration file contains all base application settings.
-Use the `config/config.example.yaml` as reference to create your configuration file:
+Запустить среду выполнения в Docker. Для этого выполните команду:
 
 ```bash
-cp config/config.example.yaml config/config.yaml
+docker compose -f docker-compose.local.yml up -d
+```
+
+### Конфигурация
+
+Используйте `config/config.default.yaml` в качестве шаблона для создания своего файла конфигурации:
+
+```bash
+cp config/config.default.yaml config/config.yaml
 nano config/config.yaml
 ```
 
-<h4 id="envs">Environment variables</h4>
+### Запуск
 
-To overwrite some properties from YAML file, you can use environment variables.
-Use the `config/.env.example` as reference to create your env file `.env`:
-
-```bash
-cp config/.env.example .env
-nano .env
-```
-
-<h3 id="launch">Launch</h3>
-
-To start server, you can run Makefile command:
+Чтобы запустить сервер, вы можете запустить команду Makefile:
 
 ```bash
 make start
 ```
 
-or you can run manually to use custom YAML config file and environment variables file:
+или вы можете запустить вручную:
 
 ```bash
 go mod tidy
 go build -o build/server cmd/api
-MANDARINE_CONFIG_FILE=config/config.yaml ./build/server
+./build/server
 ```
 
-<h2 id="dev">Development</h2>
+## Лицензия
 
-To start server with hot reload (development mode), you can run Makefile command:
-
-```bash
-make start.dev
-```
-
-<h3 id="format">Formatting</h3>
-
-To format code, you can run Makefile command:
-
-```bash
-make format
-```
-
-With fixing found issues:
-
-```bash
-make format.fix
-```
-
-<h3 id="lint">Linting</h3>
-
-All linters and its settings describes file `golangcli.yaml`. To run linters, you can execute Makefile
-command:
-
-```bash
-make lint
-```
-
-With fixing found issues:
-
-```bash
-make lint.fix
-```
-
-<h2 id="testing">Testing</h2>
-
-The system is covered with various types of tests.
-
-<h3 id="unit-testing">Unit tests</h3>
-
-Created unit tests for services, various custom managers and clients, and util functions:
-
-```bash
-make test.unit
-```
-
-After finishing, you can see the results in the `logs/unit-test` folder (logs and coverage reports).
-
-<h3 id="e2e-testing">E2E tests</h3>
-
-The main business scenarios are covered with e2e tests, and for them a test environment is deployed in Docker
-containers:
-
-```bash
-make test.e2e
-```
-
-After finishing, you can see the results in the `logs/e2e-test` folder (logs and coverage reports).
-
-<h3 id="load-testing">Load tests</h3>
-
-To test the system under load and identify bottlenecks, load tests are written:
-
-```bash
-make test.load LOAD_TEST_NAME=<test-file-name>
-```
-
-After finishing, you can see the results in the `logs/load-test` folder (logs and performance reports).
-
-<h2 id="license">License</h2>
-
-This project is licensed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0.html).
+Этот проект распространяется по [Лицензии Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).

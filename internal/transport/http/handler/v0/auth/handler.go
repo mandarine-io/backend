@@ -1,58 +1,77 @@
 package auth
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/mandarine-io/Backend/internal/config"
-	"github.com/mandarine-io/Backend/internal/domain/dto"
-	"github.com/mandarine-io/Backend/internal/domain/service"
-	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
-	dto2 "github.com/mandarine-io/Backend/pkg/transport/http/dto"
-	middleware2 "github.com/mandarine-io/Backend/pkg/transport/http/middleware"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/mandarine-io/backend/config"
+	"github.com/mandarine-io/backend/internal/infrastructure/locale"
+	"github.com/mandarine-io/backend/internal/service/domain"
+	"github.com/mandarine-io/backend/internal/service/infrastructure"
+	apihandler "github.com/mandarine-io/backend/internal/transport/http/handler"
+	"github.com/mandarine-io/backend/internal/transport/http/middleware"
+	"github.com/mandarine-io/backend/internal/transport/http/util"
+	"github.com/mandarine-io/backend/pkg/model/v0"
+	"github.com/rs/zerolog"
 	"net/http"
 )
 
-const (
-	refreshTokenCookieName = "RefreshToken"
-)
-
 var (
-	errSessionExpired      = dto2.NewI18nError("session expired", "errors.session_expired")
-	errRedirectUrlNotFound = dto2.NewI18nError("not found redirect url", "errors.redirect_url_not_found")
-	errInvalidState        = dto2.NewI18nError("invalid state", "errors.invalid_state")
+	errRedirectURLNotFound = v0.NewI18nError("not found redirect url", "errors.redirect_url_not_found")
+	errInvalidState        = v0.NewI18nError("invalid state", "errors.invalid_state")
 
 	stateCookieName   = "OAuthState"
 	stateCookieMaxAge = 20 * 60
 )
 
 type handler struct {
-	svc service.AuthService
-	cfg *config.Config
+	svc    domain.AuthService
+	cfg    config.Config
+	logger zerolog.Logger
 }
 
-func NewHandler(svc service.AuthService, cfg *config.Config) apihandler.ApiHandler {
-	return &handler{
-		svc: svc,
-		cfg: cfg,
+type Option func(*handler)
+
+func WithLogger(logger zerolog.Logger) Option {
+	return func(h *handler) {
+		h.logger = logger
 	}
 }
 
-func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
-	log.Debug().Msg("register service routes")
+func NewHandler(svc domain.AuthService, cfg config.Config, opts ...Option) apihandler.APIHandler {
+	h := &handler{
+		svc:    svc,
+		cfg:    cfg,
+		logger: zerolog.Nop(),
+	}
 
-	router.POST("v0/auth/login", h.Login)
-	router.GET("v0/auth/refresh", h.RefreshTokens)
-	router.GET("v0/auth/social/:provider", h.SocialLogin)
-	router.POST("v0/auth/social/:provider/callback", h.SocialLoginCallback)
-	router.POST("v0/auth/register", h.Register)
-	router.POST("v0/auth/register/confirm", h.RegisterConfirm)
-	router.POST("v0/auth/recovery-password", h.RecoveryPassword)
-	router.POST("v0/auth/recovery-password/verify", h.VerifyRecoveryCode)
-	router.POST("v0/auth/reset-password", h.ResetPassword)
+	for _, opt := range opts {
+		opt(h)
+	}
 
-	router.GET("v0/auth/logout", middlewares.Auth, h.Logout)
+	return h
+}
+
+func (h *handler) RegisterRoutes(router *gin.Engine) {
+	h.logger.Debug().Msg("register service routes")
+
+	authRouter := router.Group("/v0/auth")
+	{
+		authRouter.POST("/login", h.Login)
+		authRouter.POST("/refresh", h.RefreshTokens)
+		authRouter.GET("/social/:provider", h.SocialLogin)
+		authRouter.POST("/social/:provider/callback", h.SocialLoginCallback)
+		authRouter.POST("/register", h.Register)
+		authRouter.POST("/register/confirm", h.RegisterConfirm)
+		authRouter.POST("/recovery-password", h.RecoveryPassword)
+		authRouter.POST("/recovery-password/verify", h.VerifyRecoveryCode)
+		authRouter.POST("/reset-password", h.ResetPassword)
+
+		authRouter.GET(
+			"/logout",
+			middleware.Registry.Auth,
+			h.Logout,
+		)
+	}
 }
 
 // Login godoc
@@ -61,41 +80,40 @@ func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.Rout
 //	@Summary		Sign in
 //	@Description	Request for serviceentication. In response will be new access token in body and new refresh tokens in http-only cookie.
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body		dto.LoginInput	true	"Login request body"
-//	@Header			200		{string}	Set-Cookie	"RefreshToken=; HttpOnly; Max-Age=86400; Secure"
-//	@Success		200		{object}	dto.JwtTokensOutput	"JWT access token"
-//	@Failure		400		{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		403		{object}	dto.ErrorResponse	"User is blocked"
-//	@Failure		404		{object}	dto.ErrorResponse	"User not found"
-//	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body		v0.LoginInput		true	"Login request body"
+//	@Header			200		{string}	Set-Cookie				"RefreshToken=; HttpOnly; Max-Age=86400; Secure"
+//	@Success		200		{object}	v0.JwtTokensOutput	"JWT tokens"
+//	@Failure		400		{object}	v0.ErrorOutput		"Validation error"
+//	@Failure		403		{object}	v0.ErrorOutput		"User is blocked"
+//	@Failure		404		{object}	v0.ErrorOutput		"User not found"
+//	@Failure		500		{object}	v0.ErrorOutput		"Internal server error"
 //	@Router			/v0/auth/login [post]
 func (h *handler) Login(ctx *gin.Context) {
-	log.Debug().Msg("handle login")
+	h.logger.Debug().Msg("handle login")
 
-	req := dto.LoginInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.LoginInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	res, err := h.svc.Login(ctx, req)
+	res, err := h.svc.Login(ctx, input)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrBadCredentials):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
-		case errors.Is(err, service.ErrUserIsBlocked):
-			_ = ctx.AbortWithError(http.StatusForbidden, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrBadCredentials):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserIsBlocked):
+			_ = util.ErrorWithStatus(ctx, http.StatusForbidden, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
 
-	ctx.SetCookie(refreshTokenCookieName, res.RefreshToken, h.cfg.Security.JWT.RefreshTokenTTL, "/v0/auth/refresh", "", true, true)
 	ctx.JSON(http.StatusOK, res)
 }
 
@@ -105,40 +123,39 @@ func (h *handler) Login(ctx *gin.Context) {
 //	@Summary		Refresh tokens
 //	@Description	Request for refreshing tokens. In response will be new access token in body and new refresh tokens in http-only cookie.
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Header			200	{string}	Set-Cookie	"RefreshToken=; HttpOnly; Max-Age=86400; Secure"
-//	@Success		200	{object}	dto.JwtTokensOutput	"JWT access token"
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked"
-//	@Failure		404	{object}	dto.ErrorResponse	"User not found"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
-//	@Router			/v0/auth/refresh [get]
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body		v0.RefreshTokensInput	true	"Refresh token body"
+//	@Success		200		{object}	v0.JwtTokensOutput		"JWT tokens"
+//	@Failure		400		{object}	v0.ErrorOutput			"Validation error"
+//	@Failure		403		{object}	v0.ErrorOutput			"User is blocked"
+//	@Failure		404		{object}	v0.ErrorOutput			"User not found"
+//	@Failure		500		{object}	v0.ErrorOutput			"Internal server error"
+//	@Router			/v0/auth/refresh [post]
 func (h *handler) RefreshTokens(ctx *gin.Context) {
-	log.Debug().Msg("handle refresh tokens")
+	h.logger.Debug().Msg("handle refresh tokens")
 
-	refreshToken, err := ctx.Cookie(refreshTokenCookieName)
-	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, errSessionExpired)
+	input := v0.RefreshTokensInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	res, err := h.svc.RefreshTokens(ctx, refreshToken)
+	res, err := h.svc.RefreshTokens(ctx, input)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidJwtToken):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrUserIsBlocked):
-			_ = ctx.AbortWithError(http.StatusForbidden, err)
+		case errors.Is(err, infrastructure.ErrInvalidJWTToken):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrUserIsBlocked):
+			_ = util.ErrorWithStatus(ctx, http.StatusForbidden, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
 
-	ctx.SetCookie(refreshTokenCookieName, res.RefreshToken, h.cfg.Security.JWT.RefreshTokenTTL, "", "", true, true)
 	ctx.JSON(http.StatusOK, res)
 }
 
@@ -149,16 +166,16 @@ func (h *handler) RefreshTokens(ctx *gin.Context) {
 //	@Description	Request for logout. User must be logged in.
 //	@Security		BearerAuth
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
+//	@Accept			application/json
+//	@Produce		application/json
 //	@Success		200
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/logout [get]
 func (h *handler) Logout(c *gin.Context) {
-	log.Debug().Msg("handle logout")
+	h.logger.Debug().Msg("handle logout")
 
-	principal, err := middleware2.GetAuthUser(c)
+	principal, err := middleware.GetAuthUser(c)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusUnauthorized, err)
 		return
@@ -179,34 +196,34 @@ func (h *handler) Logout(c *gin.Context) {
 //	@Summary		Register
 //	@Description	Request for creating new user. At the end will be sent confirmation email with code
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.RegisterInput	true	"Register request body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.RegisterInput	true	"Register request body"
 //	@Success		202
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		409	{object}	dto.ErrorResponse	"User already exists"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		409	{object}	v0.ErrorOutput	"User already exists"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/register [post]
 func (h *handler) Register(ctx *gin.Context) {
-	log.Debug().Msg("handle register")
+	h.logger.Debug().Msg("handle register")
 
-	req := dto.RegisterInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.RegisterInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	log.Debug().Msg("get localizer")
-	localizer := ctx.Value(middleware2.LocalizerKey).(*i18n.Localizer)
+	h.logger.Debug().Msg("get localizer")
+	localizer := ctx.Value(middleware.LocalizerKey).(locale.Localizer)
 
-	if err := h.svc.Register(ctx, req, localizer); err != nil {
+	if err := h.svc.Register(ctx, input, localizer); err != nil {
 		switch {
-		case errors.Is(err, service.ErrDuplicateUser):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
-		case errors.Is(err, service.ErrSendEmail):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrDuplicateUser):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
+		case errors.Is(err, domain.ErrSendEmail):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -220,31 +237,31 @@ func (h *handler) Register(ctx *gin.Context) {
 //	@Summary		Register confirmation
 //	@Description	Request for confirming registration. At the end will be created new user
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.RegisterConfirmInput	true	"Register confirm body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.RegisterConfirmInput	true	"Register confirm body"
 //	@Success		200
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		409	{object}	dto.ErrorResponse	"User already exists"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		409	{object}	v0.ErrorOutput	"User already exists"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/register/confirm [post]
 func (h *handler) RegisterConfirm(ctx *gin.Context) {
-	log.Debug().Msg("handle register confirm")
+	h.logger.Debug().Msg("handle register confirm")
 
-	req := dto.RegisterConfirmInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.RegisterConfirmInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := h.svc.RegisterConfirm(ctx, req); err != nil {
+	if err := h.svc.RegisterConfirm(ctx, input); err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidOrExpiredOtp):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
-		case errors.Is(err, service.ErrDuplicateUser):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
+		case errors.Is(err, infrastructure.ErrInvalidOrExpiredOTP):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrDuplicateUser):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -258,34 +275,34 @@ func (h *handler) RegisterConfirm(ctx *gin.Context) {
 //	@Summary		Recovery password
 //	@Description	Request for recovery password. At the end will be sent email with code
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.RecoveryPasswordInput	true	"Recovery password body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.RecoveryPasswordInput	true	"Recovery password body"
 //	@Success		202
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		404	{object}	dto.ErrorResponse	"User not found"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		404	{object}	v0.ErrorOutput	"User not found"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/recovery-password [post]
 func (h *handler) RecoveryPassword(ctx *gin.Context) {
-	log.Debug().Msg("handle recovery password")
+	h.logger.Debug().Msg("handle recovery password")
 
-	req := dto.RecoveryPasswordInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.RecoveryPasswordInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	log.Debug().Msg("get localizer")
-	localizer := ctx.Value(middleware2.LocalizerKey).(*i18n.Localizer)
+	h.logger.Debug().Msg("get localizer")
+	localizer := ctx.Value(middleware.LocalizerKey).(locale.Localizer)
 
-	if err := h.svc.RecoveryPassword(ctx, req, localizer); err != nil {
+	if err := h.svc.RecoveryPassword(ctx, input, localizer); err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrSendEmail):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrSendEmail):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -299,28 +316,28 @@ func (h *handler) RecoveryPassword(ctx *gin.Context) {
 //	@Summary		Verify recovery code
 //	@Description	Request for verify recovery code. If code is correct will be sent status 200
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.VerifyRecoveryCodeInput	true	"Verify recovery code body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.VerifyRecoveryCodeInput	true	"Verify recovery code body"
 //	@Success		200
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/recovery-password/verify [post]
 func (h *handler) VerifyRecoveryCode(ctx *gin.Context) {
-	log.Debug().Msg("handle verify recovery code")
+	h.logger.Debug().Msg("handle verify recovery code")
 
-	req := dto.VerifyRecoveryCodeInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.VerifyRecoveryCodeInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := h.svc.VerifyRecoveryCode(ctx, req); err != nil {
+	if err := h.svc.VerifyRecoveryCode(ctx, input); err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidOrExpiredOtp):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		case errors.Is(err, infrastructure.ErrInvalidOrExpiredOTP):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -334,31 +351,31 @@ func (h *handler) VerifyRecoveryCode(ctx *gin.Context) {
 //	@Summary		Reset password
 //	@Description	Request for reset password. If code is correct will be updated password
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.ResetPasswordInput	true	"Reset password body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.ResetPasswordInput	true	"Reset password body"
 //	@Success		200
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		404	{object}	dto.ErrorResponse	"User not found"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		404	{object}	v0.ErrorOutput	"User not found"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/reset-password [post]
 func (h *handler) ResetPassword(ctx *gin.Context) {
-	log.Debug().Msg("handle reset password")
+	h.logger.Debug().Msg("handle reset password")
 
-	req := dto.ResetPasswordInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.ResetPasswordInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := h.svc.ResetPassword(ctx, req); err != nil {
+	if err := h.svc.ResetPassword(ctx, input); err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidOrExpiredOtp):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
+		case errors.Is(err, infrastructure.ErrInvalidOrExpiredOTP):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -370,45 +387,45 @@ func (h *handler) ResetPassword(ctx *gin.Context) {
 //
 //	@Id				SocialLogin
 //	@Summary		Social login
-//	@Description	Request for redirecting to OAuth consent page. After serviceorization, it will redirect to redirectUrl with serviceorization code and state
+//	@Description	Request for redirecting to OAuth consent page. After serviceorization, it will redirect to redirectURL with serviceorization code and state
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
-//	@Param			provider	path	string	true	"Social login provider (yandex, google, mailru)"
-//	@Param			redirectUrl	query	string	true	"Redirect URL"
-//	@Header			302	{string}	Set-Cookie	"OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			provider	path		string		true	"Social login provider (yandex, google, mailru)"
+//	@Param			redirectURL	query		string		true	"Redirect URL"
+//	@Header			302			{string}	Set-Cookie	"OAuthGoogleState=; HttpOnly; Max-Age=1200; Secure"
 //	@Success		302
-//	@Failure		404	{object}	dto.ErrorResponse	"Provider not found"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		404	{object}	v0.ErrorOutput	"Provider not found"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/auth/social/{provider} [get]
 func (h *handler) SocialLogin(ctx *gin.Context) {
-	log.Debug().Msg("handle social login")
+	h.logger.Debug().Msg("handle social login")
 
 	// Get provider
-	provider := ctx.Param("provider")
+	p := ctx.Param("provider")
 
 	// Get redirect url
-	redirectUrl, ok := ctx.GetQuery("redirectUrl")
+	redirectURL, ok := ctx.GetQuery("redirectURL")
 	if !ok {
-		_ = ctx.AbortWithError(http.StatusBadRequest, errRedirectUrlNotFound)
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, errRedirectURLNotFound)
 		return
 	}
 
 	// Get consent page url
-	output, err := h.svc.GetConsentPageUrl(ctx, provider, redirectUrl)
+	output, err := h.svc.GetConsentPageURL(ctx, p, redirectURL)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidProvider):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrInvalidProvider):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
 
 	// Set cookies amd redirect
 	ctx.SetCookie(stateCookieName, output.OauthState, stateCookieMaxAge, "", "", false, true)
-	ctx.Redirect(http.StatusFound, output.ConsentPageUrl)
+	ctx.Redirect(http.StatusFound, output.ConsentPageURL)
 }
 
 // SocialLoginCallback godoc
@@ -417,27 +434,26 @@ func (h *handler) SocialLogin(ctx *gin.Context) {
 //	@Summary		Social login callback
 //	@Description	Request for exchanging serviceorization code to token pairs. In process, it will exchange code to user info and register new user or login existing user. In response will be new access token in body and new refresh tokens in http-only cookie.
 //	@Tags			Authentication and Authorization API
-//	@Accept			json
-//	@Produce		json
+//	@Accept			application/json
+//	@Produce		application/json
 //	@Param			provider	path		string							true	"Social login provider (yandex, google, mailru)"
-//	@Param			body		body		dto.SocialLoginCallbackInput	true	"Social login callback request body"
-//	@Header			200			{string}	Set-Cookie	"RefreshToken=; HttpOnly; Max-Age=86400; Secure"
-//	@Success		200			{object}	dto.JwtTokensOutput	"JWT access token"
-//	@Failure		400			{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		403			{object}	dto.ErrorResponse	"User already exists"
-//	@Failure		404			{object}	dto.ErrorResponse	"User not found"
-//	@Failure		500			{object}	dto.ErrorResponse	"Internal server error"
+//	@Param			input		body		v0.SocialLoginCallbackInput	true	"Social login callback request body"
+//	@Success		200			{object}	v0.JwtTokensOutput			"JWT tokens"
+//	@Failure		400			{object}	v0.ErrorOutput				"Validation error"
+//	@Failure		403			{object}	v0.ErrorOutput				"User already exists"
+//	@Failure		404			{object}	v0.ErrorOutput				"User not found"
+//	@Failure		500			{object}	v0.ErrorOutput				"Internal server error"
 //	@Router			/v0/auth/social/{provider}/callback [post]
 func (h *handler) SocialLoginCallback(ctx *gin.Context) {
-	log.Debug().Msg("handle social login callback")
+	h.logger.Debug().Msg("handle social login callback")
 
 	// Get provider
-	provider := ctx.Param("provider")
+	p := ctx.Param("provider")
 
 	// Bind request
-	req := dto.SocialLoginCallbackInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.SocialLoginCallbackInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
@@ -445,33 +461,32 @@ func (h *handler) SocialLoginCallback(ctx *gin.Context) {
 	cookieState, err := ctx.Cookie(stateCookieName)
 	ctx.SetCookie(stateCookieName, "", -1, "", "", true, true)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, errInvalidState)
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, errInvalidState)
 		return
 	}
-	if cookieState != req.State {
-		_ = ctx.AbortWithError(http.StatusBadRequest, errInvalidState)
+	if cookieState != input.State {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, errInvalidState)
 		return
 	}
 
 	// Fetch user info
-	userInfo, err := h.svc.FetchUserInfo(ctx, provider, dto.FetchUserInfoInput{Code: req.Code})
+	userInfo, err := h.svc.FetchUserInfo(ctx, p, v0.FetchUserInfoInput{Code: input.Code})
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusNotFound, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		return
 	}
 
-	// RegisterClient or login
+	// Register or login
 	res, err := h.svc.RegisterOrLogin(ctx, userInfo)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserIsBlocked):
-			_ = ctx.AbortWithError(http.StatusForbidden, err)
+		case errors.Is(err, domain.ErrUserIsBlocked):
+			_ = util.ErrorWithStatus(ctx, http.StatusForbidden, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
 
-	ctx.SetCookie(refreshTokenCookieName, res.RefreshToken, h.cfg.Security.JWT.RefreshTokenTTL, "", "", true, true)
 	ctx.JSON(http.StatusOK, res)
 }

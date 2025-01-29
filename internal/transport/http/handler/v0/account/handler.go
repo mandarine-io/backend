@@ -1,109 +1,135 @@
 package account
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/mandarine-io/Backend/internal/domain/dto"
-	"github.com/mandarine-io/Backend/internal/domain/service"
-	apihandler "github.com/mandarine-io/Backend/internal/transport/http/handler"
-	middleware2 "github.com/mandarine-io/Backend/pkg/transport/http/middleware"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/mandarine-io/backend/internal/infrastructure/locale"
+	"github.com/mandarine-io/backend/internal/service/domain"
+	"github.com/mandarine-io/backend/internal/service/infrastructure"
+	apihandler "github.com/mandarine-io/backend/internal/transport/http/handler"
+	"github.com/mandarine-io/backend/internal/transport/http/middleware"
+	"github.com/mandarine-io/backend/internal/transport/http/util"
+	"github.com/mandarine-io/backend/pkg/model/v0"
+	"github.com/rs/zerolog"
 	"net/http"
 )
 
 type handler struct {
-	svc service.AccountService
+	svc    domain.AccountService
+	logger zerolog.Logger
 }
 
-func NewHandler(svc service.AccountService) apihandler.ApiHandler {
-	return &handler{svc: svc}
+type Option func(*handler)
+
+func WithLogger(logger zerolog.Logger) Option {
+	return func(h *handler) {
+		h.logger = logger
+	}
 }
 
-func (h *handler) RegisterRoutes(router *gin.Engine, middlewares apihandler.RouteMiddlewares) {
-	log.Debug().Msg("register service routes")
+func NewHandler(svc domain.AccountService, opts ...Option) apihandler.APIHandler {
+	h := &handler{
+		svc:    svc,
+		logger: zerolog.Nop(),
+	}
 
-	router.GET(
-		"v0/account",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.getAccount,
-	)
-	router.PATCH(
-		"v0/account/username",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.updateUsername)
-	router.PATCH(
-		"v0/account/email",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.updateEmail)
-	router.POST(
-		"v0/account/email/verify",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.verifyEmail)
-	router.POST(
-		"v0/account/password",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.setPassword)
-	router.PATCH(
-		"v0/account/password",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.updatePassword)
-	router.DELETE(
-		"v0/account",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		middlewares.DeletedUser,
-		h.deleteAccount)
-	router.GET(
-		"v0/account/restore",
-		middlewares.Auth,
-		middlewares.BannedUser,
-		h.restoreAccount,
-	)
+	for _, opt := range opts {
+		opt(h)
+	}
+
+	return h
+}
+
+func (h *handler) RegisterRoutes(router *gin.Engine) {
+	h.logger.Debug().Msg("register account routes")
+
+	accountRouter := router.Group("/v0/account")
+	{
+		accountRouter.GET(
+			"",
+			middleware.Registry.Auth,
+			h.getAccount,
+		)
+		accountRouter.PATCH(
+			"/username",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			middleware.Registry.DeletedUser,
+			h.updateUsername,
+		)
+		accountRouter.PATCH(
+			"/email",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			middleware.Registry.DeletedUser,
+			h.updateEmail,
+		)
+		accountRouter.POST(
+			"/email/verify",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			middleware.Registry.DeletedUser,
+			h.verifyEmail,
+		)
+		accountRouter.POST(
+			"/password",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			middleware.Registry.DeletedUser,
+			h.setPassword,
+		)
+		accountRouter.PATCH(
+			"/password",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			middleware.Registry.DeletedUser,
+			h.updatePassword,
+		)
+		accountRouter.DELETE(
+			"",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			h.deleteAccount,
+		)
+		accountRouter.GET(
+			"/restore",
+			middleware.Registry.Auth,
+			middleware.Registry.BannedUser,
+			h.restoreAccount,
+		)
+	}
 }
 
 // getAccount godoc
 //
 //	@Id				GetAccount
 //	@Summary		Get service
-//	@Description	Request for receiving own service. User must be logged in. In response will be returned own service info.
+//	@Description	Request for receiving own domain. User must be logged in. In response will be returned own service info.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	dto.AccountOutput	"Account info"
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Success		200	{object}	v0.AccountOutput	"Account info"
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		403	{object}	v0.ErrorOutput	"User is blocked or deleted"
+//	@Failure		404	{object}	v0.ErrorOutput	"Not found user"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/account [get]
 func (h *handler) getAccount(ctx *gin.Context) {
-	log.Debug().Msg("handle get service")
-	principal, err := middleware2.GetAuthUser(ctx)
+	h.logger.Debug().Msg("handle get service")
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
 	res, err := h.svc.GetAccount(ctx, principal.ID)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -118,41 +144,41 @@ func (h *handler) getAccount(ctx *gin.Context) {
 //	@Description	Request for updating username. User must be logged in. In response will be returned updated service info.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body		dto.UpdateUsernameInput	true	"Update username request body"
-//	@Success		200		{object}	dto.AccountOutput	"Account info"
-//	@Failure		400		{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401		{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403		{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404		{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		409		{object}	dto.ErrorResponse	"Duplicate username"
-//	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body		v0.UpdateUsernameInput	true	"Update username request body"
+//	@Success		200		{object}	v0.AccountOutput			"Account info"
+//	@Failure		400		{object}	v0.ErrorOutput			"Validation error"
+//	@Failure		401		{object}	v0.ErrorOutput			"Unauthorized"
+//	@Failure		403		{object}	v0.ErrorOutput			"User is blocked or deleted"
+//	@Failure		404		{object}	v0.ErrorOutput			"Not found user"
+//	@Failure		409		{object}	v0.ErrorOutput			"Duplicate username"
+//	@Failure		500		{object}	v0.ErrorOutput			"Internal server error"
 //	@Router			/v0/account/username [patch]
 func (h *handler) updateUsername(ctx *gin.Context) {
-	log.Debug().Msg("handle update username")
+	h.logger.Debug().Msg("handle update username")
 
-	req := dto.UpdateUsernameInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.UpdateUsernameInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
-	res, err := h.svc.UpdateUsername(ctx, principal.ID, req)
+	res, err := h.svc.UpdateUsername(ctx, principal.ID, input)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrDuplicateUsername):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrDuplicateUsername):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -167,47 +193,47 @@ func (h *handler) updateUsername(ctx *gin.Context) {
 //	@Description	Request for updating email. User must be logged in. In process will be sent verification email. In response will be returned updated service info.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body		dto.UpdateEmailInput	true	"Update email request body"
-//	@Success		200		{object}	dto.AccountOutput	"Account info (email is verified)"
-//	@Success		202		{object}	dto.AccountOutput	"Account info (email is not verified)"
-//	@Failure		400		{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401		{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403		{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404		{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		409		{object}	dto.ErrorResponse	"Duplicate email"
-//	@Failure		500		{object}	dto.ErrorResponse	"Internal server error"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body		v0.UpdateEmailInput	true	"Update email request body"
+//	@Success		200		{object}	v0.AccountOutput		"Account info (email is verified)"
+//	@Success		202		{object}	v0.AccountOutput		"Account info (email is not verified)"
+//	@Failure		400		{object}	v0.ErrorOutput		"Validation error"
+//	@Failure		401		{object}	v0.ErrorOutput		"Unauthorized"
+//	@Failure		403		{object}	v0.ErrorOutput		"User is blocked or deleted"
+//	@Failure		404		{object}	v0.ErrorOutput		"Not found user"
+//	@Failure		409		{object}	v0.ErrorOutput		"Duplicate email"
+//	@Failure		500		{object}	v0.ErrorOutput		"Internal server error"
 //	@Router			/v0/account/email [patch]
 func (h *handler) updateEmail(ctx *gin.Context) {
-	log.Debug().Msg("handle update email")
+	h.logger.Debug().Msg("handle update email")
 
-	req := dto.UpdateEmailInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.UpdateEmailInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
-	log.Debug().Msg("get localizer")
-	localizer := ctx.Value(middleware2.LocalizerKey).(*i18n.Localizer)
+	h.logger.Debug().Msg("get localizer")
+	localizer := ctx.Value(middleware.LocalizerKey).(locale.Localizer)
 
-	res, err := h.svc.UpdateEmail(ctx, principal.ID, req, localizer)
+	res, err := h.svc.UpdateEmail(ctx, principal.ID, input, localizer)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrDuplicateEmail):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
-		case errors.Is(err, service.ErrSendEmail):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrDuplicateEmail):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
+		case errors.Is(err, domain.ErrSendEmail):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -226,39 +252,39 @@ func (h *handler) updateEmail(ctx *gin.Context) {
 //	@Description	Request for verify email. User must be logged in.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.VerifyEmailInput	true	"Verify email request body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.VerifyEmailInput	true	"Verify email request body"
 //	@Success		200
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		403	{object}	v0.ErrorOutput	"User is blocked or deleted"
+//	@Failure		404	{object}	v0.ErrorOutput	"Not found user"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/account/email/verify [post]
 func (h *handler) verifyEmail(ctx *gin.Context) {
-	log.Debug().Msg("handle verify email")
+	h.logger.Debug().Msg("handle verify email")
 
-	req := dto.VerifyEmailInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.VerifyEmailInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
-	if err := h.svc.VerifyEmail(ctx, principal.ID, req); err != nil {
+	if err := h.svc.VerifyEmail(ctx, principal.ID, input); err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidOrExpiredOtp):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
+		case errors.Is(err, infrastructure.ErrInvalidOrExpiredOTP):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -273,40 +299,40 @@ func (h *handler) verifyEmail(ctx *gin.Context) {
 //	@Description	Request for setting password. User must be logged in.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.SetPasswordInput	true	"Set password request body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.SetPasswordInput	true	"Set password request body"
 //	@Success		200
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		409	{object}	dto.ErrorResponse	"Password is set"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		403	{object}	v0.ErrorOutput	"User is blocked or deleted"
+//	@Failure		404	{object}	v0.ErrorOutput	"Not found user"
+//	@Failure		409	{object}	v0.ErrorOutput	"Password is set"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/account/password [post]
 func (h *handler) setPassword(ctx *gin.Context) {
-	log.Debug().Msg("handle set password")
+	h.logger.Debug().Msg("handle set password")
 
-	req := dto.SetPasswordInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.SetPasswordInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
-	if err := h.svc.SetPassword(ctx, principal.ID, req); err != nil {
+	if err := h.svc.SetPassword(ctx, principal.ID, input); err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrPasswordIsSet):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrPasswordIsSet):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -321,39 +347,39 @@ func (h *handler) setPassword(ctx *gin.Context) {
 //	@Description	Request for updating password. User must be logged in.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Param			body	body	dto.UpdatePasswordInput	true	"Update password request body"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			input	body	v0.UpdatePasswordInput	true	"Update password request body"
 //	@Success		200
-//	@Failure		400	{object}	dto.ErrorResponse	"Validation error"
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Failure		400	{object}	v0.ErrorOutput	"Validation error"
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		403	{object}	v0.ErrorOutput	"User is blocked or deleted"
+//	@Failure		404	{object}	v0.ErrorOutput	"Not found user"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/account/password [patch]
 func (h *handler) updatePassword(ctx *gin.Context) {
-	log.Debug().Msg("handle update password")
+	h.logger.Debug().Msg("handle update password")
 
-	req := dto.UpdatePasswordInput{}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = ctx.AbortWithError(http.StatusBadRequest, err)
+	input := v0.UpdatePasswordInput{}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
-	if err := h.svc.UpdatePassword(ctx, principal.ID, req); err != nil {
+	if err := h.svc.UpdatePassword(ctx, principal.ID, input); err != nil {
 		switch {
-		case errors.Is(err, service.ErrIncorrectOldPassword):
-			_ = ctx.AbortWithError(http.StatusBadRequest, err)
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrIncorrectOldPassword):
+			_ = util.ErrorWithStatus(ctx, http.StatusBadRequest, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -365,36 +391,36 @@ func (h *handler) updatePassword(ctx *gin.Context) {
 //
 //	@Id				RestoreAccount
 //	@Summary		Restore service
-//	@Description	Request for restoring service. User must be logged in. User must be deleted. In response will be returned restored service info.
+//	@Description	Request for restoring domain. User must be logged in. User must be deleted. In response will be returned restored service info.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	dto.AccountOutput	"Account info"
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		409	{object}	dto.ErrorResponse	"User is not deleted"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Success		200	{object}	v0.AccountOutput	"Account info"
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		403	{object}	v0.ErrorOutput	"User is blocked or deleted"
+//	@Failure		404	{object}	v0.ErrorOutput	"Not found user"
+//	@Failure		409	{object}	v0.ErrorOutput	"User is not deleted"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/account/restore [get]
 func (h *handler) restoreAccount(ctx *gin.Context) {
-	log.Debug().Msg("handle restore service")
+	h.logger.Debug().Msg("handle restore service")
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
 	res, err := h.svc.RestoreAccount(ctx, principal.ID)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrUserNotDeleted):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrUserNotDeleted):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -406,38 +432,38 @@ func (h *handler) restoreAccount(ctx *gin.Context) {
 //
 //	@Id				DeleteAccount
 //	@Summary		Delete service
-//	@Description	Request for deleting service. User must be logged in. User must not be deleted.
+//	@Description	Request for deleting domain. User must be logged in. User must not be deleted.
 //	@Security		BearerAuth
 //	@Tags			Account API
-//	@Accept			json
-//	@Produce		json
-//	@Success		200
-//	@Failure		401	{object}	dto.ErrorResponse	"Unauthorized"
-//	@Failure		403	{object}	dto.ErrorResponse	"User is blocked or deleted"
-//	@Failure		404	{object}	dto.ErrorResponse	"Not found user"
-//	@Failure		409	{object}	dto.ErrorResponse	"User is deleted"
-//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Success		204
+//	@Failure		401	{object}	v0.ErrorOutput	"Unauthorized"
+//	@Failure		403	{object}	v0.ErrorOutput	"User is blocked or deleted"
+//	@Failure		404	{object}	v0.ErrorOutput	"Not found user"
+//	@Failure		409	{object}	v0.ErrorOutput	"User is deleted"
+//	@Failure		500	{object}	v0.ErrorOutput	"Internal server error"
 //	@Router			/v0/account [delete]
 func (h *handler) deleteAccount(ctx *gin.Context) {
-	log.Debug().Msg("handle delete service")
+	h.logger.Debug().Msg("handle delete service")
 
-	principal, err := middleware2.GetAuthUser(ctx)
+	principal, err := middleware.GetAuthUser(ctx)
 	if err != nil {
-		_ = ctx.AbortWithError(http.StatusUnauthorized, err)
+		_ = util.ErrorWithStatus(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
 	if err := h.svc.DeleteAccount(ctx, principal.ID); err != nil {
 		switch {
-		case errors.Is(err, service.ErrUserNotFound):
-			_ = ctx.AbortWithError(http.StatusNotFound, err)
-		case errors.Is(err, service.ErrUserAlreadyDeleted):
-			_ = ctx.AbortWithError(http.StatusConflict, err)
+		case errors.Is(err, domain.ErrUserNotFound):
+			_ = util.ErrorWithStatus(ctx, http.StatusNotFound, err)
+		case errors.Is(err, domain.ErrUserAlreadyDeleted):
+			_ = util.ErrorWithStatus(ctx, http.StatusConflict, err)
 		default:
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = util.ErrorWithStatus(ctx, http.StatusInternalServerError, err)
 		}
 		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ctx.Status(http.StatusNoContent)
 }

@@ -2,126 +2,155 @@ package gorm
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
-	"github.com/mandarine-io/Backend/internal/persistence/model"
-	repo2 "github.com/mandarine-io/Backend/internal/persistence/repo"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/mandarine-io/backend/internal/persistence/entity"
+	"github.com/mandarine-io/backend/internal/persistence/repo"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
-type userRepository struct {
-	db *gorm.DB
+type userRepo struct {
+	db     *gorm.DB
+	logger zerolog.Logger
 }
 
-func NewUserRepository(db *gorm.DB) repo2.UserRepository {
-	return &userRepository{db}
-}
+type UserRepoOption func(*userRepo)
 
-func (u *userRepository) CreateUser(ctx context.Context, user *model.UserEntity) (*model.UserEntity, error) {
-	log.Debug().Msg("create user")
-	tx := u.db.WithContext(ctx).Create(user)
-	if errors.Is(tx.Error, gorm.ErrDuplicatedKey) {
-		return user, repo2.ErrDuplicateUser
+func WithUserRepoLogger(logger zerolog.Logger) UserRepoOption {
+	return func(r *userRepo) {
+		r.logger = logger
 	}
+}
+
+func NewUserRepository(db *gorm.DB, opts ...UserRepoOption) repo.UserRepository {
+	r := &userRepo{
+		db:     db,
+		logger: zerolog.Nop(),
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	return r
+}
+
+func (r *userRepo) CreateUser(ctx context.Context, user *entity.User) (*entity.User, error) {
+	r.logger.Debug().Msg("create user")
+
+	tx := r.db.WithContext(ctx).Create(user)
+	if errors.Is(tx.Error, gorm.ErrDuplicatedKey) {
+		return user, repo.ErrDuplicateUser
+	}
+
 	return user, tx.Error
 }
 
-func (u *userRepository) UpdateUser(ctx context.Context, user *model.UserEntity) (*model.UserEntity, error) {
-	log.Debug().Msg("update user")
-	tx := u.db.WithContext(ctx).Save(user)
+func (r *userRepo) UpdateUser(ctx context.Context, user *entity.User) (*entity.User, error) {
+	r.logger.Debug().Msg("update user")
+
+	tx := r.db.WithContext(ctx).Save(user)
 	if errors.Is(tx.Error, gorm.ErrDuplicatedKey) {
-		return user, repo2.ErrDuplicateUser
+		return user, repo.ErrDuplicateUser
 	}
+
 	return user, tx.Error
 }
 
-func (u *userRepository) FindUserById(ctx context.Context, id uuid.UUID, roleJoin bool) (*model.UserEntity, error) {
-	log.Debug().Msg("find user by id")
-	var db *gorm.DB
-	if roleJoin {
-		db = u.db.WithContext(ctx).InnerJoins("Role")
-	} else {
-		db = u.db.WithContext(ctx)
+func (r *userRepo) FindUserByID(ctx context.Context, id uuid.UUID, scopes ...repo.Scope) (*entity.User, error) {
+	r.logger.Debug().Msg("find user by id")
+
+	tx := r.db.WithContext(ctx)
+
+	for _, option := range scopes {
+		tx = tx.Scopes(option)
 	}
 
-	userEntity := &model.UserEntity{}
-	tx := db.Scopes(notDeletedUsers).
+	user := &entity.User{}
+	tx = tx.Scopes(notDeletedUsers).
 		Where("users.id = ?", id).
-		First(userEntity)
+		First(user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 
-	return userEntity, tx.Error
+	return user, tx.Error
 }
 
-func (u *userRepository) FindUserByUsername(ctx context.Context, username string, roleJoin bool) (*model.UserEntity, error) {
-	log.Debug().Msg("find user by username")
-	var db *gorm.DB
-	if roleJoin {
-		db = u.db.WithContext(ctx).InnerJoins("Role")
-	} else {
-		db = u.db.WithContext(ctx)
+func (r *userRepo) FindUserByUsername(ctx context.Context, username string, scopes ...repo.Scope) (
+	*entity.User,
+	error,
+) {
+	r.logger.Debug().Msg("find user by username")
+
+	tx := r.db.WithContext(ctx)
+
+	for _, option := range scopes {
+		tx = tx.Scopes(option)
 	}
 
-	userEntity := &model.UserEntity{}
-	tx := db.Scopes(notDeletedUsers).
+	user := &entity.User{}
+	tx = tx.Scopes(notDeletedUsers).
 		Where("username = ?", username).
-		First(userEntity)
+		First(user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 
-	return userEntity, tx.Error
+	return user, tx.Error
 }
 
-func (u *userRepository) FindUserByEmail(ctx context.Context, email string, roleJoin bool) (*model.UserEntity, error) {
-	log.Debug().Msg("find user by email")
-	var db *gorm.DB
-	if roleJoin {
-		db = u.db.WithContext(ctx).InnerJoins("Role")
-	} else {
-		db = u.db.WithContext(ctx)
+func (r *userRepo) FindUserByEmail(ctx context.Context, email string, scopes ...repo.Scope) (*entity.User, error) {
+	r.logger.Debug().Msg("find user by email")
+
+	tx := r.db.WithContext(ctx)
+
+	for _, option := range scopes {
+		tx = tx.Scopes(option)
 	}
 
-	userEntity := &model.UserEntity{}
-	tx := db.Scopes(notDeletedUsers).
+	user := &entity.User{}
+	tx = tx.Scopes(notDeletedUsers).
 		Where("email = ?", email).
-		First(userEntity)
+		First(user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 
-	return userEntity, tx.Error
+	return user, tx.Error
 }
 
-func (u *userRepository) FindUserByUsernameOrEmail(ctx context.Context, login string, roleJoin bool) (*model.UserEntity, error) {
-	log.Debug().Msg("find user by username or email")
-	var db *gorm.DB
-	if roleJoin {
-		db = u.db.WithContext(ctx).InnerJoins("Role")
-	} else {
-		db = u.db.WithContext(ctx)
+func (r *userRepo) FindUserByUsernameOrEmail(ctx context.Context, login string, scopes ...repo.Scope) (
+	*entity.User,
+	error,
+) {
+	r.logger.Debug().Msg("find user by username or email")
+
+	tx := r.db.WithContext(ctx)
+
+	for _, option := range scopes {
+		tx = tx.Scopes(option)
 	}
 
-	userEntity := &model.UserEntity{}
-	tx := db.Scopes(notDeletedUsers).
+	user := &entity.User{}
+	tx = tx.Scopes(notDeletedUsers).
 		Where("username = ?", login).
 		Or("email = ?", login).
-		First(userEntity)
+		First(user)
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 
-	return userEntity, tx.Error
+	return user, tx.Error
 }
 
-func (u *userRepository) ExistsUserById(ctx context.Context, id uuid.UUID) (bool, error) {
-	log.Debug().Msg("exists user by id")
+func (r *userRepo) ExistsUserByID(ctx context.Context, id uuid.UUID) (bool, error) {
+	r.logger.Debug().Msg("exists user by id")
+
 	var exists bool
-	tx := u.db.WithContext(ctx).
-		Model(&model.UserEntity{}).
+	tx := r.db.WithContext(ctx).
+		Model(&entity.User{}).
 		Scopes(notDeletedUsers).
 		Select("count(*) > 0").
 		Where("id = ?", id).
@@ -129,11 +158,12 @@ func (u *userRepository) ExistsUserById(ctx context.Context, id uuid.UUID) (bool
 	return exists, tx.Error
 }
 
-func (u *userRepository) ExistsUserByUsername(ctx context.Context, username string) (bool, error) {
-	log.Debug().Msg("exists user by username")
+func (r *userRepo) ExistsUserByUsername(ctx context.Context, username string) (bool, error) {
+	r.logger.Debug().Msg("exists user by username")
+
 	var exists bool
-	tx := u.db.WithContext(ctx).
-		Model(&model.UserEntity{}).
+	tx := r.db.WithContext(ctx).
+		Model(&entity.User{}).
 		Scopes(notDeletedUsers).
 		Select("count(*) > 0").
 		Where("username = ?", username).
@@ -141,11 +171,12 @@ func (u *userRepository) ExistsUserByUsername(ctx context.Context, username stri
 	return exists, tx.Error
 }
 
-func (u *userRepository) ExistsUserByEmail(ctx context.Context, email string) (bool, error) {
-	log.Debug().Msg("exists user by email")
+func (r *userRepo) ExistsUserByEmail(ctx context.Context, email string) (bool, error) {
+	r.logger.Debug().Msg("exists user by email")
+
 	var exists bool
-	tx := u.db.WithContext(ctx).
-		Model(&model.UserEntity{}).
+	tx := r.db.WithContext(ctx).
+		Model(&entity.User{}).
 		Scopes(notDeletedUsers).
 		Select("count(*) > 0").
 		Where("email = ?", email).
@@ -153,11 +184,12 @@ func (u *userRepository) ExistsUserByEmail(ctx context.Context, email string) (b
 	return exists, tx.Error
 }
 
-func (u *userRepository) ExistsUserByUsernameOrEmail(ctx context.Context, username string, email string) (bool, error) {
-	log.Debug().Msg("exists user by username or email")
+func (r *userRepo) ExistsUserByUsernameOrEmail(ctx context.Context, username string, email string) (bool, error) {
+	r.logger.Debug().Msg("exists user by username or email")
+
 	var exists bool
-	tx := u.db.WithContext(ctx).
-		Model(&model.UserEntity{}).
+	tx := r.db.WithContext(ctx).
+		Model(&entity.User{}).
 		Scopes(notDeletedUsers).
 		Select("count(*) > 0").
 		Where("username = ?", username).
@@ -166,13 +198,20 @@ func (u *userRepository) ExistsUserByUsernameOrEmail(ctx context.Context, userna
 	return exists, tx.Error
 }
 
-func (u *userRepository) DeleteExpiredUser(ctx context.Context) (*model.UserEntity, error) {
-	log.Debug().Msg("delete expired user")
-	userEntity := &model.UserEntity{}
-	tx := u.db.WithContext(ctx).
+func (r *userRepo) DeleteExpiredUser(ctx context.Context) (*entity.User, error) {
+	r.logger.Debug().Msg("delete expired user")
+
+	user := &entity.User{}
+	tx := r.db.WithContext(ctx).
 		Scopes(deletedUsers).
-		Delete(userEntity)
-	return userEntity, tx.Error
+		Delete(user)
+	return user, tx.Error
+}
+
+func (r *userRepo) WithRolePreload() repo.Scope {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.InnerJoins("Role")
+	}
 }
 
 func notDeletedUsers(db *gorm.DB) *gorm.DB {
