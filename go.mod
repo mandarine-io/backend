@@ -36,7 +36,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	github.com/timandy/routine v1.1.4
 	golang.org/x/crypto v0.32.0
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.29.0
 	golang.org/x/text v0.21.0
